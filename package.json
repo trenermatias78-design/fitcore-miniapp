@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "start": "serve dist -l $PORT"
+    "build": "vite build"
   },
   "dependencies": {
     "react": "^18.2.0",
