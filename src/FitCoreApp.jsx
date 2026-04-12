@@ -986,19 +986,7 @@ export default function FitCoreApp() {
     <>
       <GlobalStyle />
       <div style={{ maxWidth: 390, margin: "0 auto", minHeight: "100vh", background: T.sbg, display: "flex", flexDirection: "column", position: "relative" }}>
-        {/* STATUS BAR */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 18px 4px", flexShrink: 0 }}>
-          <span style={{ fontSize: 11, color: T.tmu, fontFamily: "'DM Mono', monospace", fontWeight: 500 }}>9:41</span>
-          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <div style={{ display: "flex", gap: 2, alignItems: "flex-end" }}>
-              {[4,6,8,10].map((h, i) => <div key={i} style={{ width: 3, height: h, background: T.a, borderRadius: 1 }} />)}
-            </div>
-            <div style={{ width: 18, height: 9, border: `1px solid ${T.tmu}`, borderRadius: 2, position: "relative" }}>
-              <div style={{ width: "70%", height: "100%", background: T.a, borderRadius: 1 }} />
-              <div style={{ position: "absolute", right: -4, top: "25%", width: 2, height: "50%", background: T.tmu, borderRadius: "0 1px 1px 0" }} />
-            </div>
-          </div>
-        </div>
+
 
         {/* TOP NAV */}
         {showTopNav && !["welcome","onboarding","planselect","payment"].includes(appState) && (
