@@ -104,7 +104,7 @@ const TNav = ({title,onBack,rightEl}) => (
 const BNav = ({active,onChange,isAdmin}) => {
   const tabs = isAdmin
     ? [{id:"dashboard",l:"Огляд"},{id:"clients",l:"Клієнти"},{id:"payments",l:"Оплати"},{id:"broadcast",l:"Розсилка"},{id:"settings",l:"Налашт."}]
-    : [{id:"plan",l:"План"},{id:"nutrition",l:"Харчування"},{id:"progress",l:"Прогрес"},{id:"profile",l:"Профіль"}];
+    : [{id:"plan",l:"План"},{id:"nutrition",l:"Харч."},{id:"progress",l:"Прогрес"},{id:"menu",l:"Меню"},{id:"profile",l:"Профіль"}];
   const icons = {
     plan: c=><path d="M3 9h12M2 7v4M4 6v6M11 6v6M13 7v4" stroke={c} strokeWidth="1.8" strokeLinecap="round"/>,
     nutrition: c=><><path d="M9 2v5a4 4 0 01-4 4H5M15 2v14" stroke={c} strokeWidth="1.8" strokeLinecap="round" fill="none"/></>,
@@ -115,6 +115,7 @@ const BNav = ({active,onChange,isAdmin}) => {
     payments: c=><><rect x="2" y="5" width="14" height="11" rx="2" stroke={c} strokeWidth="1.8" fill="none"/><path d="M2 9h14" stroke={c} strokeWidth="1.8"/><circle cx="6" cy="13" r="1.5" fill={c}/></>,
     broadcast: c=><path d="M2 9l13-6-5 6 5 6-13-6z" fill={c}/>,
     settings: c=><><circle cx="9" cy="9" r="3" stroke={c} strokeWidth="1.8" fill="none"/><path d="M9 2v2M9 14v2M2 9h2M14 9h2" stroke={c} strokeWidth="1.8" strokeLinecap="round"/></>,
+    menu: c=><><rect x="2" y="4" width="14" height="1.8" rx=".9" fill={c}/><rect x="2" y="8.1" width="10" height="1.8" rx=".9" fill={c}/><rect x="2" y="12.2" width="12" height="1.8" rx=".9" fill={c}/></>,
   };
   return (
     <div style={{display:"flex",borderTop:`1px solid ${C.bc}`,flexShrink:0,background:C.bg,paddingBottom:"env(safe-area-inset-bottom,0px)"}}>
@@ -155,10 +156,80 @@ const Welcome = ({onStart,onLogin}) => (
 
 // ═══ PLAN SELECT ═══
 const PLANS_STATIC = {
-  start:{name:"START",price:799,features:["Тренувальний план","Шаблон харчування","Трекінг прогресу"]},
-  premium:{name:"PREMIUM",price:1699,features:["Персональний ШІ-план","Чекіни 2×/тиж","Нутріціологія","Фідбек тренера"],hot:true},
-  vip:{name:"VIP",price:3499,features:["Повний супровід","Прямий доступ до тренера","Пріоритет","Підтримка 24/7"]},
+  start:{
+    name:"START", price:799,
+    desc:"Базовий старт для новачків",
+    features:["Шаблонний тренувальний план","Базовий план харчування (КБЖУ)","Трекінг ваги і прогресу","Чекіни без фідбеку"],
+    no:["AI персоналізація","Фідбек тренера","БАДи"]
+  },
+  premium:{
+    name:"PREMIUM", price:1699, hot:true,
+    desc:"Персональний підхід від ШІ-тренера",
+    features:["Персональний план від Claude AI","Щотижневе оновлення плану","Чекіни 2× на тиждень з AI фідбеком","Індивідуальне харчування з грамами","Відповіді тренера на питання"],
+    no:["Прямий зв'язок з тренером","Пропись БАДів"]
+  },
+  vip:{
+    name:"VIP", price:3499,
+    desc:"Максимальний результат з особистим супроводом",
+    features:["Все що в PREMIUM","Прямий зв'язок з тренером особисто","Пропись БАДів під твої цілі","Корекція плану в будь-який момент","Пріоритетна відповідь 24/7"],
+    no:[]
+  },
 };
+const TRAINER_LINK = "https://t.me/matmatias";
+// ═══ MENU (тарифи і опис) ═══
+const MenuScreen = ({plans,payLinks,onSelectPlan,clientPlan}) => {
+  const p = plans || PLANS_STATIC;
+  const planV = {start:"green",premium:"blue",vip:"purple"};
+  return (
+    <Scr>
+      <div style={{fontSize:26,fontWeight:900,color:C.tm,letterSpacing:-1}}>Тарифи</div>
+      <div style={{fontSize:15,color:C.ts,lineHeight:1.6}}>Обери рівень під свої цілі. Всі тарифи починаються з 3 днів безкоштовно.</div>
+      {Object.entries(p).map(([k,plan])=>(
+        <div key={k} style={{background:C.s1,borderRadius:18,border:`1.5px solid ${plan.hot?C.acc:C.bc}`,padding:"18px",position:"relative",overflow:"hidden"}}>
+          {plan.hot&&<div style={{position:"absolute",top:16,right:16,fontSize:11,color:"#0a0a0a",background:C.acc,borderRadius:20,padding:"3px 12px",fontWeight:800}}>Популярний</div>}
+          {clientPlan===k&&<div style={{position:"absolute",top:16,right:plan.hot?120:16,fontSize:11,color:C.acc,background:"rgba(200,245,58,.1)",border:`1px solid ${C.acc}`,borderRadius:20,padding:"3px 12px",fontWeight:700}}>Твій тариф</div>}
+          <div style={{display:"flex",alignItems:"baseline",gap:10,marginBottom:4}}>
+            <div style={{fontSize:22,fontWeight:900,color:C.tm}}>{plan.name}</div>
+          </div>
+          <div style={{fontSize:36,fontWeight:900,color:C.acc,letterSpacing:-1,marginBottom:4}}>{plan.price} <span style={{fontSize:15,color:C.ts,fontWeight:500}}>₴/міс</span></div>
+          <div style={{fontSize:14,color:C.ts,marginBottom:14}}>{plan.desc}</div>
+          <div style={{height:1,background:C.bc,marginBottom:12}}/>
+          <div style={{fontSize:12,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:8}}>Включено:</div>
+          {(plan.features||[]).map(f=>(
+            <div key={f} style={{display:"flex",alignItems:"center",gap:8,fontSize:14,color:C.tm,marginBottom:7}}>
+              <div style={{width:18,height:18,borderRadius:"50%",background:"rgba(200,245,58,.15)",border:`1px solid ${C.acc}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5 4-4" stroke={C.acc} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </div>
+              {f}
+            </div>
+          ))}
+          {(plan.no||[]).length>0&&<>
+            <div style={{fontSize:12,color:C.td,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:8,marginTop:4}}>Недоступно:</div>
+            {(plan.no||[]).map(f=>(
+              <div key={f} style={{display:"flex",alignItems:"center",gap:8,fontSize:13,color:C.td,marginBottom:6}}>
+                <div style={{width:18,height:18,borderRadius:"50%",background:C.s2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke={C.td} strokeWidth="1.5" strokeLinecap="round"/></svg>
+                </div>
+                {f}
+              </div>
+            ))}
+          </>}
+          {clientPlan!==k&&<PBtn onClick={()=>onSelectPlan(k)} style={{marginTop:14,background:plan.hot?C.acc:C.s2,color:plan.hot?"#0a0a0a":C.tm}}>
+            {clientPlan?"Перейти на "+plan.name:"Обрати "+plan.name}
+          </PBtn>}
+        </div>
+      ))}
+      <div style={{background:"rgba(200,245,58,.05)",border:"1px solid rgba(200,245,58,.15)",borderRadius:16,padding:"16px"}}>
+        <div style={{fontSize:15,fontWeight:700,color:C.acc,marginBottom:6}}>Питання щодо тарифів?</div>
+        <div style={{fontSize:14,color:C.ts,marginBottom:12,lineHeight:1.6}}>Напиши тренеру — підберемо оптимальний варіант особисто.</div>
+        <a href={TRAINER_LINK} style={{textDecoration:"none"}}>
+          <PBtn style={{background:C.s2,color:C.tm}}>Написати тренеру</PBtn>
+        </a>
+      </div>
+    </Scr>
+  );
+};
+
 const PlanSelect = ({plans,payLinks,onSelect}) => {
   const p=plans||PLANS_STATIC;
   return (
@@ -445,6 +516,48 @@ const Checkin = ({userId,onDone}) => {
   );
 };
 
+// ═══ SUPPLEMENTS (VIP) ═══
+const SupplementsScreen = ({userId,clientPlan}) => {
+  const [data,setData]=useState(null);const [loading,setLoad]=useState(true);
+  useEffect(()=>{
+    apiGet(`/api/client/${userId}/supplements`).then(r=>{setData(r);setLoad(false);}).catch(()=>setLoad(false));
+  },[userId]);
+  if(loading)return <Spin/>;
+  if(clientPlan!=="vip")return(
+    <Scr>
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 24px",textAlign:"center"}}>
+        <div style={{fontSize:40}}>💊</div>
+        <div style={{fontSize:22,fontWeight:900,color:C.tm}}>Тільки для VIP</div>
+        <div style={{fontSize:15,color:C.ts,lineHeight:1.7}}>Персональна пропись БАДів під твої цілі доступна на тарифі VIP.</div>
+        <PBtn style={{maxWidth:240}} onClick={()=>{}}>Перейти на VIP</PBtn>
+      </div>
+    </Scr>
+  );
+  return(
+    <Scr>
+      <div style={{fontSize:26,fontWeight:900,color:C.tm,letterSpacing:-1}}>БАДи</div>
+      <div style={{fontSize:15,color:C.ts}}>Персональна пропись від тренера</div>
+      {data?.supplements?(
+        <div style={{background:C.s1,borderRadius:18,border:`1px solid rgba(200,245,58,.2)`,padding:"18px"}}>
+          <div style={{fontSize:12,color:C.acc,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Твоя пропись</div>
+          <div style={{fontSize:15,color:C.tm,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{data.supplements}</div>
+        </div>
+      ):(
+        <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"20px",textAlign:"center"}}>
+          <div style={{fontSize:32,marginBottom:10}}>⏳</div>
+          <div style={{fontSize:16,fontWeight:700,color:C.tm,marginBottom:6}}>Пропись готується</div>
+          <div style={{fontSize:14,color:C.ts,lineHeight:1.6}}>Тренер складає персональний список БАДів під твої цілі. Отримаєш сповіщення в бот.</div>
+        </div>
+      )}
+      <div style={{background:"rgba(200,245,58,.05)",border:"1px solid rgba(200,245,58,.15)",borderRadius:16,padding:"16px"}}>
+        <div style={{fontSize:15,fontWeight:700,color:C.acc,marginBottom:6}}>Є питання?</div>
+        <div style={{fontSize:14,color:C.ts,marginBottom:12}}>Напиши тренеру особисто — відповість протягом години.</div>
+        <a href={TRAINER_LINK} style={{textDecoration:"none"}}><PBtn style={{background:C.s2,color:C.tm}}>Написати тренеру</PBtn></a>
+      </div>
+    </Scr>
+  );
+};
+
 // ═══ PROGRESS ═══
 const Progress = ({userId}) => {
   const [data,setData]=useState(null);const [loading,setLoad]=useState(true);
@@ -507,7 +620,7 @@ const Progress = ({userId}) => {
 };
 
 // ═══ PROFILE ═══
-const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan}) => {
+const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan,onSupplements}) => {
   const planV={start:"green",premium:"blue",vip:"purple",trial:"amber"};
   return(
     <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
@@ -543,6 +656,16 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
           <span style={{fontSize:16,fontWeight:700,color:C.tm}}>Зробити чекін</span>
           <svg width="20" height="20" viewBox="0 0 18 18" fill="none"><path d="M4 9h10M10 5l4 4-4 4" stroke={C.acc} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
+        {onSupplements&&<button onClick={onSupplements} style={{background:"rgba(200,245,58,.05)",border:"1px solid rgba(200,245,58,.2)",borderRadius:16,padding:"16px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%"}}>
+          <span style={{fontSize:16,fontWeight:700,color:C.acc}}>💊 Мої БАДи (VIP)</span>
+          <svg width="20" height="20" viewBox="0 0 18 18" fill="none"><path d="M4 9h10M10 5l4 4-4 4" stroke={C.acc} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </button>}
+        <a href={TRAINER_LINK} style={{textDecoration:"none",display:"block"}}>
+          <button style={{background:C.s1,border:`1px solid ${C.bc}`,borderRadius:16,padding:"16px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%"}}>
+            <span style={{fontSize:16,fontWeight:700,color:C.tm}}>Написати тренеру</span>
+            <svg width="20" height="20" viewBox="0 0 18 18" fill="none"><path d="M4 9h10M10 5l4 4-4 4" stroke={C.acc} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+        </a>
         {isAdmin&&<button onClick={onAdminAccess} style={{background:"rgba(200,245,58,.05)",border:"1.5px solid rgba(200,245,58,.2)",borderRadius:16,padding:"16px 18px",display:"flex",alignItems:"center",gap:10,width:"100%"}}>
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2l7 4v5c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-4z" stroke={C.acc} strokeWidth="1.8" fill="none"/></svg>
           <span style={{fontSize:16,fontWeight:800,color:C.acc}}>Адмін-панель</span>
@@ -731,7 +854,7 @@ const AdminBroadcast = () => {
 };
 
 // ═══ ADMIN: SETTINGS ═══
-const AdminSettings = ({settings}) => {
+const AdminSettings = ({settings,onExitAdmin}) => {
   const [tog,setTog]=useState({autoplan:true,remind:true,offer:true,notify:false});
   return(
     <Scr>
@@ -749,6 +872,11 @@ const AdminSettings = ({settings}) => {
           <div style={{fontSize:22,fontWeight:900,color:C.acc}}>{plan.price} <span style={{fontSize:13,color:C.ts,fontWeight:500}}>₴</span></div>
         </div>
       ))}
+      <div style={{height:1,background:C.bc}}/>
+      <button onClick={onExitAdmin} style={{background:"rgba(255,85,85,.08)",border:"1px solid rgba(255,85,85,.2)",borderRadius:16,padding:"16px 18px",display:"flex",alignItems:"center",gap:10,width:"100%"}}>
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M8 11h10M14 7l4 4-4 4" stroke="#ff5555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M12 5H5a2 2 0 00-2 2v8a2 2 0 002 2h7" stroke="#ff5555" strokeWidth="1.8" strokeLinecap="round"/></svg>
+        <span style={{fontSize:16,fontWeight:800,color:"#ff5555"}}>Вийти з адмін-панелі</span>
+      </button>
     </Scr>
   );
 };
@@ -794,7 +922,7 @@ export default function FitCoreApp() {
 
   const isAdminMode=screen==="admin";
   const showNav=["client","admin"].includes(screen)&&!checkinMode;
-  const titles={plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",profile:"Профіль",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування"};
+  const titles={plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",menu:"Тарифи і меню",supplements:"БАДи",profile:"Профіль",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування"};
   const topTitle=checkinMode?"Чекін":isAdminMode?(selClient?"Профіль клієнта":titles[adminTab]):titles[clientTab];
   const showTopNav=["client","admin"].includes(screen)&&clientTab!=="profile"&&!(isAdminMode&&adminTab==="dashboard");
 
@@ -813,18 +941,21 @@ export default function FitCoreApp() {
     );
     if(screen==="admin"){
       if(selClient)return <AdminClientDetail client={selClient} onBack={()=>setSelClient(null)}/>;
+      const onExitAdmin=()=>{setScreen("client");setAdminTab("dashboard");};
       if(adminTab==="dashboard")return <AdminDash/>;
       if(adminTab==="clients")return <AdminClients onSelect={c=>setSelClient(c)}/>;
       if(adminTab==="payments")return <AdminPayments/>;
       if(adminTab==="broadcast")return <AdminBroadcast/>;
-      if(adminTab==="settings")return <AdminSettings settings={settings}/>;
+      if(adminTab==="settings")return <AdminSettings settings={settings} onExitAdmin={onExitAdmin}/>;
     }
     if(screen==="client"){
       if(checkinMode)return <Checkin userId={userId} onDone={()=>setCheckin(false)}/>;
       if(clientTab==="plan")return <TrainPlan userId={userId}/>;
       if(clientTab==="nutrition")return <Nutrition userId={userId}/>;
       if(clientTab==="progress")return <Progress userId={userId}/>;
-      if(clientTab==="profile")return <Profile client={clientData} questionnaire={questionnaire} isAdmin={isAdmin} onAdminAccess={()=>setScreen("admin")} onCheckin={()=>setCheckin(true)} onBuyPlan={()=>setScreen("plans")}/>;
+      if(clientTab==="menu")return <MenuScreen plans={plans} payLinks={payLinks} onSelectPlan={p=>{setSelPlan(p);setScreen("payment");}} clientPlan={clientData?.plan}/>;
+      if(clientTab==="supplements")return <SupplementsScreen userId={userId} clientPlan={clientData?.plan}/>;
+      if(clientTab==="profile")return <Profile client={clientData} questionnaire={questionnaire} isAdmin={isAdmin} onAdminAccess={()=>setScreen("admin")} onCheckin={()=>setCheckin(true)} onBuyPlan={()=>{setClientTab("menu");}} onSupplements={clientData?.plan==="vip"?()=>setClientTab("supplements"):null}/>;
     }
   };
 
