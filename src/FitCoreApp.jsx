@@ -185,9 +185,35 @@ const PlanSelect = ({plans,payLinks,onSelect}) => {
 };
 
 // ═══ PAYMENT ═══
-const Payment = ({planKey,plans,payLinks,onBack,onPaid}) => {
+const Payment = ({planKey,plans,payLinks,onBack,onPaid,userId}) => {
   const plan=(plans||PLANS_STATIC)[planKey];
   const link=(payLinks||{})[planKey]||"#";
+  const [sending,setSending]=useState(false);
+  const [sent,setSent]=useState(false);
+
+  const sendScreenshot=async()=>{
+    if(!userId)return;
+    setSending(true);
+    try{
+      await apiPost(`/api/client/${userId}/payment-screenshot`,{plan:planKey});
+      setSent(true);
+      setTimeout(()=>onPaid(),2000);
+    }catch(e){
+      alert("Помилка: "+e.message);
+    }
+    setSending(false);
+  };
+
+  if(sent)return(
+    <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 24px"}}>
+      <div style={{width:72,height:72,borderRadius:"50%",background:"rgba(200,245,58,.1)",border:`2px solid ${C.acc}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <svg width="32" height="32" viewBox="0 0 18 18" fill="none"><path d="M4 9l4 4 7-7" stroke={C.acc} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      </div>
+      <div style={{fontSize:22,fontWeight:900,color:C.tm,textAlign:"center"}}>Тренер отримав сповіщення!</div>
+      <div style={{fontSize:16,color:C.ts,textAlign:"center",lineHeight:1.7}}>Надішли скріншот оплати в бот — тренер активує доступ.</div>
+    </div>
+  );
+
   return (
     <Scr>
       <TNav title="Оплата" onBack={onBack}/>
@@ -215,7 +241,13 @@ const Payment = ({planKey,plans,payLinks,onBack,onPaid}) => {
         </div>
       </div>
       <a href={link} style={{textDecoration:"none"}}><PBtn>Перейти до оплати</PBtn></a>
-      <GBtn onClick={onPaid}>Надіслати скріншот</GBtn>
+      <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
+        <div style={{fontSize:14,fontWeight:700,color:C.tm,marginBottom:6}}>Вже оплатив?</div>
+        <div style={{fontSize:13,color:C.ts,marginBottom:12,lineHeight:1.6}}>Натисни кнопку — тренер отримає сповіщення і надішле запит на скріншот прямо в бот.</div>
+        <PBtn onClick={sendScreenshot} loading={sending} style={{background:C.s2,color:C.tm}}>
+          {sending?"Надсилаю...":"📸 Надіслати скріншот оплати"}
+        </PBtn>
+      </div>
     </Scr>
   );
 };
@@ -769,7 +801,7 @@ export default function FitCoreApp() {
   const renderContent=()=>{
     if(screen==="welcome")return <Welcome onStart={()=>setScreen("plans")} onLogin={()=>setScreen("plans")}/>;
     if(screen==="plans")return <PlanSelect plans={plans} payLinks={payLinks} onSelect={p=>{setSelPlan(p);setScreen("payment");}}/>;
-    if(screen==="payment")return <Payment planKey={selPlan} plans={plans} payLinks={payLinks} onBack={()=>setScreen("plans")} onPaid={()=>setScreen("pending")}/>;
+    if(screen==="payment")return <Payment planKey={selPlan} plans={plans} payLinks={payLinks} onBack={()=>setScreen("plans")} onPaid={()=>setScreen("pending")} userId={userId}/>;
     if(screen==="pending")return(
       <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 24px"}}>
         <div style={{width:72,height:72,borderRadius:"50%",background:"rgba(232,168,50,.1)",border:`2px solid ${C.amber}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
