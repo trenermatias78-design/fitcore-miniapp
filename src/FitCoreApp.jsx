@@ -481,7 +481,7 @@ const Progress = ({userId}) => {
 };
 
 // PROFILE
-const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin}) => {
+const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan}) => {
   const planV={start:"green",premium:"blue",vip:"purple",trial:"amber"};
   return(
     <Scr>
@@ -504,6 +504,12 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin}) => {
         </div>
       )}
       <Div/>
+      {client?.status==="trial"&&(
+        <button onClick={onBuyPlan} style={{background:T.a,borderRadius:10,padding:"12px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%"}} className="pu">
+          <span style={{fontSize:13,color:T.tm,fontWeight:500}}>💳 Придбати тариф</span>
+          <svg width="14" height="14" viewBox="0 0 18 18" fill="none"><path d="M4 9h10M10 5l4 4-4 4" stroke={T.tm} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </button>
+      )}
       <button onClick={onCheckin} style={{background:T.sc,border:`1px solid ${T.bc}`,borderRadius:10,padding:"12px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%"}}>
         <span style={{fontSize:13,color:T.tm}}>Зробити чекін</span>
         <svg width="14" height="14" viewBox="0 0 18 18" fill="none"><path d="M4 9h10M10 5l4 4-4 4" stroke={T.tmd} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -831,7 +837,7 @@ export default function FitCoreApp() {
       if(clientTab==="plan")return <TrainPlan userId={userId}/>;
       if(clientTab==="nutrition")return <Nutrition userId={userId}/>;
       if(clientTab==="progress")return <Progress userId={userId}/>;
-      if(clientTab==="profile")return <Profile client={clientData} questionnaire={questionnaire} isAdmin={isAdmin} onAdminAccess={()=>setScreen("admin")} onCheckin={()=>setCheckin(true)}/>;
+      if(clientTab==="profile")return <Profile client={clientData} questionnaire={questionnaire} isAdmin={isAdmin} onAdminAccess={()=>setScreen("admin")} onCheckin={()=>setCheckin(true)} onBuyPlan={()=>setScreen("plans")}/>;
     }
   };
 
