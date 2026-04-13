@@ -302,12 +302,29 @@ const Payment = ({planKey,plans,payLinks,onBack,onPaid,userId}) => {
   };
 
   if(sent)return(
-    <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 24px"}}>
+    <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 28px",textAlign:"center"}}>
       <div style={{width:72,height:72,borderRadius:"50%",background:"rgba(200,245,58,.1)",border:`2px solid ${C.acc}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
         <svg width="32" height="32" viewBox="0 0 18 18" fill="none"><path d="M4 9l4 4 7-7" stroke={C.acc} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </div>
-      <div style={{fontSize:22,fontWeight:900,color:C.tm,textAlign:"center"}}>Тренер отримав сповіщення!</div>
-      <div style={{fontSize:16,color:C.ts,textAlign:"center",lineHeight:1.7}}>Надішли скріншот оплати в бот — тренер активує доступ.</div>
+      <div style={{fontSize:22,fontWeight:900,color:C.tm}}>Тренер отримав сповіщення!</div>
+      <div style={{background:C.s1,borderRadius:16,border:`1px solid rgba(200,245,58,.2)`,padding:"16px",width:"100%"}}>
+        <div style={{fontSize:13,fontWeight:700,color:C.acc,marginBottom:10,textTransform:"uppercase",letterSpacing:.7}}>Що робити далі:</div>
+        {[
+          ["1","Відкрий бота @fitcore_matias_bot"],
+          ["2","Натисни кнопку або напиши будь-що"],
+          ["3","Надішли скріншот оплати в чат"],
+          ["4","Тренер підтвердить протягом 1 години"],
+        ].map(([n,t])=>(
+          <div key={n} style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:8}}>
+            <div style={{width:22,height:22,borderRadius:"50%",background:C.acc,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:"#080808",flexShrink:0}}>{n}</div>
+            <div style={{fontSize:14,color:C.ts,lineHeight:1.5,textAlign:"left"}}>{t}</div>
+          </div>
+        ))}
+      </div>
+      <a href="https://t.me/fitcore_matias_bot" style={{textDecoration:"none",width:"100%"}}>
+        <PBtn>Відкрити бота</PBtn>
+      </a>
+      <GBtn onClick={onBack}>Повернутись назад</GBtn>
     </div>
   );
 
@@ -772,26 +789,75 @@ const NotificationsScreen = ({userId,nutritionPlan}) => {
 };
 
 // ═══ SUPPLEMENTS (VIP) ═══
-const SupplementsScreen = ({userId,clientPlan}) => {
-  const [data,setData]=useState(null);const [loading,setLoad]=useState(true);
-  useEffect(()=>{
-    apiGet(`/api/client/${userId}/supplements`).then(r=>{setData(r);setLoad(false);}).catch(()=>setLoad(false));
-  },[userId]);
+const SupplementsScreen = ({userId,clientPlan,isAdmin}) => {
+  const [data,setData]=useState(null);
+  const [loading,setLoad]=useState(true);
+  const [genLoading,setGenLoad]=useState(false);
+  const [showForm,setShowForm]=useState(false);
+  const [contra,setContra]=useState("");
+  const [manualText,setManual]=useState("");
+  const [saving,setSaving]=useState(false);
+
+  const load=()=>{
+    apiGet(`/api/client/${userId}/supplements`).then(r=>{setData(r);setManual(r.supplements||"");setLoad(false);}).catch(()=>setLoad(false));
+  };
+  useEffect(()=>{load();},[userId]);
+
+  const generateAI=async()=>{
+    setGenLoad(true);
+    try{
+      const r=await apiPost(`/api/client/${userId}/generate-supplements`,{contraindications:contra,goals_extra:""});
+      setData(d=>({...d,supplements:r.supplements}));
+      setShowForm(false);
+    }catch(e){alert("Помилка: "+e.message);}
+    setGenLoad(false);
+  };
+
+  const saveManual=async()=>{
+    setSaving(true);
+    try{
+      await apiPost(`/api/client/${userId}/supplements`,{supplements:manualText});
+      setData(d=>({...d,supplements:manualText}));
+    }catch(e){alert("Помилка: "+e.message);}
+    setSaving(false);
+  };
+
   if(loading)return <Spin/>;
-  if(clientPlan!=="vip")return(
+  if(clientPlan!=="vip"&&!isAdmin)return(
     <Scr>
       <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 24px",textAlign:"center"}}>
         <div style={{fontSize:40}}>💊</div>
         <div style={{fontSize:22,fontWeight:900,color:C.tm}}>Тільки для VIP</div>
         <div style={{fontSize:15,color:C.ts,lineHeight:1.7}}>Персональна пропись БАДів під твої цілі доступна на тарифі VIP.</div>
-        <PBtn style={{maxWidth:240}} onClick={()=>{}}>Перейти на VIP</PBtn>
       </div>
     </Scr>
   );
+
+  if(showForm)return(
+    <Scr>
+      <TNav title="Генерація БАДів" onBack={()=>setShowForm(false)}/>
+      <div style={{fontSize:15,color:C.ts,lineHeight:1.6}}>Перед генерацією вкажи важливу інформацію для безпечного підбору.</div>
+      <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
+        <div style={{fontSize:12,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,marginBottom:8}}>Алергії, ліки, хронічні хвороби</div>
+        <textarea value={contra} onChange={e=>setContra(e.target.value)}
+          placeholder="Наприклад: алергія на рибу, приймаю метформін, гіпертонія..."
+          rows={4} style={{background:C.s2,border:`1px solid ${C.bc}`,borderRadius:12,padding:"12px",color:C.tm,fontSize:14,width:"100%",resize:"none",lineHeight:1.6}}/>
+      </div>
+      <div style={{background:"rgba(255,85,85,.06)",border:"1px solid rgba(255,85,85,.2)",borderRadius:14,padding:"12px 14px"}}>
+        <div style={{fontSize:13,color:"#ff8888",lineHeight:1.6}}>⚠️ БАДи не є ліками. Перед прийомом проконсультуйся з лікарем, особливо якщо маєш хронічні захворювання або приймаєш медикаменти.</div>
+      </div>
+      <PBtn onClick={generateAI} loading={genLoading}>{genLoading?"Генерую...":"Згенерувати AI пропись"}</PBtn>
+    </Scr>
+  );
+
   return(
     <Scr>
-      <div style={{fontSize:26,fontWeight:900,color:C.tm,letterSpacing:-1}}>БАДи</div>
-      <div style={{fontSize:15,color:C.ts}}>Персональна пропись від тренера</div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{fontSize:26,fontWeight:900,color:C.tm,letterSpacing:-1}}>БАДи</div>
+        <button onClick={()=>setShowForm(true)} style={{background:C.acc,color:"#080808",borderRadius:20,padding:"8px 14px",fontSize:12,fontWeight:800}}>AI ✦</button>
+      </div>
+      <div style={{fontSize:14,color:C.ts}}>Персональна пропись від тренера</div>
+
       {data?.supplements?(
         <div style={{background:C.s1,borderRadius:18,border:`1px solid rgba(200,245,58,.2)`,padding:"18px"}}>
           <div style={{fontSize:12,color:C.acc,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Твоя пропись</div>
@@ -800,10 +866,22 @@ const SupplementsScreen = ({userId,clientPlan}) => {
       ):(
         <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"20px",textAlign:"center"}}>
           <div style={{fontSize:32,marginBottom:10}}>⏳</div>
-          <div style={{fontSize:16,fontWeight:700,color:C.tm,marginBottom:6}}>Пропись готується</div>
-          <div style={{fontSize:14,color:C.ts,lineHeight:1.6}}>Тренер складає персональний список БАДів під твої цілі. Отримаєш сповіщення в бот.</div>
+          <div style={{fontSize:16,fontWeight:700,color:C.tm,marginBottom:6}}>Пропись ще не готова</div>
+          <div style={{fontSize:14,color:C.ts,lineHeight:1.6,marginBottom:14}}>Натисни "AI ✦" щоб згенерувати автоматично або зачекай поки тренер призначить вручну.</div>
+          <PBtn onClick={()=>setShowForm(true)}>Згенерувати AI пропись</PBtn>
         </div>
       )}
+
+      {isAdmin&&(
+        <div style={{background:C.s1,borderRadius:16,border:`1px solid rgba(200,245,58,.2)`,padding:"14px 16px"}}>
+          <div style={{fontSize:12,color:C.acc,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,marginBottom:8}}>Ручне призначення (адмін)</div>
+          <textarea value={manualText} onChange={e=>setManual(e.target.value)}
+            placeholder="Введи пропись БАДів вручну..." rows={5}
+            style={{background:C.s2,border:`1px solid ${C.bc}`,borderRadius:12,padding:"12px",color:C.tm,fontSize:13,width:"100%",resize:"none",lineHeight:1.6,marginBottom:10}}/>
+          <PBtn onClick={saveManual} loading={saving} style={{background:C.s3,color:C.tm}}>Зберегти</PBtn>
+        </div>
+      )}
+
       <div style={{background:"rgba(200,245,58,.05)",border:"1px solid rgba(200,245,58,.15)",borderRadius:16,padding:"16px"}}>
         <div style={{fontSize:15,fontWeight:700,color:C.acc,marginBottom:6}}>Є питання?</div>
         <div style={{fontSize:14,color:C.ts,marginBottom:12}}>Напиши тренеру особисто — відповість протягом години.</div>
@@ -1266,7 +1344,7 @@ export default function FitCoreApp() {
       if(clientTab==="nutrition")return <Nutrition userId={userId}/>;
       if(clientTab==="progress")return <Progress userId={userId}/>;
       if(clientTab==="menu")return <MenuScreen plans={plans} payLinks={payLinks} onSelectPlan={p=>{setSelPlan(p);setScreen("payment");}} clientPlan={clientData?.plan} onShowReviews={()=>setClientTab("reviews")}/>;
-      if(clientTab==="supplements")return <SupplementsScreen userId={userId} clientPlan={clientData?.plan}/>;
+      if(clientTab==="supplements")return <SupplementsScreen userId={userId} clientPlan={clientData?.plan} isAdmin={isAdmin}/>;
       if(clientTab==="reviews")return <ReviewsScreen userId={userId}/>;
       if(clientTab==="notifications")return <NotificationsScreen userId={userId}/>;
       if(clientTab==="profile")return <Profile client={clientData} questionnaire={questionnaire} isAdmin={isAdmin} onAdminAccess={()=>setScreen("admin")} onCheckin={()=>setCheckin(true)} onBuyPlan={()=>{setClientTab("menu");}} onSupplements={clientData?.plan==="vip"?()=>setClientTab("supplements"):null} userId={userId}/>;
