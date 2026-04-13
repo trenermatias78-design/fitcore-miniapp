@@ -1271,6 +1271,7 @@ export default function FitCoreApp() {
           const st=auth.client.status;
           if(["active","trial"].includes(st))setScreen("client");
           else if(st==="pending_approval")setScreen("pending");
+          else if(st==="expired")setScreen("expired");
           else setScreen("goto_bot");
         }else{setScreen("goto_bot");}
       }catch(e){console.error("Init:",e);setScreen("welcome");}
@@ -1320,6 +1321,15 @@ export default function FitCoreApp() {
     );
     if(screen==="plans")return <PlanSelect plans={plans} payLinks={payLinks} onSelect={p=>{setSelPlan(p);setScreen("payment");}}/>;
     if(screen==="payment")return <Payment planKey={selPlan} plans={plans} payLinks={payLinks} onBack={()=>setScreen("plans")} onPaid={()=>setScreen("pending")} userId={userId}/>;
+    if(screen==="expired")return(
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 28px",textAlign:"center"}}>
+        <div style={{fontSize:48}}>🔒</div>
+        <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-1}}>Пакет закінчився</div>
+        <div style={{fontSize:15,color:C.ts,lineHeight:1.7}}>Твій тариф завершився.<br/>Придбай новий пакет щоб відновити доступ.</div>
+        <PBtn onClick={()=>setScreen("plans")}>Придбати тариф</PBtn>
+        <div style={{fontSize:13,color:C.td}}>Всі твої дані збережені</div>
+      </div>
+    );
     if(screen==="pending")return(
       <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 24px"}}>
         <div style={{width:72,height:72,borderRadius:"50%",background:"rgba(232,168,50,.1)",border:`2px solid ${C.amber}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
