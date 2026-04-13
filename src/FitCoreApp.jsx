@@ -294,7 +294,7 @@ const Payment = ({planKey,plans,payLinks,onBack,onPaid,userId}) => {
     try{
       await apiPost(`/api/client/${userId}/payment-screenshot`,{plan:planKey});
       setSent(true);
-      setTimeout(()=>onPaid(),2000);
+      // Не робимо автоматичний перехід — клієнт бачить інструкцію і сам вирішує
     }catch(e){
       alert("Помилка: "+e.message);
     }
