@@ -354,7 +354,15 @@ const Payment = ({planKey,plans,payLinks,onBack,onPaid,userId}) => {
           <div style={{fontSize:12,color:C.ts,marginTop:2}}>MatiasFitness — {plan?.name}</div>
         </div>
       </div>
-      <a href={link} style={{textDecoration:"none"}}><PBtn>Перейти до оплати</PBtn></a>
+      <PBtn onClick={()=>{
+        if(link && link !== "#"){
+          if(window.Telegram?.WebApp?.openLink){
+            window.Telegram.WebApp.openLink(link);
+          } else {
+            window.open(link,"_blank");
+          }
+        }
+      }}>Перейти до оплати</PBtn>
       <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
         <div style={{fontSize:14,fontWeight:700,color:C.tm,marginBottom:6}}>Вже оплатив?</div>
         <div style={{fontSize:13,color:C.ts,marginBottom:12,lineHeight:1.6}}>Натисни кнопку — тренер отримає сповіщення і надішле запит на скріншот прямо в бот.</div>
@@ -371,11 +379,24 @@ const TrainPlan = ({userId}) => {
   const [data,setData]=useState(null);
   const [loading,setLoad]=useState(true);
   const [gen,setGen]=useState(false);
-  const load=useCallback(async()=>{
-    try{setLoad(true);const r=await apiGet(`/api/client/${userId}/plan`);setData(r.plan);}
+  const load=useCallback(async(autoGen=false)=>{
+    try{
+      setLoad(true);
+      const r=await apiGet(`/api/client/${userId}/plan`);
+      if(!r.plan && autoGen){
+        // Немає плану — генеруємо автоматично
+        setGen(true);
+        try{await apiPost(`/api/client/${userId}/generate-plan`,{});}catch(e){console.error(e);}
+        setGen(false);
+        const r2=await apiGet(`/api/client/${userId}/plan`);
+        setData(r2.plan);
+      } else {
+        setData(r.plan);
+      }
+    }
     catch(e){console.error(e);}finally{setLoad(false);}
   },[userId]);
-  useEffect(()=>{load();},[load]);
+  useEffect(()=>{load(true);},[load]);
   const generate=async()=>{
     setGen(true);
     try{await apiPost(`/api/client/${userId}/generate-plan`,{});await load();}
@@ -1357,7 +1378,7 @@ export default function FitCoreApp() {
       if(clientTab==="supplements")return <SupplementsScreen userId={userId} clientPlan={clientData?.plan} isAdmin={isAdmin}/>;
       if(clientTab==="reviews")return <ReviewsScreen userId={userId}/>;
       if(clientTab==="notifications")return <NotificationsScreen userId={userId}/>;
-      if(clientTab==="profile")return <Profile client={clientData} questionnaire={questionnaire} isAdmin={isAdmin} onAdminAccess={()=>setScreen("admin")} onCheckin={()=>setCheckin(true)} onBuyPlan={()=>{setClientTab("menu");}} onSupplements={clientData?.plan==="vip"?()=>setClientTab("supplements"):null} userId={userId}/>;
+      if(clientTab==="profile")return <Profile client={clientData} questionnaire={questionnaire} isAdmin={isAdmin} onAdminAccess={()=>setScreen("admin")} onCheckin={()=>setCheckin(true)} onBuyPlan={()=>{setScreen("plans");}} onSupplements={clientData?.plan==="vip"?()=>setClientTab("supplements"):null} userId={userId}/>;
     }
   };
 
