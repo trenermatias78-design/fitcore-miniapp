@@ -817,7 +817,7 @@ const NotificationsScreen = ({userId,nutritionPlan}) => {
           </div>
         );
       })
-      ])}
+      })}
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 const tg = window.Telegram?.WebApp;
