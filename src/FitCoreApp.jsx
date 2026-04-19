@@ -366,17 +366,19 @@ const Payment = ({planKey,plans,payLinks,onBack,onPaid,userId}) => {
         <div style={{fontSize:12,color:C.td}}>або</div>
         <div style={{flex:1,height:1,background:C.bc}}/>
       </div>
-      <PBtn onClick={()=>{
+      <PBtn onClick={async()=>{
         const tg=window.Telegram?.WebApp;
-        if(tg){tg.close();}
-        // Stars payment triggered via bot
-        fetch(`${API_BASE}/api/client/${userId}/request-stars-payment`,{
-          method:"POST",
-          headers:{"Content-Type":"application/json","X-Dev-User-Id":String(userId)},
-          body:JSON.stringify({plan:planKey})
-        }).then(()=>{
-          if(tg){setTimeout(()=>tg.close(),500);}
-        }).catch(e=>console.error(e));
+        try{
+          await fetch(`${API_BASE}/api/client/${userId}/request-stars-payment`,{
+            method:"POST",
+            headers:{"Content-Type":"application/json","X-Telegram-Init-Data":getInitData(),"X-Dev-User-Id":String(userId)},
+            body:JSON.stringify({plan:planKey})
+          });
+          if(tg){tg.close();}
+        }catch(e){
+          console.error(e);
+          alert("Помилка. Спробуй ще раз.");
+        }
       }} style={{background:"linear-gradient(135deg,#f6c90e,#e4a200)",color:"#000"}}>⭐ Оплатити зірками Telegram</PBtn>
       <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
         <div style={{fontSize:14,fontWeight:700,color:C.tm,marginBottom:6}}>Вже оплатив?</div>
