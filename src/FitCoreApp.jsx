@@ -817,7 +817,8 @@ const NotificationsScreen = ({userId,nutritionPlan}) => {
           </div>
         );
       })
-      ])}useState, useEffect, useCallback } from "react";
+      ])}
+import { useState, useEffect, useCallback } from "react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 const tg = window.Telegram?.WebApp;
