@@ -104,7 +104,7 @@ const TNav = ({title,onBack,rightEl}) => (
 const BNav = ({active,onChange,isAdmin}) => {
   const tabs = isAdmin
     ? [{id:"dashboard",l:"Огляд"},{id:"clients",l:"Клієнти"},{id:"payments",l:"Оплати"},{id:"broadcast",l:"Розсилка"},{id:"settings",l:"Налашт."}]
-    : [{id:"plan",l:"План"},{id:"nutrition",l:"Харчування"},{id:"progress",l:"Прогрес"},{id:"profile",l:"Профіль"}];
+    : [{id:"plan",l:"План"},{id:"nutrition",l:"Харч."},{id:"progress",l:"Прогрес"},{id:"menu",l:"Меню"},{id:"profile",l:"Профіль"}];
   const icons = {
     plan: c=><path d="M3 9h12M2 7v4M4 6v6M11 6v6M13 7v4" stroke={c} strokeWidth="1.8" strokeLinecap="round"/>,
     nutrition: c=><><path d="M9 2v5a4 4 0 01-4 4H5M15 2v14" stroke={c} strokeWidth="1.8" strokeLinecap="round" fill="none"/></>,
@@ -115,6 +115,7 @@ const BNav = ({active,onChange,isAdmin}) => {
     payments: c=><><rect x="2" y="5" width="14" height="11" rx="2" stroke={c} strokeWidth="1.8" fill="none"/><path d="M2 9h14" stroke={c} strokeWidth="1.8"/><circle cx="6" cy="13" r="1.5" fill={c}/></>,
     broadcast: c=><path d="M2 9l13-6-5 6 5 6-13-6z" fill={c}/>,
     settings: c=><><circle cx="9" cy="9" r="3" stroke={c} strokeWidth="1.8" fill="none"/><path d="M9 2v2M9 14v2M2 9h2M14 9h2" stroke={c} strokeWidth="1.8" strokeLinecap="round"/></>,
+    menu: c=><><rect x="2" y="4" width="14" height="1.8" rx=".9" fill={c}/><rect x="2" y="8.1" width="10" height="1.8" rx=".9" fill={c}/><rect x="2" y="12.2" width="12" height="1.8" rx=".9" fill={c}/></>,
   };
   return (
     <div style={{display:"flex",borderTop:`1px solid ${C.bc}`,flexShrink:0,background:C.bg,paddingBottom:"env(safe-area-inset-bottom,0px)"}}>
@@ -155,10 +156,106 @@ const Welcome = ({onStart,onLogin}) => (
 
 // ═══ PLAN SELECT ═══
 const PLANS_STATIC = {
-  start:{name:"START",price:799,stars:500,features:["Тренувальний план","Шаблон харчування","Трекінг прогресу"]},
-  premium:{name:"PREMIUM",price:1699,stars:999,features:["Персональний ШІ-план","Чекіни 2×/тиж","Нутріціологія","Фідбек тренера"],hot:true},
-  vip:{name:"VIP",price:3499,stars:1999,features:["Повний супровід","Прямий доступ до тренера","Пріоритет","Підтримка 24/7"]},
+  start:{
+    name:"START", price:799, stars:500,
+    desc:"Базовий старт для новачків",
+    features:["Шаблонний тренувальний план","Базовий план харчування (КБЖУ)","Трекінг ваги і прогресу","Чекіни без фідбеку"],
+    no:["AI персоналізація","Фідбек тренера","БАДи"]
+  },
+  premium:{
+    name:"PREMIUM", price:1699, stars:999, hot:true,
+    desc:"Персональний підхід від ШІ-тренера",
+    features:["Персональний план від Claude AI","Щотижневе оновлення плану","Чекіни 2× на тиждень з AI фідбеком","Індивідуальне харчування з грамами","Відповіді тренера на питання"],
+    no:["Прямий зв'язок з тренером","Пропись БАДів"]
+  },
+  vip:{
+    name:"VIP", price:3499, stars:1999,
+    desc:"Максимальний результат з особистим супроводом",
+    features:["Все що в PREMIUM","Прямий зв'язок з тренером особисто","Пропись БАДів під твої цілі","Корекція плану в будь-який момент","Пріоритетна відповідь 24/7"],
+    no:[]
+  },
 };
+const TRAINER_LINK = "https://t.me/matmatias";
+// ═══ MENU (тарифи і опис) ═══
+const MenuScreen = ({plans,payLinks,onSelectPlan,clientPlan,onShowReviews}) => {
+  const p = plans || PLANS_STATIC;
+  const planV = {start:"green",premium:"blue",vip:"purple"};
+  return (
+    <Scr>
+      <div style={{fontSize:26,fontWeight:900,color:C.tm,letterSpacing:-1}}>Тарифи</div>
+      <div style={{fontSize:15,color:C.ts,lineHeight:1.6}}>Обери рівень під свої цілі. Всі тарифи починаються з 3 днів безкоштовно.</div>
+      {Object.entries(p).map(([k,plan])=>(
+        <div key={k} style={{background:C.s1,borderRadius:18,border:`1.5px solid ${plan.hot?C.acc:C.bc}`,padding:"18px",position:"relative",overflow:"hidden"}}>
+          {plan.hot&&<div style={{position:"absolute",top:16,right:16,fontSize:11,color:"#0a0a0a",background:C.acc,borderRadius:20,padding:"3px 12px",fontWeight:800}}>Популярний</div>}
+          {clientPlan===k&&<div style={{position:"absolute",top:16,right:plan.hot?120:16,fontSize:11,color:C.acc,background:"rgba(200,245,58,.1)",border:`1px solid ${C.acc}`,borderRadius:20,padding:"3px 12px",fontWeight:700}}>Твій тариф</div>}
+          <div style={{display:"flex",alignItems:"baseline",gap:10,marginBottom:4}}>
+            <div style={{fontSize:22,fontWeight:900,color:C.tm}}>{plan.name}</div>
+          </div>
+          <div style={{fontSize:36,fontWeight:900,color:C.acc,letterSpacing:-1,marginBottom:4}}>{plan.price} <span style={{fontSize:15,color:C.ts,fontWeight:500}}>₴/міс</span></div>
+          <div style={{fontSize:14,color:C.ts,marginBottom:14}}>{plan.desc}</div>
+          <div style={{height:1,background:C.bc,marginBottom:12}}/>
+          <div style={{fontSize:12,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:8}}>Включено:</div>
+          {(plan.features||[]).map(f=>(
+            <div key={f} style={{display:"flex",alignItems:"center",gap:8,fontSize:14,color:C.tm,marginBottom:7}}>
+              <div style={{width:18,height:18,borderRadius:"50%",background:"rgba(200,245,58,.15)",border:`1px solid ${C.acc}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5 4-4" stroke={C.acc} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </div>
+              {f}
+            </div>
+          ))}
+          {(plan.no||[]).length>0&&<>
+            <div style={{fontSize:12,color:C.td,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:8,marginTop:4}}>Недоступно:</div>
+            {(plan.no||[]).map(f=>(
+              <div key={f} style={{display:"flex",alignItems:"center",gap:8,fontSize:13,color:C.td,marginBottom:6}}>
+                <div style={{width:18,height:18,borderRadius:"50%",background:C.s2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke={C.td} strokeWidth="1.5" strokeLinecap="round"/></svg>
+                </div>
+                {f}
+              </div>
+            ))}
+          </>}
+          {clientPlan!==k&&<PBtn onClick={()=>onSelectPlan(k)} style={{marginTop:14,background:plan.hot?C.acc:C.s2,color:plan.hot?"#0a0a0a":C.tm}}>
+            {clientPlan?"Перейти на "+plan.name:"Обрати "+plan.name}
+          </PBtn>}
+        </div>
+      ))}
+      <div style={{background:"rgba(200,245,58,.05)",border:"1px solid rgba(200,245,58,.15)",borderRadius:16,padding:"16px"}}>
+        <div style={{fontSize:15,fontWeight:700,color:C.acc,marginBottom:6}}>Питання щодо тарифів?</div>
+        <div style={{fontSize:14,color:C.ts,marginBottom:12,lineHeight:1.6}}>Напиши тренеру — підберемо оптимальний варіант особисто.</div>
+        <a href={TRAINER_LINK} style={{textDecoration:"none"}}>
+          <PBtn style={{background:C.s2,color:C.tm}}>Написати тренеру</PBtn>
+        </a>
+      </div>
+      <ReviewsPreview onShowAll={onShowReviews}/>
+    </Scr>
+  );
+};
+
+const ReviewsPreview = ({onShowAll}) => {
+  const [reviews,setReviews]=useState([]);
+  useEffect(()=>{
+    apiGet("/api/reviews").then(r=>setReviews((r.reviews||[]).slice(0,3))).catch(()=>{});
+  },[]);
+  if(!reviews.length)return null;
+  return(
+    <div style={{background:C.s1,borderRadius:18,border:`1px solid ${C.bc}`,overflow:"hidden"}}>
+      <div style={{padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:`1px solid ${C.bc}`}}>
+        <div style={{fontSize:16,fontWeight:800,color:C.tm}}>Відгуки клієнтів</div>
+        <button onClick={onShowAll} style={{background:"none",fontSize:13,color:C.acc,fontWeight:700}}>Всі →</button>
+      </div>
+      {reviews.map(r=>(
+        <div key={r.id} style={{padding:"12px 16px",borderBottom:`1px solid ${C.bc}`}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:5}}>
+            <div style={{fontSize:13,fontWeight:700,color:C.tm}}>{r.full_name||"Анонімно"}</div>
+            <div>{Array.from({length:5},(_,i)=><span key={i} style={{fontSize:12,opacity:i<r.rating?1:.2}}>⭐</span>)}</div>
+          </div>
+          {r.text_positive&&<div style={{fontSize:13,color:C.ts,lineHeight:1.5}}>{r.text_positive.slice(0,100)}{r.text_positive.length>100?"...":""}</div>}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const PlanSelect = ({plans,payLinks,onSelect}) => {
   const p=plans||PLANS_STATIC;
   return (
@@ -198,7 +295,7 @@ const Payment = ({planKey,plans,payLinks,onBack,onPaid,userId}) => {
     try{
       await apiPost(`/api/client/${userId}/payment-screenshot`,{plan:planKey});
       setSent(true);
-      setTimeout(()=>onPaid(),2000);
+      // Не робимо автоматичний перехід — клієнт бачить інструкцію і сам вирішує
     }catch(e){
       alert("Помилка: "+e.message);
     }
@@ -206,12 +303,29 @@ const Payment = ({planKey,plans,payLinks,onBack,onPaid,userId}) => {
   };
 
   if(sent)return(
-    <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 24px"}}>
+    <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 28px",textAlign:"center"}}>
       <div style={{width:72,height:72,borderRadius:"50%",background:"rgba(200,245,58,.1)",border:`2px solid ${C.acc}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
         <svg width="32" height="32" viewBox="0 0 18 18" fill="none"><path d="M4 9l4 4 7-7" stroke={C.acc} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </div>
-      <div style={{fontSize:22,fontWeight:900,color:C.tm,textAlign:"center"}}>Тренер отримав сповіщення!</div>
-      <div style={{fontSize:16,color:C.ts,textAlign:"center",lineHeight:1.7}}>Надішли скріншот оплати в бот — тренер активує доступ.</div>
+      <div style={{fontSize:22,fontWeight:900,color:C.tm}}>Тренер отримав сповіщення!</div>
+      <div style={{background:C.s1,borderRadius:16,border:`1px solid rgba(200,245,58,.2)`,padding:"16px",width:"100%"}}>
+        <div style={{fontSize:13,fontWeight:700,color:C.acc,marginBottom:10,textTransform:"uppercase",letterSpacing:.7}}>Що робити далі:</div>
+        {[
+          ["1","Відкрий бота @fitcore_matias_bot"],
+          ["2","Натисни кнопку або напиши будь-що"],
+          ["3","Надішли скріншот оплати в чат"],
+          ["4","Тренер підтвердить протягом 1 години"],
+        ].map(([n,t])=>(
+          <div key={n} style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:8}}>
+            <div style={{width:22,height:22,borderRadius:"50%",background:C.acc,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:"#080808",flexShrink:0}}>{n}</div>
+            <div style={{fontSize:14,color:C.ts,lineHeight:1.5,textAlign:"left"}}>{t}</div>
+          </div>
+        ))}
+      </div>
+      <a href="https://t.me/fitcore_matias_bot" style={{textDecoration:"none",width:"100%"}}>
+        <PBtn>Відкрити бота</PBtn>
+      </a>
+      <GBtn onClick={onBack}>Повернутись назад</GBtn>
     </div>
   );
 
@@ -241,7 +355,29 @@ const Payment = ({planKey,plans,payLinks,onBack,onPaid,userId}) => {
           <div style={{fontSize:12,color:C.ts,marginTop:2}}>MatiasFitness — {plan?.name}</div>
         </div>
       </div>
-      <a href={link} style={{textDecoration:"none"}}><PBtn>Перейти до оплати</PBtn></a>
+      <PBtn onClick={()=>{
+        if(link&&link!=="#"){
+          if(window.Telegram?.WebApp?.openLink){window.Telegram.WebApp.openLink(link);}
+          else{window.open(link,"_blank");}
+        }
+      }}>💳 Monobank</PBtn>
+      <div style={{display:"flex",alignItems:"center",gap:10,margin:"4px 0"}}>
+        <div style={{flex:1,height:1,background:C.bc}}/>
+        <div style={{fontSize:12,color:C.td}}>або</div>
+        <div style={{flex:1,height:1,background:C.bc}}/>
+      </div>
+      <PBtn onClick={()=>{
+        const tg=window.Telegram?.WebApp;
+        if(tg){tg.close();}
+        // Stars payment triggered via bot
+        fetch(`${API_BASE}/api/client/${userId}/request-stars-payment`,{
+          method:"POST",
+          headers:{"Content-Type":"application/json","X-Dev-User-Id":String(userId)},
+          body:JSON.stringify({plan:planKey})
+        }).then(()=>{
+          if(tg){setTimeout(()=>tg.close(),500);}
+        }).catch(e=>console.error(e));
+      }} style={{background:"linear-gradient(135deg,#f6c90e,#e4a200)",color:"#000"}}>⭐ Оплатити зірками Telegram</PBtn>
       <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
         <div style={{fontSize:14,fontWeight:700,color:C.tm,marginBottom:6}}>Вже оплатив?</div>
         <div style={{fontSize:13,color:C.ts,marginBottom:12,lineHeight:1.6}}>Натисни кнопку — тренер отримає сповіщення і надішле запит на скріншот прямо в бот.</div>
@@ -310,7 +446,8 @@ const TrainPlan = ({userId}) => {
                       </div>
                       <div style={{fontSize:13,color:C.acc,fontWeight:700,background:"rgba(200,245,58,.08)",padding:"4px 10px",borderRadius:8}}>{ex.sets}×{ex.reps}</div>
                     </div>
-                    {ex.note&&<div style={{fontSize:12,color:C.td,fontStyle:"italic",marginTop:3,paddingLeft:14}}>{ex.note}</div>}
+                    {ex.note&&<div style={{fontSize:12,color:C.td,fontStyle:"italic",marginTop:3,paddingLeft:14}}>📌 {ex.note}</div>}
+                    {ex.technique&&<div style={{fontSize:12,color:"rgba(200,245,58,0.75)",marginTop:4,paddingLeft:14,lineHeight:1.5}}>💡 {ex.technique}</div>}
                   </div>
                 ))}
                 {d.rest_note&&<div style={{fontSize:12,color:C.td,fontStyle:"italic",marginTop:4}}>{d.rest_note}</div>}
@@ -446,6 +583,338 @@ const Checkin = ({userId,onDone}) => {
   );
 };
 
+// ═══ REVIEWS ═══
+const ReviewsScreen = ({userId}) => {
+  const [reviews,setReviews]=useState([]);
+  const [loading,setLoad]=useState(true);
+  const [showForm,setForm]=useState(false);
+  const [rating,setRating]=useState(0);
+  const [pos,setPos]=useState("");
+  const [imp,setImp]=useState("");
+  const [anon,setAnon]=useState(false);
+  const [sending,setSend]=useState(false);
+  const [sent,setSent]=useState(false);
+
+  useEffect(()=>{
+    apiGet("/api/reviews").then(r=>{setReviews(r.reviews||[]);setLoad(false);}).catch(()=>setLoad(false));
+  },[]);
+
+  const submit=async()=>{
+    if(!rating)return;
+    setSend(true);
+    try{
+      await apiPost(`/api/client/${userId}/review`,{rating,text_positive:pos,text_improve:imp,is_anonymous:anon});
+      setSent(true);
+      setForm(false);
+      const r=await apiGet("/api/reviews");
+      setReviews(r.reviews||[]);
+    }catch(e){alert("Помилка: "+e.message);}
+    setSend(false);
+  };
+
+  const stars=(n,selected)=>Array.from({length:5},(_,i)=>(
+    <button key={i} onClick={()=>selected(i+1)}
+      style={{width:40,height:40,borderRadius:12,background:i<n?"rgba(240,160,48,.15)":"var(--s2)",border:`1.5px solid ${i<n?"rgba(240,160,48,.4)":"var(--bc)"}`,fontSize:20,cursor:"pointer"}}>
+      {i<n?"⭐":"☆"}
+    </button>
+  ));
+
+  if(showForm)return(
+    <Scr>
+      <TNav title="Залишити відгук" onBack={()=>setForm(false)}/>
+      {sent?(
+        <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,textAlign:"center"}}>
+          <div style={{fontSize:48}}>🙏</div>
+          <div style={{fontSize:22,fontWeight:900,color:C.tm}}>Дякуємо!</div>
+          <div style={{fontSize:15,color:C.ts,lineHeight:1.7}}>Відгук надіслано тренеру і опубліковано.</div>
+          <PBtn onClick={()=>setSent(false)} style={{maxWidth:200}}>Готово</PBtn>
+        </div>
+      ):(
+        <>
+          <div style={{fontSize:14,color:C.ts,lineHeight:1.6}}>Твій відгук допомагає покращувати програму і мотивує інших клієнтів.</div>
+          <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
+            <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,marginBottom:10}}>Загальна оцінка</div>
+            <div style={{display:"flex",gap:8,justifyContent:"center"}}>{stars(rating,setRating)}</div>
+            {rating>0&&<div style={{textAlign:"center",fontSize:14,fontWeight:700,color:C.amber,marginTop:8}}>
+              {["","😞 Погано","😕 Нижче середнього","😐 Нормально","😊 Добре","🔥 Відмінно"][rating]}
+            </div>}
+          </div>
+          <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
+            <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,marginBottom:8}}>Що найбільше подобається?</div>
+            <textarea value={pos} onChange={e=>setPos(e.target.value)} placeholder="Розкажи що тобі подобається в програмі..." rows={3}
+              style={{background:C.s2,border:`1px solid ${pos?C.bc2:C.bc}`,borderRadius:12,padding:"12px",color:C.tm,fontSize:14,width:"100%",resize:"none",lineHeight:1.6}}/>
+          </div>
+          <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
+            <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,marginBottom:8}}>Що можна покращити?</div>
+            <textarea value={imp} onChange={e=>setImp(e.target.value)} placeholder="Твої побажання для тренера..." rows={2}
+              style={{background:C.s2,border:`1px solid ${C.bc}`,borderRadius:12,padding:"12px",color:C.tm,fontSize:14,width:"100%",resize:"none",lineHeight:1.6}}/>
+          </div>
+          <button onClick={()=>setAnon(!anon)} style={{background:"none",display:"flex",alignItems:"center",gap:10,padding:"4px 0"}}>
+            <div style={{width:20,height:20,borderRadius:6,background:anon?"rgba(200,245,58,.15)":"var(--s2)",border:`1.5px solid ${anon?C.acc:C.bc}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              {anon&&<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke={C.acc} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+            </div>
+            <span style={{fontSize:14,color:C.ts}}>Публікувати анонімно</span>
+          </button>
+          <PBtn onClick={submit} loading={sending} disabled={!rating}>{sending?"Надсилаю...":"Надіслати відгук"}</PBtn>
+        </>
+      )}
+    </Scr>
+  );
+
+  return(
+    <Scr>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{fontSize:26,fontWeight:900,color:C.tm,letterSpacing:-1}}>Відгуки</div>
+        <button onClick={()=>setForm(true)} style={{background:C.acc,color:"#080808",borderRadius:20,padding:"8px 16px",fontSize:13,fontWeight:800}}>+ Залишити</button>
+      </div>
+      {loading?<Spin/>:reviews.length===0?(
+        <div style={{padding:"40px 0",textAlign:"center"}}>
+          <div style={{fontSize:32,marginBottom:12}}>💬</div>
+          <div style={{fontSize:15,color:C.ts,lineHeight:1.7}}>Відгуків поки немає.<br/>Будь першим!</div>
+        </div>
+      ):reviews.map(r=>(
+        <div key={r.id} style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+            <div style={{fontSize:14,fontWeight:700,color:C.tm}}>{r.full_name||"Анонімно"}</div>
+            <div style={{display:"flex",gap:2}}>{Array.from({length:5},(_,i)=>(
+              <span key={i} style={{fontSize:14,opacity:i<r.rating?1:.25}}>⭐</span>
+            ))}</div>
+          </div>
+          {r.text_positive&&<div style={{fontSize:14,color:C.ts,lineHeight:1.6,marginBottom:6}}>👍 {r.text_positive}</div>}
+          {r.text_improve&&<div style={{fontSize:13,color:C.td,lineHeight:1.6}}>💡 {r.text_improve}</div>}
+          <div style={{fontSize:11,color:C.td,marginTop:8}}>{(r.created_at||"").slice(0,10)}</div>
+        </div>
+      ))}
+    </Scr>
+  );
+};
+
+// ═══ NOTIFICATIONS SETTINGS ═══
+const NotificationsScreen = ({userId,nutritionPlan}) => {
+  const [settings,setSettings]=useState(null);
+  const [loading,setLoad]=useState(true);
+  const [saving,setSave]=useState(false);
+  const [saved,setSaved]=useState(false);
+
+  const DAYS=[{n:"Пн",v:"1"},{n:"Вт",v:"2"},{n:"Ср",v:"3"},{n:"Чт",v:"4"},{n:"Пт",v:"5"},{n:"Сб",v:"6"},{n:"Нд",v:"7"}];
+
+  useEffect(()=>{
+    apiGet(`/api/client/${userId}/notifications`).then(r=>{
+      setSettings({...r,meal_settings:r.meal_settings||{}});
+      setLoad(false);
+    }).catch(()=>{
+      setSettings({workout_enabled:true,workout_time:"18:00",workout_days:"1,3,5",checkin_enabled:true,water_enabled:true,meal_settings:{}});
+      setLoad(false);
+    });
+  },[userId]);
+
+  const save=async()=>{
+    setSave(true);
+    try{
+      await apiPost(`/api/client/${userId}/notifications`,settings);
+      setSaved(true);
+      setTimeout(()=>setSaved(false),2000);
+    }catch(e){alert("Помилка: "+e.message);}
+    setSave(false);
+  };
+
+  const toggleDay=d=>{
+    const days=(settings.workout_days||"").split(",").filter(Boolean);
+    const newDays=days.includes(d)?days.filter(x=>x!==d):[...days,d].sort();
+    setSettings(s=>({...s,workout_days:newDays.join(",")}));
+  };
+
+  const toggleMeal=(name,enabled)=>{
+    setSettings(s=>({...s,meal_settings:{...s.meal_settings,[name]:{...s.meal_settings[name],enabled}}}));
+  };
+
+  if(loading)return <Spin/>;
+
+  const mealItems=nutritionPlan?.meals||[
+    {name:"Сніданок",time:"07:30"},{name:"Перекус",time:"10:30"},{name:"Обід",time:"13:00"},
+    {name:"Пред-тренув.",time:"16:00"},{name:"Вечеря",time:"18:30"},{name:"Пізній перекус",time:"21:00"}
+  ];
+  const mealColors=["#c8f53a","#f0a030","#3a9fd8","#9b7fe8","#ff6b6b","#888"];
+
+  const Tog=({on,onToggle,size=44})=>(
+    <div onClick={onToggle} style={{width:size,height:size*0.55,borderRadius:size*0.28,background:on?C.acc:C.s3,position:"relative",cursor:"pointer",transition:"background .2s",flexShrink:0}}>
+      <div style={{width:size*0.42,height:size*0.42,borderRadius:"50%",background:on?"#080808":C.ts,position:"absolute",top:size*0.065,left:on?size*0.52:size*0.065,transition:"left .2s"}}/>
+    </div>
+  );
+
+  return(
+    <Scr>
+      <div style={{fontSize:26,fontWeight:900,color:C.tm,letterSpacing:-1}}>Нагадування</div>
+      <div style={{fontSize:14,color:C.ts}}>Налаштуй сповіщення під свій розклад.</div>
+
+      {saved&&<div style={{background:"rgba(200,245,58,.1)",border:"1px solid rgba(200,245,58,.2)",borderRadius:14,padding:"12px 16px",fontSize:14,color:C.acc,fontWeight:700}}>✓ Збережено</div>}
+
+      <div style={{fontSize:13,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,padding:"4px 0"}}>Тренування</div>
+
+      <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div><div style={{fontSize:15,fontWeight:700,color:C.tm}}>Нагадування про тренування</div><div style={{fontSize:12,color:C.ts,marginTop:2}}>За 30 хв до початку</div></div>
+        <Tog on={settings.workout_enabled} onToggle={()=>setSettings(s=>({...s,workout_enabled:!s.workout_enabled}))}/>
+      </div>
+
+      {settings.workout_enabled&&<>
+        <div style={{background:C.s1,borderRadius:14,border:`1px solid ${C.bc}`,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div style={{fontSize:14,color:C.ts}}>Час тренування</div>
+          <input type="time" value={settings.workout_time||"18:00"} onChange={e=>setSettings(s=>({...s,workout_time:e.target.value}))}
+            style={{background:"none",color:C.acc,fontSize:16,fontWeight:700,border:"none",outline:"none",textAlign:"right"}}/>
+        </div>
+        <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
+          {DAYS.map(d=>{
+            const active=(settings.workout_days||"").split(",").includes(d.v);
+            return <button key={d.v} onClick={()=>toggleDay(d.v)}
+              style={{width:40,height:40,borderRadius:12,background:active?C.acc:C.s1,border:`1px solid ${active?C.acc:C.bc}`,fontSize:13,fontWeight:700,color:active?"#080808":C.ts}}>{d.n}</button>;
+          })}
+        </div>
+      </>}
+
+      <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div><div style={{fontSize:15,fontWeight:700,color:C.tm}}>Нагадування про чекін</div><div style={{fontSize:12,color:C.ts,marginTop:2}}>Ср і Пт о 19:00</div></div>
+        <Tog on={settings.checkin_enabled} onToggle={()=>setSettings(s=>({...s,checkin_enabled:!s.checkin_enabled}))}/>
+      </div>
+
+      <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div><div style={{fontSize:15,fontWeight:700,color:C.tm}}>Нагадування про воду</div><div style={{fontSize:12,color:C.ts,marginTop:2}}>Кожні 2 години з 9:00</div></div>
+        <Tog on={settings.water_enabled} onToggle={()=>setSettings(s=>({...s,water_enabled:!s.water_enabled}))}/>
+      </div>
+
+      <div style={{fontSize:13,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,padding:"4px 0"}}>Прийоми їжі</div>
+
+      <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div><div style={{fontSize:15,fontWeight:700,color:C.tm}}>Всі нагадування їжі</div><div style={{fontSize:12,color:C.ts,marginTop:2}}>Головний перемикач</div></div>
+        <Tog on={Object.values(settings.meal_settings||{}).some(m=>m.enabled!==false)} onToggle={()=>{
+          const allOn=mealItems.every(m=>(settings.meal_settings[m.name]?.enabled)!==false);
+          const newMs={};
+          mealItems.forEach(m=>{newMs[m.name]={...settings.meal_settings[m.name],enabled:!allOn};});
+          setSettings(s=>({...s,meal_settings:newMs}));
+        }}/>
+      </div>
+
+      {mealItems.map((m,i)=>{
+        const ms=settings.meal_settings[m.name]||{};
+        const enabled=ms.enabled!==false;
+        return(
+          <div key={m.name} style={{background:C.s1,borderRadius:14,border:`1px solid ${C.bc}`,padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <div style={{width:8,height:8,borderRadius:"50%",background:mealColors[i],flexShrink:0}}/>
+              <div><div style={{fontSize:14,fontWeight:600,color:C.tm}}>{m.name}</div><div style={{fontSize:12,color:C.ts}}>{m.time}</div></div>
+            </div>
+            <Tog on={enabled} onToggle={()=>toggleMeal(m.name,!enabled)} size={38}/>
+          </div>
+        );
+      })}
+
+      <PBtn onClick={save} loading={saving}>Зберегти налаштування</PBtn>
+    </Scr>
+  );
+};
+
+// ═══ SUPPLEMENTS (VIP) ═══
+const SupplementsScreen = ({userId,clientPlan,isAdmin}) => {
+  const [data,setData]=useState(null);
+  const [loading,setLoad]=useState(true);
+  const [genLoading,setGenLoad]=useState(false);
+  const [showForm,setShowForm]=useState(false);
+  const [contra,setContra]=useState("");
+  const [manualText,setManual]=useState("");
+  const [saving,setSaving]=useState(false);
+
+  const load=()=>{
+    apiGet(`/api/client/${userId}/supplements`).then(r=>{setData(r);setManual(r.supplements||"");setLoad(false);}).catch(()=>setLoad(false));
+  };
+  useEffect(()=>{load();},[userId]);
+
+  const generateAI=async()=>{
+    setGenLoad(true);
+    try{
+      const r=await apiPost(`/api/client/${userId}/generate-supplements`,{contraindications:contra,goals_extra:""});
+      setData(d=>({...d,supplements:r.supplements}));
+      setShowForm(false);
+    }catch(e){alert("Помилка: "+e.message);}
+    setGenLoad(false);
+  };
+
+  const saveManual=async()=>{
+    setSaving(true);
+    try{
+      await apiPost(`/api/client/${userId}/supplements`,{supplements:manualText});
+      setData(d=>({...d,supplements:manualText}));
+    }catch(e){alert("Помилка: "+e.message);}
+    setSaving(false);
+  };
+
+  if(loading)return <Spin/>;
+  if(clientPlan!=="vip"&&!isAdmin)return(
+    <Scr>
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 24px",textAlign:"center"}}>
+        <div style={{fontSize:40}}>💊</div>
+        <div style={{fontSize:22,fontWeight:900,color:C.tm}}>Тільки для VIP</div>
+        <div style={{fontSize:15,color:C.ts,lineHeight:1.7}}>Персональна пропись БАДів під твої цілі доступна на тарифі VIP.</div>
+      </div>
+    </Scr>
+  );
+
+  if(showForm)return(
+    <Scr>
+      <TNav title="Генерація БАДів" onBack={()=>setShowForm(false)}/>
+      <div style={{fontSize:15,color:C.ts,lineHeight:1.6}}>Перед генерацією вкажи важливу інформацію для безпечного підбору.</div>
+      <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
+        <div style={{fontSize:12,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,marginBottom:8}}>Алергії, ліки, хронічні хвороби</div>
+        <textarea value={contra} onChange={e=>setContra(e.target.value)}
+          placeholder="Наприклад: алергія на рибу, приймаю метформін, гіпертонія..."
+          rows={4} style={{background:C.s2,border:`1px solid ${C.bc}`,borderRadius:12,padding:"12px",color:C.tm,fontSize:14,width:"100%",resize:"none",lineHeight:1.6}}/>
+      </div>
+      <div style={{background:"rgba(255,85,85,.06)",border:"1px solid rgba(255,85,85,.2)",borderRadius:14,padding:"12px 14px"}}>
+        <div style={{fontSize:13,color:"#ff8888",lineHeight:1.6}}>⚠️ БАДи не є ліками. Перед прийомом проконсультуйся з лікарем, особливо якщо маєш хронічні захворювання або приймаєш медикаменти.</div>
+      </div>
+      <PBtn onClick={generateAI} loading={genLoading}>{genLoading?"Генерую...":"Згенерувати AI пропись"}</PBtn>
+    </Scr>
+  );
+
+  return(
+    <Scr>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{fontSize:26,fontWeight:900,color:C.tm,letterSpacing:-1}}>БАДи</div>
+        <button onClick={()=>setShowForm(true)} style={{background:C.acc,color:"#080808",borderRadius:20,padding:"8px 14px",fontSize:12,fontWeight:800}}>AI ✦</button>
+      </div>
+      <div style={{fontSize:14,color:C.ts}}>Персональна пропись від тренера</div>
+
+      {data?.supplements?(
+        <div style={{background:C.s1,borderRadius:18,border:`1px solid rgba(200,245,58,.2)`,padding:"18px"}}>
+          <div style={{fontSize:12,color:C.acc,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Твоя пропись</div>
+          <div style={{fontSize:15,color:C.tm,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{data.supplements}</div>
+        </div>
+      ):(
+        <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"20px",textAlign:"center"}}>
+          <div style={{fontSize:32,marginBottom:10}}>⏳</div>
+          <div style={{fontSize:16,fontWeight:700,color:C.tm,marginBottom:6}}>Пропись ще не готова</div>
+          <div style={{fontSize:14,color:C.ts,lineHeight:1.6,marginBottom:14}}>Натисни "AI ✦" щоб згенерувати автоматично або зачекай поки тренер призначить вручну.</div>
+          <PBtn onClick={()=>setShowForm(true)}>Згенерувати AI пропись</PBtn>
+        </div>
+      )}
+
+      {isAdmin&&(
+        <div style={{background:C.s1,borderRadius:16,border:`1px solid rgba(200,245,58,.2)`,padding:"14px 16px"}}>
+          <div style={{fontSize:12,color:C.acc,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,marginBottom:8}}>Ручне призначення (адмін)</div>
+          <textarea value={manualText} onChange={e=>setManual(e.target.value)}
+            placeholder="Введи пропись БАДів вручну..." rows={5}
+            style={{background:C.s2,border:`1px solid ${C.bc}`,borderRadius:12,padding:"12px",color:C.tm,fontSize:13,width:"100%",resize:"none",lineHeight:1.6,marginBottom:10}}/>
+          <PBtn onClick={saveManual} loading={saving} style={{background:C.s3,color:C.tm}}>Зберегти</PBtn>
+        </div>
+      )}
+
+      <div style={{background:"rgba(200,245,58,.05)",border:"1px solid rgba(200,245,58,.15)",borderRadius:16,padding:"16px"}}>
+        <div style={{fontSize:15,fontWeight:700,color:C.acc,marginBottom:6}}>Є питання?</div>
+        <div style={{fontSize:14,color:C.ts,marginBottom:12}}>Напиши тренеру особисто — відповість протягом години.</div>
+        <a href={TRAINER_LINK} style={{textDecoration:"none"}}><PBtn style={{background:C.s2,color:C.tm}}>Написати тренеру</PBtn></a>
+      </div>
+    </Scr>
+  );
+};
+
 // ═══ PROGRESS ═══
 const Progress = ({userId}) => {
   const [data,setData]=useState(null);const [loading,setLoad]=useState(true);
@@ -508,8 +977,9 @@ const Progress = ({userId}) => {
 };
 
 // ═══ PROFILE ═══
-const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan}) => {
+const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan,onSupplements,userId}) => {
   const planV={start:"green",premium:"blue",vip:"purple",trial:"amber"};
+  const [profileTab,setProfileTab]=useState(0);
   return(
     <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
       <div style={{position:"relative",height:200,flexShrink:0,overflow:"hidden"}}>
@@ -528,7 +998,15 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
           <div style={{fontSize:14,color:C.ts,fontWeight:600}}>Доступ</div>
           <div style={{fontSize:14,color:C.amber,fontWeight:700}}>{(client?.status||"").toUpperCase()} · до {(client?.expires_at||"").slice(0,10)}</div>
         </div>
-        {questionnaire&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        <div style={{display:"flex",gap:7}}>
+          {["Дані","Відгуки","Сповіщення"].map((t,i)=>(
+            <button key={t} onClick={()=>setProfileTab(i)}
+              style={{flex:1,padding:"9px 0",borderRadius:12,fontSize:13,fontWeight:700,background:profileTab===i?C.acc:C.s1,color:profileTab===i?"#080808":C.ts,border:`1px solid ${profileTab===i?C.acc:C.bc}`}}>
+              {t}
+            </button>
+          ))}
+        </div>
+        {profileTab===0&&questionnaire&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
           {[["Вік",`${questionnaire.age||"—"} р.`],["Стать",questionnaire.gender==="female"?"Жінка":"Чоловік"],["Вага",`${questionnaire.weight_kg||"—"} кг`],["Ціль",`${questionnaire.target_weight||"—"} кг`],["Обладнання",questionnaire.equipment==="gym"?"Зал":questionnaire.equipment||"—"],["Трен./тиж",`${questionnaire.workouts_pw||"—"}×`]].map(([l,v])=>(
             <div key={l} style={{background:C.s1,borderRadius:14,border:`1px solid ${C.bc}`,padding:"12px 14px"}}>
               <div style={{fontSize:12,color:C.ts,fontWeight:600}}>{l}</div>
@@ -536,6 +1014,8 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
             </div>
           ))}
         </div>}
+        {profileTab===1&&<ReviewsScreen userId={userId}/>}
+        {profileTab===2&&<NotificationsScreen userId={userId}/>}
         {client?.status==="trial"&&<div className="pu" onClick={onBuyPlan} style={{background:C.acc,borderRadius:16,padding:"16px 20px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div><div style={{fontSize:17,fontWeight:800,color:"#0a0a0a"}}>Придбати тариф</div><div style={{fontSize:12,color:"rgba(10,10,10,.55)",fontWeight:600,marginTop:2}}>від 799 ₴ / місяць</div></div>
           <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="13" fill="rgba(0,0,0,.2)"/><path d="M9 14h10M14 9l5 5-5 5" stroke="#0a0a0a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -544,6 +1024,16 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
           <span style={{fontSize:16,fontWeight:700,color:C.tm}}>Зробити чекін</span>
           <svg width="20" height="20" viewBox="0 0 18 18" fill="none"><path d="M4 9h10M10 5l4 4-4 4" stroke={C.acc} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
+        {onSupplements&&<button onClick={onSupplements} style={{background:"rgba(200,245,58,.05)",border:"1px solid rgba(200,245,58,.2)",borderRadius:16,padding:"16px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%"}}>
+          <span style={{fontSize:16,fontWeight:700,color:C.acc}}>💊 Мої БАДи (VIP)</span>
+          <svg width="20" height="20" viewBox="0 0 18 18" fill="none"><path d="M4 9h10M10 5l4 4-4 4" stroke={C.acc} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </button>}
+        <a href={TRAINER_LINK} style={{textDecoration:"none",display:"block"}}>
+          <button style={{background:C.s1,border:`1px solid ${C.bc}`,borderRadius:16,padding:"16px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%"}}>
+            <span style={{fontSize:16,fontWeight:700,color:C.tm}}>Написати тренеру</span>
+            <svg width="20" height="20" viewBox="0 0 18 18" fill="none"><path d="M4 9h10M10 5l4 4-4 4" stroke={C.acc} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+        </a>
         {isAdmin&&<button onClick={onAdminAccess} style={{background:"rgba(200,245,58,.05)",border:"1.5px solid rgba(200,245,58,.2)",borderRadius:16,padding:"16px 18px",display:"flex",alignItems:"center",gap:10,width:"100%"}}>
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2l7 4v5c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-4z" stroke={C.acc} strokeWidth="1.8" fill="none"/></svg>
           <span style={{fontSize:16,fontWeight:800,color:C.acc}}>Адмін-панель</span>
@@ -732,7 +1222,7 @@ const AdminBroadcast = () => {
 };
 
 // ═══ ADMIN: SETTINGS ═══
-const AdminSettings = ({settings}) => {
+const AdminSettings = ({settings,onExitAdmin}) => {
   const [tog,setTog]=useState({autoplan:true,remind:true,offer:true,notify:false});
   return(
     <Scr>
@@ -750,11 +1240,40 @@ const AdminSettings = ({settings}) => {
           <div style={{fontSize:22,fontWeight:900,color:C.acc}}>{plan.price} <span style={{fontSize:13,color:C.ts,fontWeight:500}}>₴</span></div>
         </div>
       ))}
+      <div style={{height:1,background:C.bc}}/>
+      <button onClick={onExitAdmin} style={{background:"rgba(255,85,85,.08)",border:"1px solid rgba(255,85,85,.2)",borderRadius:16,padding:"16px 18px",display:"flex",alignItems:"center",gap:10,width:"100%"}}>
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M8 11h10M14 7l4 4-4 4" stroke="#ff5555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M12 5H5a2 2 0 00-2 2v8a2 2 0 002 2h7" stroke="#ff5555" strokeWidth="1.8" strokeLinecap="round"/></svg>
+        <span style={{fontSize:16,fontWeight:800,color:"#ff5555"}}>Вийти з адмін-панелі</span>
+      </button>
     </Scr>
   );
 };
 
 // ═══ MAIN APP ═══
+// ═══ DUMBBELL LOADER ═══
+const DumbbellLoader = () => {
+  const [spinning, setSpinning] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setSpinning(true), 600);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div className={spinning ? "db-spin db-appear" : "db-appear"}
+      style={{width:64,height:64,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+        <rect x="8" y="27" width="10" height="10" rx="3" fill="#c8f53a"/>
+        <rect x="8" y="22" width="10" height="6" rx="2" fill="rgba(200,245,58,.6)"/>
+        <rect x="8" y="36" width="10" height="6" rx="2" fill="rgba(200,245,58,.6)"/>
+        <rect x="46" y="27" width="10" height="10" rx="3" fill="#c8f53a"/>
+        <rect x="46" y="22" width="10" height="6" rx="2" fill="rgba(200,245,58,.6)"/>
+        <rect x="46" y="36" width="10" height="6" rx="2" fill="rgba(200,245,58,.6)"/>
+        <rect x="18" y="30" width="28" height="4" rx="2" fill="#c8f53a"/>
+        <rect x="26" y="26" width="12" height="12" rx="3" fill="rgba(200,245,58,.3)" stroke="#c8f53a" strokeWidth="1.5"/>
+      </svg>
+    </div>
+  );
+};
+
 export default function FitCoreApp() {
   const [screen,setScreen]=useState("loading");
   const [userId,setUserId]=useState(null);const [isAdmin,setIsAdmin]=useState(false);
@@ -776,9 +1295,10 @@ export default function FitCoreApp() {
           const st=auth.client.status;
           if(["active","trial"].includes(st))setScreen("client");
           else if(st==="pending_approval")setScreen("pending");
-          else setScreen("welcome");
-        }else{setScreen("welcome");}
-      }catch(e){console.error("Init:",e);setScreen("welcome");}
+          else if(st==="expired")setScreen("expired");
+          else setScreen("goto_bot");
+        }else{setScreen("goto_bot");}
+      }catch(e){console.error("Init:",e);setScreen("goto_bot");}
     };
     init();
   },[]);
@@ -786,23 +1306,54 @@ export default function FitCoreApp() {
   if(screen==="loading")return(
     <>
       <G/>
-      <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:20}}>
-        <div style={{fontSize:36,fontWeight:900,color:C.tm,letterSpacing:-2}}>FITCORE</div>
-        <div className="sp" style={{width:32,height:32,borderRadius:"50%",border:`2px solid ${C.s3}`,borderTopColor:C.acc}}/>
+      <style>{`
+        @keyframes dbSpin{0%{transform:rotate(0deg) scale(1);}80%{transform:rotate(360deg) scale(1);}100%{transform:rotate(360deg) scale(0) translateY(-40px);opacity:0;}}
+        @keyframes dbAppear{from{opacity:0;transform:scale(.6);}to{opacity:1;transform:scale(1);}}
+        .db-spin{animation:dbSpin 1.4s ease-in-out forwards;}
+        .db-appear{animation:dbAppear .5s ease forwards;}
+      `}</style>
+      <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",position:"relative",overflow:"hidden"}}>
+        <img src="/photo3.jpg" alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 20%"}}/>
+        <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(8,8,8,.4) 0%,rgba(8,8,8,.75) 50%,rgba(8,8,8,.97) 100%)"}}/>
+        <div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",alignItems:"center",gap:24}}>
+          <div style={{fontSize:42,fontWeight:900,color:C.tm,letterSpacing:-2,textAlign:"center",lineHeight:1}}>FITCORE</div>
+          <div style={{fontSize:14,color:"rgba(255,255,255,.4)",letterSpacing:2,textTransform:"uppercase"}}>AI Trainer by Matias</div>
+          <DumbbellLoader/>
+        </div>
       </div>
     </>
   );
 
   const isAdminMode=screen==="admin";
   const showNav=["client","admin"].includes(screen)&&!checkinMode;
-  const titles={plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",profile:"Профіль",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування"};
+  const titles={plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",menu:"Тарифи і меню",supplements:"БАДи",profile:"Профіль",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування"};
   const topTitle=checkinMode?"Чекін":isAdminMode?(selClient?"Профіль клієнта":titles[adminTab]):titles[clientTab];
   const showTopNav=["client","admin"].includes(screen)&&clientTab!=="profile"&&!(isAdminMode&&adminTab==="dashboard");
 
   const renderContent=()=>{
     if(screen==="welcome")return <Welcome onStart={()=>setScreen("plans")} onLogin={()=>setScreen("plans")}/>;
+    if(screen==="goto_bot")return(
+      <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,padding:"0 28px",textAlign:"center"}}>
+        <img src="/photo2.jpg" alt="" style={{width:100,height:100,borderRadius:"50%",objectFit:"cover",objectPosition:"center 20%",border:`3px solid ${C.acc}`}}/>
+        <div style={{fontSize:28,fontWeight:900,color:C.tm,letterSpacing:-1,lineHeight:1.1}}>Привіт!</div>
+        <div style={{fontSize:16,color:C.ts,lineHeight:1.7}}>Щоб розпочати — пройди коротку анкету в боті. Це займе 2 хвилини.</div>
+        <a href="https://t.me/fitcore_matias_bot" style={{textDecoration:"none",width:"100%"}}>
+          <PBtn>Відкрити бота</PBtn>
+        </a>
+        <div style={{fontSize:13,color:C.td}}>Вже пройшов анкету? Зачекай — доступ відкриється автоматично.</div>
+      </div>
+    );
     if(screen==="plans")return <PlanSelect plans={plans} payLinks={payLinks} onSelect={p=>{setSelPlan(p);setScreen("payment");}}/>;
     if(screen==="payment")return <Payment planKey={selPlan} plans={plans} payLinks={payLinks} onBack={()=>setScreen("plans")} onPaid={()=>setScreen("pending")} userId={userId}/>;
+    if(screen==="expired")return(
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 28px",textAlign:"center"}}>
+        <div style={{fontSize:48}}>🔒</div>
+        <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-1}}>Пакет закінчився</div>
+        <div style={{fontSize:15,color:C.ts,lineHeight:1.7}}>Твій тариф завершився.<br/>Придбай новий пакет щоб відновити доступ.</div>
+        <PBtn onClick={()=>setScreen("plans")}>Придбати тариф</PBtn>
+        <div style={{fontSize:13,color:C.td}}>Всі твої дані збережені</div>
+      </div>
+    );
     if(screen==="pending")return(
       <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 24px"}}>
         <div style={{width:72,height:72,borderRadius:"50%",background:"rgba(232,168,50,.1)",border:`2px solid ${C.amber}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -814,18 +1365,23 @@ export default function FitCoreApp() {
     );
     if(screen==="admin"){
       if(selClient)return <AdminClientDetail client={selClient} onBack={()=>setSelClient(null)}/>;
+      const onExitAdmin=()=>{setScreen("client");setAdminTab("dashboard");};
       if(adminTab==="dashboard")return <AdminDash/>;
       if(adminTab==="clients")return <AdminClients onSelect={c=>setSelClient(c)}/>;
       if(adminTab==="payments")return <AdminPayments/>;
       if(adminTab==="broadcast")return <AdminBroadcast/>;
-      if(adminTab==="settings")return <AdminSettings settings={settings}/>;
+      if(adminTab==="settings")return <AdminSettings settings={settings} onExitAdmin={onExitAdmin}/>;
     }
     if(screen==="client"){
       if(checkinMode)return <Checkin userId={userId} onDone={()=>setCheckin(false)}/>;
       if(clientTab==="plan")return <TrainPlan userId={userId}/>;
       if(clientTab==="nutrition")return <Nutrition userId={userId}/>;
       if(clientTab==="progress")return <Progress userId={userId}/>;
-      if(clientTab==="profile")return <Profile client={clientData} questionnaire={questionnaire} isAdmin={isAdmin} onAdminAccess={()=>setScreen("admin")} onCheckin={()=>setCheckin(true)} onBuyPlan={()=>setScreen("plans")}/>;
+      if(clientTab==="menu")return <MenuScreen plans={plans} payLinks={payLinks} onSelectPlan={p=>{setSelPlan(p);setScreen("payment");}} clientPlan={clientData?.plan} onShowReviews={()=>setClientTab("reviews")}/>;
+      if(clientTab==="supplements")return <SupplementsScreen userId={userId} clientPlan={clientData?.plan} isAdmin={isAdmin}/>;
+      if(clientTab==="reviews")return <ReviewsScreen userId={userId}/>;
+      if(clientTab==="notifications")return <NotificationsScreen userId={userId}/>;
+      if(clientTab==="profile")return <Profile client={clientData} questionnaire={questionnaire} isAdmin={isAdmin} onAdminAccess={()=>setScreen("admin")} onCheckin={()=>setCheckin(true)} onBuyPlan={()=>{setClientTab("menu");}} onSupplements={clientData?.plan==="vip"?()=>setClientTab("supplements"):null} userId={userId}/>;
     }
   };
 
