@@ -1,46 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
-
-const I18N = {
-  uk: {
-    myPlan:"Мій план", nutrition:"Харчування", progress:"Прогрес",
-    menu:"Меню", profile:"Профіль",
-    generatePlan:"Згенерувати план", generating:"Генерую...",
-    noPlan:"План ще не згенерований",
-    noPlanDesc:"Натисни кнопку щоб Claude AI склав твій персональний план",
-    checkin:"Зробити чекін", buyPlan:"Придбати тариф",
-    reviews:"Відгуки", notifications:"Сповіщення", data:"Дані",
-    supplements:"БАДи", choosePlan:"Обери тариф", payment:"Оплата",
-    payMono:"💳 Monobank", payStars:"⭐ Оплатити зірками Telegram",
-    alreadyPaid:"Вже оплатив?", sendScreenshot:"📸 Надіслати скріншот оплати",
-    back:"Назад", save:"Зберегти налаштування",
-    trialDays:"3 дні безкоштовно на будь-якому тарифі", popular:"Популярний",
-    weightKg:"Вага (кг)", energyLevel:"Рівень енергії 1-5",
-    sleepHours:"Сон (годин)", comment:"Коментар (необов'язково)",
-    submit:"Надіслати", streak:"стрік", days:"днів",
-    yourPlan:"Твій план", workoutDays:"тренувальних дні",
-  },
-  en: {
-    myPlan:"My Plan", nutrition:"Nutrition", progress:"Progress",
-    menu:"Menu", profile:"Profile",
-    generatePlan:"Generate Plan", generating:"Generating...",
-    noPlan:"No plan yet",
-    noPlanDesc:"Press the button to let Claude AI create your personalized plan",
-    checkin:"Check-in", buyPlan:"Buy Plan",
-    reviews:"Reviews", notifications:"Notifications", data:"Data",
-    supplements:"Supplements", choosePlan:"Choose Plan", payment:"Payment",
-    payMono:"💳 Monobank", payStars:"⭐ Pay with Telegram Stars",
-    alreadyPaid:"Already paid?", sendScreenshot:"📸 Send payment screenshot",
-    back:"Back", save:"Save settings",
-    trialDays:"3 days free on any plan", popular:"Popular",
-    weightKg:"Weight (kg)", energyLevel:"Energy level 1-5",
-    sleepHours:"Sleep (hours)", comment:"Comment (optional)",
-    submit:"Submit", streak:"streak", days:"days",
-    yourPlan:"Your Plan", workoutDays:"training days",
-  }
-};
-const t = (lang, key) => (I18N[lang] || I18N.uk)[key] || key;
 const tg = window.Telegram?.WebApp;
 const getInitData = () => tg?.initData || "";
 const getTgUser = () => tg?.initDataUnsafe?.user || null;
@@ -399,7 +359,7 @@ const Payment = ({planKey,plans,payLinks,onBack,onPaid,userId}) => {
           if(window.Telegram?.WebApp?.openLink){window.Telegram.WebApp.openLink(link);}
           else{window.open(link,"_blank");}
         }
-      }}>{t(lang,"payMono")}</PBtn>
+      }}>💳 Monobank</PBtn>
       <div style={{display:"flex",alignItems:"center",gap:10,margin:"4px 0"}}>
         <div style={{flex:1,height:1,background:C.bc}}/>
         <div style={{fontSize:12,color:C.td}}>або</div>
@@ -416,9 +376,9 @@ const Payment = ({planKey,plans,payLinks,onBack,onPaid,userId}) => {
         }).then(()=>{
           if(tg){setTimeout(()=>tg.close(),500);}
         }).catch(e=>console.error(e));
-      }} style={{background:"linear-gradient(135deg,#f6c90e,#e4a200)",color:"#000"}}>{t(lang,"payStars")}</PBtn>
+      }} style={{background:"linear-gradient(135deg,#f6c90e,#e4a200)",color:"#000"}}>⭐ Оплатити зірками Telegram</PBtn>
       <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
-        <div style={{fontSize:14,fontWeight:700,color:C.tm,marginBottom:6}}>{t(lang,"alreadyPaid")}</div>
+        <div style={{fontSize:14,fontWeight:700,color:C.tm,marginBottom:6}}>Вже оплатив?</div>
         <div style={{fontSize:13,color:C.ts,marginBottom:12,lineHeight:1.6}}>Натисни кнопку — тренер отримає сповіщення і надішле запит на скріншот прямо в бот.</div>
         <PBtn onClick={sendScreenshot} loading={sending} style={{background:C.s2,color:C.tm}}>
           {sending?"Надсилаю...":"📸 Надіслати скріншот оплати"}
@@ -448,7 +408,7 @@ const TrainPlan = ({userId}) => {
   if(!data)return(
     <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,padding:"0 24px"}}>
       <div style={{fontSize:18,fontWeight:700,color:C.ts,textAlign:"center"}}>План ще не готовий</div>
-      <PBtn onClick={generate} loading={gen} style={{maxWidth:260}}>{gen?t(lang,"generating"):t(lang,"generatePlan")}</PBtn>
+      <PBtn onClick={generate} loading={gen} style={{maxWidth:260}}>{gen?"Генерую...":"Згенерувати план"}</PBtn>
     </div>
   );
   let days=[],weekNote="";
@@ -857,46 +817,6 @@ const NotificationsScreen = ({userId,nutritionPlan}) => {
       ])}useState, useEffect, useCallback } from "react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
-
-const I18N = {
-  uk: {
-    myPlan:"Мій план", nutrition:"Харчування", progress:"Прогрес",
-    menu:"Меню", profile:"Профіль",
-    generatePlan:"Згенерувати план", generating:"Генерую...",
-    noPlan:"План ще не згенерований",
-    noPlanDesc:"Натисни кнопку щоб Claude AI склав твій персональний план",
-    checkin:"Зробити чекін", buyPlan:"Придбати тариф",
-    reviews:"Відгуки", notifications:"Сповіщення", data:"Дані",
-    supplements:"БАДи", choosePlan:"Обери тариф", payment:"Оплата",
-    payMono:"💳 Monobank", payStars:"⭐ Оплатити зірками Telegram",
-    alreadyPaid:"Вже оплатив?", sendScreenshot:"📸 Надіслати скріншот оплати",
-    back:"Назад", save:"Зберегти налаштування",
-    trialDays:"3 дні безкоштовно на будь-якому тарифі", popular:"Популярний",
-    weightKg:"Вага (кг)", energyLevel:"Рівень енергії 1-5",
-    sleepHours:"Сон (годин)", comment:"Коментар (необов'язково)",
-    submit:"Надіслати", streak:"стрік", days:"днів",
-    yourPlan:"Твій план", workoutDays:"тренувальних дні",
-  },
-  en: {
-    myPlan:"My Plan", nutrition:"Nutrition", progress:"Progress",
-    menu:"Menu", profile:"Profile",
-    generatePlan:"Generate Plan", generating:"Generating...",
-    noPlan:"No plan yet",
-    noPlanDesc:"Press the button to let Claude AI create your personalized plan",
-    checkin:"Check-in", buyPlan:"Buy Plan",
-    reviews:"Reviews", notifications:"Notifications", data:"Data",
-    supplements:"Supplements", choosePlan:"Choose Plan", payment:"Payment",
-    payMono:"💳 Monobank", payStars:"⭐ Pay with Telegram Stars",
-    alreadyPaid:"Already paid?", sendScreenshot:"📸 Send payment screenshot",
-    back:"Back", save:"Save settings",
-    trialDays:"3 days free on any plan", popular:"Popular",
-    weightKg:"Weight (kg)", energyLevel:"Energy level 1-5",
-    sleepHours:"Sleep (hours)", comment:"Comment (optional)",
-    submit:"Submit", streak:"streak", days:"days",
-    yourPlan:"Your Plan", workoutDays:"training days",
-  }
-};
-const t = (lang, key) => (I18N[lang] || I18N.uk)[key] || key;
 const tg = window.Telegram?.WebApp;
 const getInitData = () => tg?.initData || "";
 const getTgUser = () => tg?.initDataUnsafe?.user || null;
@@ -1255,7 +1175,7 @@ const Payment = ({planKey,plans,payLinks,onBack,onPaid,userId}) => {
           if(window.Telegram?.WebApp?.openLink){window.Telegram.WebApp.openLink(link);}
           else{window.open(link,"_blank");}
         }
-      }}>{t(lang,"payMono")}</PBtn>
+      }}>💳 Monobank</PBtn>
       <div style={{display:"flex",alignItems:"center",gap:10,margin:"4px 0"}}>
         <div style={{flex:1,height:1,background:C.bc}}/>
         <div style={{fontSize:12,color:C.td}}>або</div>
@@ -1272,9 +1192,9 @@ const Payment = ({planKey,plans,payLinks,onBack,onPaid,userId}) => {
         }).then(()=>{
           if(tg){setTimeout(()=>tg.close(),500);}
         }).catch(e=>console.error(e));
-      }} style={{background:"linear-gradient(135deg,#f6c90e,#e4a200)",color:"#000"}}>{t(lang,"payStars")}</PBtn>
+      }} style={{background:"linear-gradient(135deg,#f6c90e,#e4a200)",color:"#000"}}>⭐ Оплатити зірками Telegram</PBtn>
       <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
-        <div style={{fontSize:14,fontWeight:700,color:C.tm,marginBottom:6}}>{t(lang,"alreadyPaid")}</div>
+        <div style={{fontSize:14,fontWeight:700,color:C.tm,marginBottom:6}}>Вже оплатив?</div>
         <div style={{fontSize:13,color:C.ts,marginBottom:12,lineHeight:1.6}}>Натисни кнопку — тренер отримає сповіщення і надішле запит на скріншот прямо в бот.</div>
         <PBtn onClick={sendScreenshot} loading={sending} style={{background:C.s2,color:C.tm}}>
           {sending?"Надсилаю...":"📸 Надіслати скріншот оплати"}
@@ -1304,7 +1224,7 @@ const TrainPlan = ({userId}) => {
   if(!data)return(
     <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,padding:"0 24px"}}>
       <div style={{fontSize:18,fontWeight:700,color:C.ts,textAlign:"center"}}>План ще не готовий</div>
-      <PBtn onClick={generate} loading={gen} style={{maxWidth:260}}>{gen?t(lang,"generating"):t(lang,"generatePlan")}</PBtn>
+      <PBtn onClick={generate} loading={gen} style={{maxWidth:260}}>{gen?"Генерую...":"Згенерувати план"}</PBtn>
     </div>
   );
   let days=[],weekNote="";
@@ -2173,7 +2093,7 @@ export default function FitCoreApp() {
   const [screen,setScreen]=useState("loading");
   const [userId,setUserId]=useState(null);const [isAdmin,setIsAdmin]=useState(false);
   const [clientData,setClient]=useState(null);const [questionnaire,setQst]=useState(null);
-  const [plans,setPlans]=useState(null);const [payLinks,setPayLinks]=useState(null);const [lang,setLang]=useState("uk");
+  const [plans,setPlans]=useState(null);const [payLinks,setPayLinks]=useState(null);
   const [settings,setSettings]=useState(null);
   const [clientTab,setClientTab]=useState("plan");const [adminTab,setAdminTab]=useState("dashboard");
   const [selClient,setSelClient]=useState(null);const [selPlan,setSelPlan]=useState(null);
@@ -2183,7 +2103,7 @@ export default function FitCoreApp() {
     const init=async()=>{
       try{
         const auth=await apiPost("/api/auth",{});
-        setUserId(auth.user_id);setIsAdmin(auth.is_admin);setPlans(auth.plans);setPayLinks(auth.payment_links);setClient(auth.client);setLang(auth.client?.lang||"uk");
+        setUserId(auth.user_id);setIsAdmin(auth.is_admin);setPlans(auth.plans);setPayLinks(auth.payment_links);setClient(auth.client);
         if(auth.is_admin){try{const s=await apiGet("/api/admin/settings");setSettings(s);}catch{}}
         if(auth.client){
           try{const d=await apiGet(`/api/client/${auth.user_id}`);setQst(d.questionnaire);}catch{}
@@ -2221,9 +2141,7 @@ export default function FitCoreApp() {
 
   const isAdminMode=screen==="admin";
   const showNav=["client","admin"].includes(screen)&&!checkinMode;
-  const titles=lang==="en"?
-    {plan:"My Plan",nutrition:"Nutrition",progress:"Progress",menu:"Menu",supplements:"Supplements",profile:"Profile",dashboard:"Dashboard",clients:"Clients",payments:"Payments",broadcast:"Broadcast",settings:"Settings"}:
-    {plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",menu:"Тарифи і меню",supplements:"БАДи",profile:"Профіль",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування"};
+  const titles={plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",menu:"Тарифи і меню",supplements:"БАДи",profile:"Профіль",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування"};
   const topTitle=checkinMode?"Чекін":isAdminMode?(selClient?"Профіль клієнта":titles[adminTab]):titles[clientTab];
   const showTopNav=["client","admin"].includes(screen)&&clientTab!=="profile"&&!(isAdminMode&&adminTab==="dashboard");
 
@@ -2271,10 +2189,10 @@ export default function FitCoreApp() {
     }
     if(screen==="client"){
       if(checkinMode)return <Checkin userId={userId} onDone={()=>setCheckin(false)}/>;
-      if(clientTab==="plan")return <TrainPlan userId={userId} lang={lang}/>;
+      if(clientTab==="plan")return <TrainPlan userId={userId}/>;
       if(clientTab==="nutrition")return <Nutrition userId={userId}/>;
       if(clientTab==="progress")return <Progress userId={userId}/>;
-      if(clientTab==="menu")return <MenuScreen lang={lang} plans={plans} payLinks={payLinks} onSelectPlan={p=>{setSelPlan(p);setScreen("payment");}} clientPlan={clientData?.plan} onShowReviews={()=>setClientTab("reviews")}/>;
+      if(clientTab==="menu")return <MenuScreen plans={plans} payLinks={payLinks} onSelectPlan={p=>{setSelPlan(p);setScreen("payment");}} clientPlan={clientData?.plan} onShowReviews={()=>setClientTab("reviews")}/>;
       if(clientTab==="supplements")return <SupplementsScreen userId={userId} clientPlan={clientData?.plan} isAdmin={isAdmin}/>;
       if(clientTab==="reviews")return <ReviewsScreen userId={userId}/>;
       if(clientTab==="notifications")return <NotificationsScreen userId={userId}/>;
