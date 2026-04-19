@@ -157,19 +157,19 @@ const Welcome = ({onStart,onLogin}) => (
 // ═══ PLAN SELECT ═══
 const PLANS_STATIC = {
   start:{
-    name:"START", price:799,
+    name:"START", price:799, stars:500,
     desc:"Базовий старт для новачків",
     features:["Шаблонний тренувальний план","Базовий план харчування (КБЖУ)","Трекінг ваги і прогресу","Чекіни без фідбеку"],
     no:["AI персоналізація","Фідбек тренера","БАДи"]
   },
   premium:{
-    name:"PREMIUM", price:1699, hot:true,
+    name:"PREMIUM", price:1699, stars:999, hot:true,
     desc:"Персональний підхід від ШІ-тренера",
     features:["Персональний план від Claude AI","Щотижневе оновлення плану","Чекіни 2× на тиждень з AI фідбеком","Індивідуальне харчування з грамами","Відповіді тренера на питання"],
     no:["Прямий зв'язок з тренером","Пропись БАДів"]
   },
   vip:{
-    name:"VIP", price:3499,
+    name:"VIP", price:3499, stars:1999,
     desc:"Максимальний результат з особистим супроводом",
     features:["Все що в PREMIUM","Прямий зв'язок з тренером особисто","Пропись БАДів під твої цілі","Корекція плану в будь-який момент","Пріоритетна відповідь 24/7"],
     no:[]
@@ -268,7 +268,10 @@ const PlanSelect = ({plans,payLinks,onSelect}) => {
           {plan.hot&&<div style={{fontSize:11,color:"#0a0a0a",background:C.acc,borderRadius:20,padding:"3px 12px",display:"inline-block",marginBottom:8,fontWeight:800}}>Популярний</div>}
           <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:8}}>
             <div style={{fontSize:20,fontWeight:800,color:C.tm}}>{plan.name}</div>
-            <div style={{fontSize:26,fontWeight:900,color:C.acc}}>{plan.price} <span style={{fontSize:13,color:C.ts,fontWeight:500}}>₴/міс</span></div>
+            <div>
+              <div style={{fontSize:26,fontWeight:900,color:C.acc}}>{plan.price} <span style={{fontSize:13,color:C.ts,fontWeight:500}}>₴/міс</span></div>
+              {plan.stars&&<div style={{fontSize:12,color:"#f6c90e",fontWeight:600,marginTop:2}}>⭐ або {plan.stars} зірок Telegram</div>}
+            </div>
           </div>
           {(plan.features||[]).map(f=>(
             <div key={f} style={{display:"flex",alignItems:"center",gap:8,fontSize:14,color:plan.hot?"#d8f080":C.ts,marginBottom:5}}>
@@ -973,19 +976,19 @@ const Welcome = ({onStart,onLogin}) => (
 // ═══ PLAN SELECT ═══
 const PLANS_STATIC = {
   start:{
-    name:"START", price:799,
+    name:"START", price:799, stars:500,
     desc:"Базовий старт для новачків",
     features:["Шаблонний тренувальний план","Базовий план харчування (КБЖУ)","Трекінг ваги і прогресу","Чекіни без фідбеку"],
     no:["AI персоналізація","Фідбек тренера","БАДи"]
   },
   premium:{
-    name:"PREMIUM", price:1699, hot:true,
+    name:"PREMIUM", price:1699, stars:999, hot:true,
     desc:"Персональний підхід від ШІ-тренера",
     features:["Персональний план від Claude AI","Щотижневе оновлення плану","Чекіни 2× на тиждень з AI фідбеком","Індивідуальне харчування з грамами","Відповіді тренера на питання"],
     no:["Прямий зв'язок з тренером","Пропись БАДів"]
   },
   vip:{
-    name:"VIP", price:3499,
+    name:"VIP", price:3499, stars:1999,
     desc:"Максимальний результат з особистим супроводом",
     features:["Все що в PREMIUM","Прямий зв'язок з тренером особисто","Пропись БАДів під твої цілі","Корекція плану в будь-який момент","Пріоритетна відповідь 24/7"],
     no:[]
@@ -1084,7 +1087,10 @@ const PlanSelect = ({plans,payLinks,onSelect}) => {
           {plan.hot&&<div style={{fontSize:11,color:"#0a0a0a",background:C.acc,borderRadius:20,padding:"3px 12px",display:"inline-block",marginBottom:8,fontWeight:800}}>Популярний</div>}
           <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:8}}>
             <div style={{fontSize:20,fontWeight:800,color:C.tm}}>{plan.name}</div>
-            <div style={{fontSize:26,fontWeight:900,color:C.acc}}>{plan.price} <span style={{fontSize:13,color:C.ts,fontWeight:500}}>₴/міс</span></div>
+            <div>
+              <div style={{fontSize:26,fontWeight:900,color:C.acc}}>{plan.price} <span style={{fontSize:13,color:C.ts,fontWeight:500}}>₴/міс</span></div>
+              {plan.stars&&<div style={{fontSize:12,color:"#f6c90e",fontWeight:600,marginTop:2}}>⭐ або {plan.stars} зірок Telegram</div>}
+            </div>
           </div>
           {(plan.features||[]).map(f=>(
             <div key={f} style={{display:"flex",alignItems:"center",gap:8,fontSize:14,color:plan.hot?"#d8f080":C.ts,marginBottom:5}}>
