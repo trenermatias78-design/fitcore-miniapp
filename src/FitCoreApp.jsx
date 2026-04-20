@@ -1225,14 +1225,16 @@ const AdminBroadcast = () => {
 
 // ═══ ADMIN: SETTINGS ═══
 const AdminSettings = ({settings,onExitAdmin}) => {
-  const [tog,setTog]=useState({autoplan:true,remind:true,offer:true,notify:false});
   return(
     <Scr>
       <div style={{fontSize:16,fontWeight:700,color:C.tm}}>Автоматизація</div>
-      {[{k:"autoplan",l:"Авто-план щопонеділка",s:"Генерація через Claude AI"},{k:"remind",l:"Нагадування про чекін",s:"Ср та Пт о 18:00"},{k:"offer",l:"Оффер на день 3",s:"Trial → платний тариф"},{k:"notify",l:"Сповіщення адміна",s:"Нові оплати та чекіни"}].map(item=>(
-        <div key={item.k} style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
-          <div><div style={{fontSize:16,fontWeight:600,color:C.tm}}>{item.l}</div><div style={{fontSize:13,color:C.ts,marginTop:3}}>{item.s}</div></div>
-          <Tog on={tog[item.k]} onToggle={()=>setTog(t=>({...t,[item.k]:!t[item.k]}))}/>
+      <div style={{background:"rgba(200,245,58,.05)",border:"1px solid rgba(200,245,58,.15)",borderRadius:16,padding:"14px 16px"}}>
+        <div style={{fontSize:13,color:C.ts,lineHeight:1.7}}>Всі автоматичні функції запущені на сервері постійно:</div>
+      </div>
+      {[{l:"✅ Авто-план щопонеділка",s:"Генерація через Claude AI о 07:00"},{l:"✅ Нагадування про чекін",s:"Ср та Пт о 19:00 (активним клієнтам)"},{l:"✅ Оффер на день 3",s:"Trial → платний тариф о 12:00"},{l:"✅ Нагадування за 3 дні до кінця",s:"Про закінчення підписки о 10:00"},{l:"✅ Автоблокування",s:"Прострочені пакети о 00:01"}].map(item=>(
+        <div key={item.l} style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
+          <div style={{fontSize:15,fontWeight:600,color:C.tm}}>{item.l}</div>
+          <div style={{fontSize:13,color:C.ts,marginTop:3}}>{item.s}</div>
         </div>
       ))}
       <div style={{fontSize:16,fontWeight:700,color:C.tm}}>Тарифи</div>
@@ -1295,8 +1297,9 @@ export default function FitCoreApp() {
         if(auth.client){
           try{const d=await apiGet(`/api/client/${auth.user_id}`);setQst(d.questionnaire);}catch{}
           const st=auth.client.status;
-          if(["active","trial"].includes(st))setScreen("client");
-          else if(st==="pending_approval")setScreen("pending");
+          if(auth.is_admin)setScreen("admin");
+          else if(["active","trial"].includes(st))setScreen("client");
+          else if(["pending_approval","pending_payment"].includes(st))setScreen("pending");
           else if(st==="expired")setScreen("expired");
           else setScreen("goto_bot");
         }else{setScreen("goto_bot");}
@@ -1333,7 +1336,7 @@ export default function FitCoreApp() {
   const showTopNav=["client","admin"].includes(screen)&&clientTab!=="profile"&&!(isAdminMode&&adminTab==="dashboard");
 
   const renderContent=()=>{
-    if(screen==="welcome")return <Welcome onStart={()=>setScreen("plans")} onLogin={()=>setScreen("plans")}/>;
+    if(screen==="welcome")return <Welcome onStart={()=>setScreen("plans")} onLogin={()=>setScreen("goto_bot")}/>;
     if(screen==="goto_bot")return(
       <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,padding:"0 28px",textAlign:"center"}}>
         <img src="/photo2.jpg" alt="" style={{width:100,height:100,borderRadius:"50%",objectFit:"cover",objectPosition:"center 20%",border:`3px solid ${C.acc}`}}/>
