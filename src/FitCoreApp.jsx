@@ -611,16 +611,22 @@ function getExTip(name) {
 }
 
 // ═══ EXERCISE MODAL ═══
-const ExModal = ({ex, tapY, onClose}) => {
+const ExModal = ({ex, tapY, tapX, onClose}) => {
   const info = getExTip(ex?.name);
   const [imgUrl, setImgUrl] = useState(null);
   const [imgLoading, setImgLoading] = useState(true);
   const [imgErr, setImgErr] = useState(false);
 
-  // Позиція: якщо тапнули нижче середини — показуємо вгорі, інакше вниз
+  // Позиція: з'являється поруч з місцем тапу
   const winH = window.innerHeight;
-  const showAbove = tapY > winH * 0.55;
-  const topPos = showAbove ? Math.max(20, tapY - 420) : Math.min(tapY - 30, winH - 400);
+  const winW = window.innerWidth;
+  const modalH = 380; // max висота модалки
+  const modalW = Math.min(winW - 24, 400); // ширина з відступами
+  
+  // Вертикально: якщо тапнули нижче середини — вгору, інакше вниз
+  let top = tapY > winH * 0.5 ? Math.max(12, tapY - modalH) : Math.min(tapY + 8, winH - modalH - 12);
+  // Горизонтально: центруємо, але не виходимо за межі
+  let left = Math.max(12, Math.min(tapX - modalW / 2, winW - modalW - 12));
 
   useEffect(() => {
     if (!info?.search) { setImgLoading(false); return; }
@@ -652,8 +658,9 @@ const ExModal = ({ex, tapY, onClose}) => {
       <div onClick={e=>e.stopPropagation()}
         style={{
           position:"fixed",
-          left:12, right:12,
-          top:topPos,
+          left:left,
+          width:modalW,
+          top:top,
           background:C.s1,
           borderRadius:20,
           border:`1px solid ${C.bc}`,
@@ -697,6 +704,7 @@ const TrainPlan = ({userId}) => {
   const [gen,setGen]=useState(false);
   const [selEx,setSelEx]=useState(null);
   const [tapY,setTapY]=useState(0);
+  const [tapX,setTapX]=useState(0);
   const load=useCallback(async()=>{
     try{setLoad(true);const r=await apiGet(`/api/client/${userId}/plan`);setData(r.plan);}
     catch(e){console.error(e);}finally{setLoad(false);}
@@ -747,7 +755,7 @@ const TrainPlan = ({userId}) => {
                         <div style={{width:6,height:6,borderRadius:"50%",background:C.acc,flexShrink:0}}/>
                         <div style={{fontSize:14,color:C.tm}}>{ex.name}</div>
                         {getExTip(ex.name)&&(
-                          <div onClick={e=>{e.stopPropagation();setTapY(e.clientY);setSelEx(ex);}}
+                          <div onClick={e=>{e.stopPropagation();setTapY(e.clientY);setTapX(e.clientX);setSelEx(ex);}}
                             style={{fontSize:10,color:"#0a0a0a",background:C.acc,borderRadius:6,padding:"1px 7px",fontWeight:900,flexShrink:0,cursor:"pointer",userSelect:"none"}}>?</div>
                         )}
                       </div>
@@ -772,7 +780,7 @@ const TrainPlan = ({userId}) => {
           <div style={{fontSize:13,color:C.ts,lineHeight:1.6}}>{weekNote}</div>
         </div>}
       </div>
-      {selEx&&<ExModal ex={selEx} tapY={tapY} onClose={()=>setSelEx(null)}/>}
+      {selEx&&<ExModal ex={selEx} tapY={tapY} tapX={tapX} onClose={()=>setSelEx(null)}/>}
     </div>
   );
 };
