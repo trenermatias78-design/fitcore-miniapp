@@ -256,36 +256,99 @@ const ReviewsPreview = ({onShowAll}) => {
   );
 };
 
+// ─── Duration helpers ───
+const DUR_DISC = {1:0,3:15,6:25,12:35};
+const DUR_LABEL = {1:"1 місяць",3:"3 місяці",6:"6 місяців",12:"1 рік 🏆"};
+const DUR_FUNNEL = {
+  1: null,
+  3: "73% клієнтів досягають цілі саме за 3 місяці системної роботи",
+  6: "⭐ Найпопулярніший вибір — стабільна трансформація за 6 місяців",
+  12: "🔥 Максимальний результат · Безперервний прогрес весь рік · Найбільша знижка",
+};
+function dCalc(base,months){return Math.round(base*months*(1-DUR_DISC[months]/100));}
+function dStars(base,months){return Math.round(base*months*(1-DUR_DISC[months]/100));}
+function dSaved(base,months){return Math.round(base*months)-dCalc(base,months);}
+
 const PlanSelect = ({plans,payLinks,onSelect}) => {
+  const [months,setMonths]=useState(1);
   const p=plans||PLANS_STATIC;
   return (
     <Scr>
       <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-1}}>Обери тариф</div>
-      <div style={{fontSize:14,color:C.ts}}>3 дні безкоштовно на будь-якому тарифі</div>
-      {Object.entries(p).map(([k,plan])=>(
-        <div key={k} className={plan.hot?"bl":""} onClick={()=>onSelect(k)}
-          style={{background:C.s1,borderRadius:18,border:`1.5px solid ${plan.hot?C.acc:C.bc}`,padding:"16px",cursor:"pointer"}}>
-          {plan.hot&&<div style={{fontSize:11,color:"#0a0a0a",background:C.acc,borderRadius:20,padding:"3px 12px",display:"inline-block",marginBottom:8,fontWeight:800}}>Популярний</div>}
-          <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:8}}>
-            <div style={{fontSize:20,fontWeight:800,color:C.tm}}>{plan.name}</div>
-            <div style={{fontSize:26,fontWeight:900,color:C.acc}}>{plan.price} <span style={{fontSize:13,color:C.ts,fontWeight:500}}>₴/міс</span></div>
-              {plan.stars&&<div style={{fontSize:12,color:"#f6c90e",fontWeight:600,marginTop:2}}>⭐ або {plan.stars} зірок Telegram</div>}
+      <div style={{fontSize:14,color:C.ts,marginBottom:2}}>3 дні безкоштовно · оплата після</div>
+
+      {/* Duration switcher */}
+      <div style={{background:C.s1,borderRadius:18,border:`1px solid ${C.bc}`,padding:"14px"}}>
+        <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Тривалість підписки</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
+          {[1,3,6,12].map(m=>{
+            const on=months===m;
+            const disc=DUR_DISC[m];
+            return(
+              <div key={m} onClick={()=>setMonths(m)}
+                style={{borderRadius:14,border:`2px solid ${on?C.acc:C.bc}`,background:on?"rgba(200,245,58,.08)":C.s2,padding:"10px 6px",cursor:"pointer",textAlign:"center",position:"relative",transition:"all .15s"}}>
+                {disc>0&&<div style={{position:"absolute",top:-8,left:"50%",transform:"translateX(-50%)",background:m===12?C.acc:m===6?"#e8a832":"#4a9fdf",color:"#080808",fontSize:8,fontWeight:900,padding:"2px 5px",borderRadius:6,whiteSpace:"nowrap",lineHeight:1.4}}>-{disc}%</div>}
+                <div style={{fontSize:m===12?10:12,fontWeight:800,color:on?C.acc:C.ts,lineHeight:1.3}}>{m===12?"1 рік":m+"міс"}</div>
+              </div>
+            );
+          })}
+        </div>
+        {DUR_FUNNEL[months]&&(
+          <div style={{marginTop:10,padding:"10px 12px",background:"rgba(200,245,58,.06)",border:"1px solid rgba(200,245,58,.2)",borderRadius:12,fontSize:13,color:C.acc,fontWeight:600,lineHeight:1.5}}>
+            💡 {DUR_FUNNEL[months]}
           </div>
-          {(plan.features||[]).map(f=>(
-            <div key={f} style={{display:"flex",alignItems:"center",gap:8,fontSize:14,color:plan.hot?"#d8f080":C.ts,marginBottom:5}}>
-              <div style={{width:5,height:5,borderRadius:"50%",background:C.acc,flexShrink:0}}/>{f}
+        )}
+      </div>
+
+      {/* Plan cards */}
+      {Object.entries(p).map(([k,plan])=>{
+        const price=dCalc(plan.price,months);
+        const stars=dStars(plan.stars||500,months);
+        const saved=dSaved(plan.price,months);
+        const perMo=months>1?Math.round(price/months):null;
+        return(
+          <div key={k} className={plan.hot?"bl":""} onClick={()=>onSelect(k,months)}
+            style={{background:C.s1,borderRadius:18,border:`1.5px solid ${plan.hot?C.acc:C.bc}`,padding:"16px",cursor:"pointer",position:"relative"}}>
+            {plan.hot&&<div style={{position:"absolute",top:14,right:14,fontSize:11,color:"#0a0a0a",background:C.acc,borderRadius:20,padding:"3px 10px",fontWeight:800}}>Популярний</div>}
+            {months>1&&saved>0&&<div style={{position:"absolute",top:plan.hot?40:14,right:14,fontSize:10,color:"#080808",background:"#e8a832",borderRadius:20,padding:"2px 8px",fontWeight:800}}>-{saved.toLocaleString()} ₴</div>}
+            <div style={{fontSize:19,fontWeight:900,color:C.tm,marginBottom:6}}>{plan.name}</div>
+            <div style={{display:"flex",alignItems:"baseline",gap:6,marginBottom:2}}>
+              <span style={{fontSize:30,fontWeight:900,color:C.acc,letterSpacing:-1}}>{price.toLocaleString()}</span>
+              <span style={{fontSize:14,color:C.ts}}>₴ / {DUR_LABEL[months]}</span>
+            </div>
+            {perMo&&<div style={{fontSize:13,color:C.ts,marginBottom:6}}>= {perMo} ₴/міс</div>}
+            <div style={{fontSize:12,color:"#f6c90e",marginBottom:10}}>⭐ або {stars.toLocaleString()} зірок Telegram</div>
+            {(plan.features||[]).map(f=>(
+              <div key={f} style={{display:"flex",alignItems:"center",gap:8,fontSize:13,color:plan.hot?"#d8f080":C.ts,marginBottom:4}}>
+                <div style={{width:4,height:4,borderRadius:"50%",background:C.acc,flexShrink:0}}/>{f}
+              </div>
+            ))}
+          </div>
+        );
+      })}
+
+      {months>1&&(
+        <div style={{background:"rgba(200,245,58,.04)",border:"1px solid rgba(200,245,58,.12)",borderRadius:16,padding:"14px 16px"}}>
+          <div style={{fontSize:14,fontWeight:700,color:C.acc,marginBottom:8}}>🎯 Чому довгий пакет вигідніший?</div>
+          {["Результат у фітнесі — це мінімум 3 місяці послідовної роботи","Зупинитись на місяць = повернутись майже до початку","Довгий пакет = зобов'язання перед собою = вищий результат",`Ти реально економиш ${DUR_DISC[months]}% — це ${dSaved(1699,months).toLocaleString()} ₴+ в залежності від тарифу`].map((t,i)=>(
+            <div key={i} style={{display:"flex",gap:8,fontSize:13,color:C.ts,marginBottom:5,lineHeight:1.5}}>
+              <span style={{color:C.acc,fontWeight:700,flexShrink:0}}>▸</span>{t}
             </div>
           ))}
         </div>
-      ))}
+      )}
     </Scr>
   );
 };
 
 // ═══ PAYMENT ═══
-const Payment = ({planKey,plans,payLinks,onBack,onPaid,userId}) => {
+const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
   const plan=(plans||PLANS_STATIC)[planKey];
   const link=(payLinks||{})[planKey]||"#";
+  const totalPrice=dCalc((plan?.price)||0,months);
+  const totalStars=dStars((plan?.stars)||500,months);
+  const saved=dSaved((plan?.price)||0,months);
+  const disc=DUR_DISC[months]||0;
   const [sending,setSending]=useState(false);
   const [sent,setSent]=useState(false);
 
@@ -293,7 +356,7 @@ const Payment = ({planKey,plans,payLinks,onBack,onPaid,userId}) => {
     if(!userId)return;
     setSending(true);
     try{
-      await apiPost(`/api/client/${userId}/payment-screenshot`,{plan:planKey});
+      await apiPost(`/api/client/${userId}/payment-screenshot`,{plan:planKey,months});
       setSent(true);
       // Не робимо автоматичний перехід — клієнт бачить інструкцію і сам вирішує
     }catch(e){
@@ -334,16 +397,21 @@ const Payment = ({planKey,plans,payLinks,onBack,onPaid,userId}) => {
       <TNav title="Оплата" onBack={onBack}/>
       <div style={{background:C.s1,borderRadius:18,border:`1px solid ${C.bc}`,padding:"16px"}}>
         <div style={{fontSize:12,color:C.ts,textTransform:"uppercase",letterSpacing:.8,marginBottom:10,fontWeight:600}}>Замовлення</div>
-        {[["Тариф",plan?.name],["Пробний","3 дні безкоштовно"]].map(([l,v])=>(
+        {[
+          ["Тариф",plan?.name],
+          ["Тривалість",DUR_LABEL[months]||"1 місяць"],
+          ["Пробний","3 дні безкоштовно"],
+          ...(disc>0?[["Знижка",`-${disc}%  (-${saved.toLocaleString()} ₴)`]]:[]),
+        ].map(([l,v])=>(
           <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",fontSize:15}}>
             <span style={{color:C.ts}}>{l}</span>
-            <span style={{color:l==="Пробний"?C.acc:C.tm,fontWeight:600}}>{v}</span>
+            <span style={{color:l==="Знижка"||l==="Пробний"?C.acc:C.tm,fontWeight:600}}>{v}</span>
           </div>
         ))}
         <Div style={{margin:"8px 0"}}/>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <span style={{fontSize:16,fontWeight:700,color:C.tm}}>До сплати</span>
-          <span style={{fontSize:32,fontWeight:900,color:C.acc}}>{plan?.price} ₴</span>
+          <span style={{fontSize:32,fontWeight:900,color:C.acc}}>{totalPrice.toLocaleString()} ₴</span>
         </div>
       </div>
       <div className="bl" style={{background:"rgba(200,245,58,.05)",borderRadius:18,border:`1.5px solid ${C.acc}`,padding:"16px",display:"flex",alignItems:"center",gap:12}}>
@@ -372,7 +440,7 @@ const Payment = ({planKey,plans,payLinks,onBack,onPaid,userId}) => {
           await fetch(`${API_BASE}/api/client/${userId}/request-stars-payment`,{
             method:"POST",
             headers:{"Content-Type":"application/json","X-Telegram-Init-Data":getInitData(),"X-Dev-User-Id":String(userId)},
-            body:JSON.stringify({plan:planKey})
+            body:JSON.stringify({plan:planKey,months})
           });
           if(tg){tg.close();}
         }catch(e){
@@ -1285,7 +1353,7 @@ export default function FitCoreApp() {
   const [plans,setPlans]=useState(null);const [payLinks,setPayLinks]=useState(null);
   const [settings,setSettings]=useState(null);
   const [clientTab,setClientTab]=useState("plan");const [adminTab,setAdminTab]=useState("dashboard");
-  const [selClient,setSelClient]=useState(null);const [selPlan,setSelPlan]=useState(null);
+  const [selClient,setSelClient]=useState(null);const [selPlan,setSelPlan]=useState(null);const [selMonths,setSelMonths]=useState(1);
   const [checkinMode,setCheckin]=useState(false);
 
   useEffect(()=>{
@@ -1348,8 +1416,8 @@ export default function FitCoreApp() {
         <div style={{fontSize:13,color:C.td}}>Вже пройшов анкету? Зачекай — доступ відкриється автоматично.</div>
       </div>
     );
-    if(screen==="plans")return <PlanSelect plans={plans} payLinks={payLinks} onSelect={p=>{setSelPlan(p);setScreen("payment");}}/>;
-    if(screen==="payment")return <Payment planKey={selPlan} plans={plans} payLinks={payLinks} onBack={()=>setScreen("plans")} onPaid={()=>setScreen("pending")} userId={userId}/>;
+    if(screen==="plans")return <PlanSelect plans={plans} payLinks={payLinks} onSelect={(p,m)=>{setSelPlan(p);setSelMonths(m||1);setScreen("payment");}}/>;
+    if(screen==="payment")return <Payment planKey={selPlan} months={selMonths||1} plans={plans} payLinks={payLinks} onBack={()=>setScreen("plans")} onPaid={()=>setScreen("pending")} userId={userId}/>;
     if(screen==="expired")return(
       <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 28px",textAlign:"center"}}>
         <div style={{fontSize:48}}>🔒</div>
@@ -1382,7 +1450,7 @@ export default function FitCoreApp() {
       if(clientTab==="plan")return <TrainPlan userId={userId}/>;
       if(clientTab==="nutrition")return <Nutrition userId={userId}/>;
       if(clientTab==="progress")return <Progress userId={userId}/>;
-      if(clientTab==="menu")return <MenuScreen plans={plans} payLinks={payLinks} onSelectPlan={p=>{setSelPlan(p);setScreen("payment");}} clientPlan={clientData?.plan} onShowReviews={()=>setClientTab("reviews")}/>;
+      if(clientTab==="menu")return <MenuScreen plans={plans} payLinks={payLinks} onSelectPlan={(p,m)=>{setSelPlan(p);setSelMonths(m||1);setScreen("payment");}} clientPlan={clientData?.plan} onShowReviews={()=>setClientTab("reviews")}/>;
       if(clientTab==="supplements")return <SupplementsScreen userId={userId} clientPlan={clientData?.plan} isAdmin={isAdmin}/>;
       if(clientTab==="reviews")return <ReviewsScreen userId={userId}/>;
       if(clientTab==="notifications")return <NotificationsScreen userId={userId}/>;
