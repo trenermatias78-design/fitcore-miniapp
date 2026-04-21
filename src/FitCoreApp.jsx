@@ -515,11 +515,92 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
   );
 };
 
+
+// ═══ EXERCISE TIPS ═══
+const EX_DB = {
+  "жим штанги лежачи":        {img:"https://wger.de/media/exercise-images/192/Bench-press-1.png",       tip:"Лопатки зведені, спина природній прогин. Штанга до нижньої частини грудей. Лікті 45-75°. Негативна фаза 2 сек."},
+  "жим гантелей лежачи":      {img:"https://wger.de/media/exercise-images/67/Dumbbell-Bench-Press-1.png",tip:"Гантелі на рівні грудей. На підйомі злегка звужуй. Повний діапазон руху."},
+  "жим під кутом":            {img:"https://wger.de/media/exercise-images/68/Incline-dumbbell-bench-press-1.png",tip:"Лава 30-45°. Акцент на верхній частині грудей. Лікті не надто широко."},
+  "зведення в кросовері":     {img:"https://wger.de/media/exercise-images/43/Cable-crossover-1.png",    tip:"Легкий нахил вперед. Руки злегка зігнуті. Пікове скорочення внизу 1 сек."},
+  "відмикання від підлоги":   {img:"https://wger.de/media/exercise-images/10/Push-ups-1.png",           tip:"Тіло — пряма лінія. Лікті 45° від тулуба. Груди торкаються підлоги."},
+  "віджимання":               {img:"https://wger.de/media/exercise-images/10/Push-ups-1.png",           tip:"Тіло — пряма лінія. Лікті 45°. Груди торкаються підлоги."},
+  "станова тяга":             {img:"https://wger.de/media/exercise-images/29/Deadlift-1.png",           tip:"Спина пряма, нейтральний хребет. Штанга над серединою стопи. Ноги штовхають підлогу. Не округляй поперек."},
+  "підтягування":             {img:"https://wger.de/media/exercise-images/4/Pull-ups-1.png",            tip:"Хват ширше плечей. Починай з повного розгинання. Тягни лопатки вниз перед рухом. Груди до перекладини."},
+  "тяга верхнього блоку":     {img:"https://wger.de/media/exercise-images/90/Lat-pull-down-1.png",      tip:"Легкий відхил назад. Тягни до верхньої частини грудей. Лікті вниз вздовж тулуба."},
+  "тяга штанги в нахилі":     {img:"https://wger.de/media/exercise-images/63/Barbell-row-1.png",        tip:"Нахил 45°, спина пряма. Тягни до поясу. Не розгойдуй корпус."},
+  "тяга гантелі":             {img:"https://wger.de/media/exercise-images/37/Dumbbell-row-1.png",       tip:"Упор рукою і коліном. Спина паралельно підлозі. Лікоть вгору-назад."},
+  "тяга горизонтального блоку":{img:"https://wger.de/media/exercise-images/86/Seated-cable-rows-1.png", tip:"Сидячи прямо. Тягни до пупка, лікті вздовж тіла. Не відхиляйся назад."},
+  "гіперекстензія":           {img:"https://wger.de/media/exercise-images/36/Back-extension-1.png",     tip:"Підіймайся до прямої лінії тіла — не вище. Повільний контрольований рух."},
+  "жим штанги стоячи":        {img:"https://wger.de/media/exercise-images/74/Overhead-press-1.png",     tip:"Ноги на ширині плечей. Штанга вертикально вгору. Корпус не прогинається назад."},
+  "жим гантелей сидячи":      {img:"https://wger.de/media/exercise-images/72/Dumbbell-shoulder-press-1.png",tip:"Спина пряма. Гантелі на рівні вух. Жим вгору без стуку."},
+  "жим гантелей стоячи":      {img:"https://wger.de/media/exercise-images/72/Dumbbell-shoulder-press-1.png",tip:"Спина пряма. Гантелі на рівні вух. Жим вгору без стуку."},
+  "підйом гантелей в сторони":{img:"https://wger.de/media/exercise-images/69/Dumbbell-lateral-raise-1.png",tip:"Руки злегка зігнуті. Підйом до рівня плечей — не вище. Мізинець трохи вище великого."},
+  "махи в сторони":           {img:"https://wger.de/media/exercise-images/69/Dumbbell-lateral-raise-1.png",tip:"Руки злегка зігнуті. Підйом до рівня плечей. Мізинець вище великого."},
+  "махи в нахилі":            {img:"https://wger.de/media/exercise-images/84/Reverse-flyes-1.png",      tip:"Нахил 45-90°. Підйом ліктями вгору-назад. Акцент на задній дельті."},
+  "зворотні розведення":      {img:"https://wger.de/media/exercise-images/84/Reverse-flyes-1.png",      tip:"Нахил 45-90°. Підйом ліктями вгору-назад. Акцент на задній дельті."},
+  "тяга до підборіддя":       {img:"https://wger.de/media/exercise-images/85/Upright-row-1.png",        tip:"Хват вузький. Тягни лікті вгору-в сторони. Не піднімай вище підборіддя."},
+  "шраги":                    {img:"https://wger.de/media/exercise-images/88/Barbell-shrug-1.png",       tip:"Руки прямі. Підйом плечей вертикально вгору. Без кругових рухів. Пікове скорочення 1 сек."},
+  "підйом штанги на біцепс":  {img:"https://wger.de/media/exercise-images/78/Barbell-curl-1.png",       tip:"Лікті притиснуті до тіла. Підйом до повного скорочення. Опускання 2-3 сек."},
+  "підйом гантелей на біцепс":{img:"https://wger.de/media/exercise-images/79/Dumbbell-curl-1.png",      tip:"Лікті нерухомі. Обертай передпліччя під час підйому. Повне розгинання внизу."},
+  "молотки":                  {img:"https://wger.de/media/exercise-images/80/Hammer-curl-1.png",         tip:"Хват нейтральний. Лікті нерухомі. Тягни до плеча. Акцент на брахіаліс."},
+  "французький жим":          {img:"https://wger.de/media/exercise-images/70/Tricep-extension-1.png",   tip:"Плечі вертикально. Опускай за голову. Лікті нерухомі — лише передпліччя рухається."},
+  "відмикання на брусах":     {img:"https://wger.de/media/exercise-images/95/Dips-1.png",               tip:"Тіло вертикально для трицепса. Лікті вздовж тіла. Повне розгинання вгорі."},
+  "розгинання в блоці":       {img:"https://wger.de/media/exercise-images/71/Tricep-pushdown-1.png",    tip:"Лікті притиснуті до тіла. Повне випрямлення. Пікове скорочення внизу."},
+  "присідання зі штангою":    {img:"https://wger.de/media/exercise-images/1/Squats-1.png",              tip:"Штанга на трапеції. Ноги ширше плечей, носки 30° назовні. Коліна над носками. Сідати до паралелі або нижче."},
+  "присідання":               {img:"https://wger.de/media/exercise-images/1/Squats-1.png",              tip:"Ноги на ширині плечей, носки 30° назовні. Коліна над носками. Спина пряма."},
+  "жим ногами":               {img:"https://wger.de/media/exercise-images/58/Leg-press-1.png",          tip:"Стопи посередині платформи. Коліна не виходять за носки. Не блокуй коліна вгорі."},
+  "румунська тяга":           {img:"https://wger.de/media/exercise-images/40/Romanian-deadlift-1.png",  tip:"Спина пряма. Нахил з відведенням таза назад. Відчувай розтяжку задньої поверхні стегна."},
+  "розгинання ніг":           {img:"https://wger.de/media/exercise-images/56/Leg-extension-1.png",      tip:"Розгинай до повного випрямлення. Пікове скорочення вгорі. Повільне опускання."},
+  "згинання ніг":             {img:"https://wger.de/media/exercise-images/57/Leg-curl-1.png",           tip:"Таз притиснутий. Згинай до 90°. Повне розгинання внизу."},
+  "випади":                   {img:"https://wger.de/media/exercise-images/35/Lunges-1.png",             tip:"Коліно заднє майже торкається підлоги. Переднє коліно над носком. Штовхайся п'ятою."},
+  "болгарські присідання":    {img:"https://wger.de/media/exercise-images/35/Lunges-1.png",             tip:"Задня нога на лаві. Передня нога далеко вперед. Опускайся до паралелі."},
+  "підйом на носки":          {img:"https://wger.de/media/exercise-images/61/Calf-raises-1.png",        tip:"Повний діапазон — від максимального опускання до пальців. Пікове скорочення 1 сек."},
+  "ягідичний міст":           {img:"https://wger.de/media/exercise-images/94/Glute-bridge-1.png",       tip:"Підйом таза — стискай сідниці. Пікове скорочення 2 сек. Поясниця не прогинається."},
+  "скручування":              {img:"https://wger.de/media/exercise-images/91/Crunches-1.png",           tip:"Піднімай лопатки від підлоги. Поясниця притиснута. Видих у верхній точці."},
+  "планка":                   {img:"https://wger.de/media/exercise-images/3/Plank-1.png",               tip:"Тіло — пряма лінія. Таз не піднімай і не опускай. Дихай рівно."},
+  "підйом ніг":               {img:"https://wger.de/media/exercise-images/38/Leg-raise-1.png",          tip:"Поясниця притиснута. Підйом до 90°. Повільне опускання без торкання підлоги."},
+  "підйом ніг у висі":        {img:"https://wger.de/media/exercise-images/38/Leg-raise-1.png",          tip:"Не гойдайся. Підйом колін або прямих ніг. Поперек не прогинається."},
+  "берпі":                    {img:"https://wger.de/media/exercise-images/10/Push-ups-1.png",           tip:"Стрибок вниз → упор → відмикання → підйом → стрибок вгору. Приземляйся м'яко."},
+  "гірська стежина":          {img:"https://wger.de/media/exercise-images/10/Push-ups-1.png",           tip:"Упор лежачи. По черзі підтягуй коліна до грудей. Таз рівний. Швидкий темп."},
+};
+
+function getExTip(name){
+  if(!name)return null;
+  const low=name.toLowerCase();
+  for(const [k,v] of Object.entries(EX_DB)){if(low.includes(k))return v;}
+  return null;
+}
+
+const ExModal=({ex,onClose})=>{
+  const tip=getExTip(ex?.name);
+  const [err,setErr]=useState(false);
+  if(!tip)return null;
+  return(
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+      <div onClick={e=>e.stopPropagation()} className="fi"
+        style={{background:C.s1,borderRadius:"24px 24px 0 0",width:"100%",maxWidth:430,padding:"20px 20px 36px",maxHeight:"85vh",overflowY:"auto"}}>
+        <div style={{width:40,height:4,borderRadius:2,background:C.bc,margin:"0 auto 16px"}}/>
+        <div style={{fontSize:20,fontWeight:900,color:C.tm,marginBottom:14}}>{ex.name}</div>
+        {!err&&<img src={tip.img} alt={ex.name} onError={()=>setErr(true)}
+          style={{width:"100%",borderRadius:16,marginBottom:14,objectFit:"cover",maxHeight:220,background:C.s2}}/>}
+        <div style={{background:"rgba(200,245,58,.06)",border:"1px solid rgba(200,245,58,.2)",borderRadius:14,padding:"14px 16px",marginBottom:14}}>
+          <div style={{fontSize:12,color:C.acc,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:8}}>💡 Техніка</div>
+          <div style={{fontSize:15,color:C.tm,lineHeight:1.7}}>{tip.tip}</div>
+        </div>
+        {ex.sets&&<div style={{fontSize:14,color:C.ts,marginBottom:6}}>📊 <span style={{color:C.tm,fontWeight:700}}>{ex.sets}×{ex.reps}</span></div>}
+        {ex.note&&<div style={{fontSize:13,color:C.td,fontStyle:"italic"}}>{ex.note}</div>}
+        <button onClick={onClose} style={{width:"100%",marginTop:16,background:C.s2,color:C.ts,border:`1px solid ${C.bc}`,borderRadius:14,padding:"14px 0",fontSize:15,fontWeight:700}}>Закрити</button>
+      </div>
+    </div>
+  );
+};
+
 // ═══ TRAINING PLAN ═══
 const TrainPlan = ({userId}) => {
   const [data,setData]=useState(null);
   const [loading,setLoad]=useState(true);
   const [gen,setGen]=useState(false);
+  const [selEx,setSelEx]=useState(null);
   const load=useCallback(async()=>{
     try{setLoad(true);const r=await apiGet(`/api/client/${userId}/plan`);setData(r.plan);}
     catch(e){console.error(e);}finally{setLoad(false);}
@@ -566,9 +647,11 @@ const TrainPlan = ({userId}) => {
                 {(d.exercises||[]).map((ex,j)=>(
                   <div key={j}>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}>
+                      <div onClick={()=>getExTip(ex.name)&&setSelEx(ex)}
+                        style={{display:"flex",alignItems:"center",gap:8,flex:1,cursor:getExTip(ex.name)?"pointer":"default"}}>
                         <div style={{width:6,height:6,borderRadius:"50%",background:C.acc,flexShrink:0}}/>
                         <div style={{fontSize:14,color:C.tm}}>{ex.name}</div>
+                        {getExTip(ex.name)&&<div style={{fontSize:10,color:"#0a0a0a",background:C.acc,borderRadius:6,padding:"1px 6px",fontWeight:800,flexShrink:0}}>?</div>}
                       </div>
                       <div style={{fontSize:13,color:C.acc,fontWeight:700,background:"rgba(200,245,58,.08)",padding:"4px 10px",borderRadius:8}}>{ex.sets}×{ex.reps}</div>
                     </div>
@@ -591,6 +674,7 @@ const TrainPlan = ({userId}) => {
           <div style={{fontSize:13,color:C.ts,lineHeight:1.6}}>{weekNote}</div>
         </div>}
       </div>
+      {selEx&&<ExModal ex={selEx} onClose={()=>setSelEx(null)}/>}
     </div>
   );
 };
