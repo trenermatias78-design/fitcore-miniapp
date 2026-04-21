@@ -176,49 +176,105 @@ const PLANS_STATIC = {
   },
 };
 const TRAINER_LINK = "https://t.me/matmatias";
-// ═══ MENU (тарифи і опис) ═══
+// ═══ MENU — тарифи + тривалість в одному місці ═══
 const MenuScreen = ({plans,payLinks,onSelectPlan,clientPlan,onShowReviews}) => {
   const p = plans || PLANS_STATIC;
-  const planV = {start:"green",premium:"blue",vip:"purple"};
+  const [months,setMonths] = useState(1);
+
   return (
     <Scr>
       <div style={{fontSize:26,fontWeight:900,color:C.tm,letterSpacing:-1}}>Тарифи</div>
-      <div style={{fontSize:15,color:C.ts,lineHeight:1.6}}>Обери рівень під свої цілі. Всі тарифи починаються з 3 днів безкоштовно.</div>
-      {Object.entries(p).map(([k,plan])=>(
-        <div key={k} style={{background:C.s1,borderRadius:18,border:`1.5px solid ${plan.hot?C.acc:C.bc}`,padding:"18px",position:"relative",overflow:"hidden"}}>
-          {plan.hot&&<div style={{position:"absolute",top:16,right:16,fontSize:11,color:"#0a0a0a",background:C.acc,borderRadius:20,padding:"3px 12px",fontWeight:800}}>Популярний</div>}
-          {clientPlan===k&&<div style={{position:"absolute",top:16,right:plan.hot?120:16,fontSize:11,color:C.acc,background:"rgba(200,245,58,.1)",border:`1px solid ${C.acc}`,borderRadius:20,padding:"3px 12px",fontWeight:700}}>Твій тариф</div>}
-          <div style={{display:"flex",alignItems:"baseline",gap:10,marginBottom:4}}>
-            <div style={{fontSize:22,fontWeight:900,color:C.tm}}>{plan.name}</div>
-          </div>
-          <div style={{fontSize:36,fontWeight:900,color:C.acc,letterSpacing:-1,marginBottom:4}}>{plan.price} <span style={{fontSize:15,color:C.ts,fontWeight:500}}>₴/міс</span></div>
-          <div style={{fontSize:14,color:C.ts,marginBottom:14}}>{plan.desc}</div>
-          <div style={{height:1,background:C.bc,marginBottom:12}}/>
-          <div style={{fontSize:12,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:8}}>Включено:</div>
-          {(plan.features||[]).map(f=>(
-            <div key={f} style={{display:"flex",alignItems:"center",gap:8,fontSize:14,color:C.tm,marginBottom:7}}>
-              <div style={{width:18,height:18,borderRadius:"50%",background:"rgba(200,245,58,.15)",border:`1px solid ${C.acc}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5 4-4" stroke={C.acc} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      <div style={{fontSize:14,color:C.ts}}>3 дні безкоштовно · оплата після пробного</div>
+
+      {/* Duration switcher */}
+      <div style={{background:C.s1,borderRadius:18,border:`1px solid ${C.bc}`,padding:"14px"}}>
+        <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Тривалість підписки</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
+          {[1,3,6,12].map(m=>{
+            const on=months===m;
+            const disc=DUR_DISC[m];
+            return(
+              <div key={m} onClick={()=>setMonths(m)}
+                style={{borderRadius:14,border:`2px solid ${on?C.acc:C.bc}`,background:on?"rgba(200,245,58,.08)":C.s2,padding:"10px 4px",cursor:"pointer",textAlign:"center",position:"relative",transition:"all .15s"}}>
+                {disc>0&&<div style={{position:"absolute",top:-8,left:"50%",transform:"translateX(-50%)",background:m===12?C.acc:m===6?"#e8a832":"#4a9fdf",color:"#080808",fontSize:8,fontWeight:900,padding:"2px 5px",borderRadius:6,whiteSpace:"nowrap",lineHeight:1.4}}>-{disc}%</div>}
+                <div style={{fontSize:m===12?10:12,fontWeight:800,color:on?C.acc:C.ts,lineHeight:1.3}}>{m===12?"1 рік":m+"міс"}</div>
               </div>
-              {f}
+            );
+          })}
+        </div>
+        {DUR_FUNNEL[months]&&(
+          <div style={{marginTop:10,padding:"10px 12px",background:"rgba(200,245,58,.06)",border:"1px solid rgba(200,245,58,.2)",borderRadius:12,fontSize:13,color:C.acc,fontWeight:600,lineHeight:1.5}}>
+            💡 {DUR_FUNNEL[months]}
+          </div>
+        )}
+      </div>
+
+      {/* Plan cards */}
+      {Object.entries(p).map(([k,plan])=>{
+        const price=dCalc(plan.price,months);
+        const stars=dStars(plan.stars||500,months);
+        const saved=dSaved(plan.price,months);
+        const perMo=months>1?Math.round(price/months):null;
+        const isMine=clientPlan===k;
+        return(
+          <div key={k} style={{background:C.s1,borderRadius:18,border:`1.5px solid ${plan.hot?C.acc:C.bc}`,padding:"18px",position:"relative",overflow:"hidden"}}>
+            {plan.hot&&<div style={{position:"absolute",top:16,right:16,fontSize:11,color:"#0a0a0a",background:C.acc,borderRadius:20,padding:"3px 12px",fontWeight:800}}>Популярний</div>}
+            {isMine&&<div style={{position:"absolute",top:16,right:plan.hot?120:16,fontSize:11,color:C.acc,background:"rgba(200,245,58,.1)",border:`1px solid ${C.acc}`,borderRadius:20,padding:"3px 12px",fontWeight:700}}>Твій тариф</div>}
+            {months>1&&saved>0&&<div style={{position:"absolute",top:isMine||plan.hot?40:16,right:16,fontSize:10,color:"#080808",background:"#e8a832",borderRadius:20,padding:"2px 8px",fontWeight:800}}>-{saved.toLocaleString()} ₴</div>}
+
+            <div style={{fontSize:22,fontWeight:900,color:C.tm,marginBottom:4}}>{plan.name}</div>
+
+            {/* Price */}
+            <div style={{display:"flex",alignItems:"baseline",gap:6,marginBottom:2}}>
+              <span style={{fontSize:34,fontWeight:900,color:C.acc,letterSpacing:-1}}>{price.toLocaleString()}</span>
+              <span style={{fontSize:14,color:C.ts}}>₴ / {DUR_LABEL[months]}</span>
             </div>
-          ))}
-          {(plan.no||[]).length>0&&<>
-            <div style={{fontSize:12,color:C.td,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:8,marginTop:4}}>Недоступно:</div>
-            {(plan.no||[]).map(f=>(
-              <div key={f} style={{display:"flex",alignItems:"center",gap:8,fontSize:13,color:C.td,marginBottom:6}}>
-                <div style={{width:18,height:18,borderRadius:"50%",background:C.s2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke={C.td} strokeWidth="1.5" strokeLinecap="round"/></svg>
+            {perMo&&<div style={{fontSize:13,color:C.ts,marginBottom:4}}>= {perMo} ₴/міс</div>}
+            <div style={{fontSize:12,color:"#f6c90e",marginBottom:12}}>⭐ або {stars.toLocaleString()} зірок Telegram</div>
+
+            <div style={{fontSize:14,color:C.ts,marginBottom:12,lineHeight:1.5}}>{plan.desc}</div>
+            <div style={{height:1,background:C.bc,marginBottom:12}}/>
+
+            {/* Features */}
+            <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:8}}>Включено:</div>
+            {(plan.features||[]).map(f=>(
+              <div key={f} style={{display:"flex",alignItems:"center",gap:8,fontSize:14,color:C.tm,marginBottom:7}}>
+                <div style={{width:18,height:18,borderRadius:"50%",background:"rgba(200,245,58,.15)",border:`1px solid ${C.acc}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5 4-4" stroke={C.acc} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </div>
                 {f}
               </div>
             ))}
-          </>}
-          {clientPlan!==k&&<PBtn onClick={()=>onSelectPlan(k)} style={{marginTop:14,background:plan.hot?C.acc:C.s2,color:plan.hot?"#0a0a0a":C.tm}}>
-            {clientPlan?"Перейти на "+plan.name:"Обрати "+plan.name}
-          </PBtn>}
+            {(plan.no||[]).length>0&&<>
+              <div style={{fontSize:11,color:C.td,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:8,marginTop:4}}>Недоступно:</div>
+              {(plan.no||[]).map(f=>(
+                <div key={f} style={{display:"flex",alignItems:"center",gap:8,fontSize:13,color:C.td,marginBottom:6}}>
+                  <div style={{width:18,height:18,borderRadius:"50%",background:C.s2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke={C.td} strokeWidth="1.5" strokeLinecap="round"/></svg>
+                  </div>
+                  {f}
+                </div>
+              ))}
+            </>}
+
+            {!isMine&&<PBtn onClick={()=>onSelectPlan(k,months)} style={{marginTop:14,background:plan.hot?C.acc:C.s2,color:plan.hot?"#0a0a0a":C.tm}}>
+              {clientPlan?"Перейти на "+plan.name:"Обрати "+plan.name}
+            </PBtn>}
+          </div>
+        );
+      })}
+
+      {months>1&&(
+        <div style={{background:"rgba(200,245,58,.04)",border:"1px solid rgba(200,245,58,.12)",borderRadius:16,padding:"14px 16px"}}>
+          <div style={{fontSize:14,fontWeight:700,color:C.acc,marginBottom:8}}>🎯 Чому довгий пакет вигідніший?</div>
+          {["Результат у фітнесі — це мінімум 3 місяці послідовної роботи","Зупинитись на місяць = майже повернутись до початку","Довгий пакет = зобов'язання перед собою = вищий результат",`Реальна економія ${DUR_DISC[months]}% — це ${dSaved(1699,months).toLocaleString()} ₴+ в залежності від тарифу`].map((t,i)=>(
+            <div key={i} style={{display:"flex",gap:8,fontSize:13,color:C.ts,marginBottom:5,lineHeight:1.5}}>
+              <span style={{color:C.acc,fontWeight:700,flexShrink:0}}>▸</span>{t}
+            </div>
+          ))}
         </div>
-      ))}
+      )}
+
       <div style={{background:"rgba(200,245,58,.05)",border:"1px solid rgba(200,245,58,.15)",borderRadius:16,padding:"16px"}}>
         <div style={{fontSize:15,fontWeight:700,color:C.acc,marginBottom:6}}>Питання щодо тарифів?</div>
         <div style={{fontSize:14,color:C.ts,marginBottom:12,lineHeight:1.6}}>Напиши тренеру — підберемо оптимальний варіант особисто.</div>
@@ -1404,7 +1460,7 @@ export default function FitCoreApp() {
   const showTopNav=["client","admin"].includes(screen)&&clientTab!=="profile"&&!(isAdminMode&&adminTab==="dashboard");
 
   const renderContent=()=>{
-    if(screen==="welcome")return <Welcome onStart={()=>setScreen("plans")} onLogin={()=>setScreen("goto_bot")}/>;
+    if(screen==="welcome")return <Welcome onStart={()=>setScreen("goto_bot")} onLogin={()=>setScreen("goto_bot")}/>;
     if(screen==="goto_bot")return(
       <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,padding:"0 28px",textAlign:"center"}}>
         <img src="/photo2.jpg" alt="" style={{width:100,height:100,borderRadius:"50%",objectFit:"cover",objectPosition:"center 20%",border:`3px solid ${C.acc}`}}/>
@@ -1417,13 +1473,13 @@ export default function FitCoreApp() {
       </div>
     );
     if(screen==="plans")return <PlanSelect plans={plans} payLinks={payLinks} onSelect={(p,m)=>{setSelPlan(p);setSelMonths(m||1);setScreen("payment");}}/>;
-    if(screen==="payment")return <Payment planKey={selPlan} months={selMonths||1} plans={plans} payLinks={payLinks} onBack={()=>setScreen("plans")} onPaid={()=>setScreen("pending")} userId={userId}/>;
+    if(screen==="payment")return <Payment planKey={selPlan} months={selMonths||1} plans={plans} payLinks={payLinks} onBack={()=>{setClientTab("menu");setScreen("client");}} onPaid={()=>setScreen("pending")} userId={userId}/>;
     if(screen==="expired")return(
       <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 28px",textAlign:"center"}}>
         <div style={{fontSize:48}}>🔒</div>
         <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-1}}>Пакет закінчився</div>
         <div style={{fontSize:15,color:C.ts,lineHeight:1.7}}>Твій тариф завершився.<br/>Придбай новий пакет щоб відновити доступ.</div>
-        <PBtn onClick={()=>setScreen("plans")}>Придбати тариф</PBtn>
+        <PBtn onClick={()=>{setClientTab("menu");setScreen("client");}}>Придбати тариф</PBtn>
         <div style={{fontSize:13,color:C.td}}>Всі твої дані збережені</div>
       </div>
     );
