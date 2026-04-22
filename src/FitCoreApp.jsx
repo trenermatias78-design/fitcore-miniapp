@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useLayoutEffect, useRef } from "react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 const tg = window.Telegram?.WebApp;
