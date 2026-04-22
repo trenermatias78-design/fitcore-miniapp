@@ -611,63 +611,76 @@ function getExTip(name) {
 }
 
 // ═══ EXERCISE MODAL ═══
-// Smart positioning для tooltip — завжди біля anchor, адаптивна висота
-function calcTooltipPos(anchorRect, modalW, maxH, gap = 8, margin = 12) {
-  if (!anchorRect) return {top: margin, left: margin, placement: "bottom", height: maxH};
-  const winH = window.innerHeight;
-  const winW = window.innerWidth;
-
-  const spaceBelow = winH - anchorRect.bottom - gap - margin;
-  const spaceAbove = anchorRect.top - gap - margin;
-
-  let top, placement, height;
-
-  // Обираємо сторону де БІЛЬШЕ місця
-  if (spaceBelow >= spaceAbove) {
-    // Знизу — від anchor.bottom + gap, висота обмежена доступним простором
-    top = anchorRect.bottom + gap;
-    height = Math.min(maxH, spaceBelow);
-    placement = "bottom";
-  } else {
-    // Зверху — висота обмежена spaceAbove, top = anchor.top - height - gap
-    height = Math.min(maxH, spaceAbove);
-    top = anchorRect.top - height - gap;
-    placement = "top";
-  }
-
-  // Горизонталь: центруємо по anchor + shift
-  const anchorCenterX = anchorRect.left + anchorRect.width / 2;
-  let left = anchorCenterX - modalW / 2;
-  if (left < margin) left = margin;
-  if (left + modalW > winW - margin) left = winW - modalW - margin;
-
-  return {top, left, placement, height};
-}
-
-const ExModal = ({ex, anchorRect, onClose}) => {
+const ExModal = ({ex, anchorEl, onClose}) => {
   const info = getExTip(ex?.name);
   const [imgUrl, setImgUrl] = useState(null);
   const [imgLoading, setImgLoading] = useState(true);
   const [imgErr, setImgErr] = useState(false);
   const [visible, setVisible] = useState(false);
-  const [pos, setPos] = useState({top: 0, left: 0, placement: "bottom"});
+  const [pos, setPos] = useState({top: -9999, left: 12, height: 400, placement: "bottom"});
   const modalRef = useRef(null);
 
-  // Розрахунок позиції на основі anchor
+  // Позиціонування ПІСЛЯ рендеру, з реальною висотою модалки та актуальним rect anchor
   useLayoutEffect(() => {
+    if (!anchorEl || !modalRef.current) return;
+    const rect = anchorEl.getBoundingClientRect();
+    const winH = window.innerHeight;
     const winW = window.innerWidth;
+    const margin = 12;
+    const gap = 8;
     const modalW = Math.min(winW - 24, 360);
-    const maxH = 400;
-    setPos(calcTooltipPos(anchorRect, modalW, maxH));
-    requestAnimationFrame(() => setVisible(true));
-  }, [anchorRect]);
+    const realH = modalRef.current.offsetHeight;
 
-  // Recalc on resize/scroll
+    const spaceBelow = winH - rect.bottom - gap - margin;
+    const spaceAbove = rect.top - gap - margin;
+    let top, height, placement;
+
+    if (spaceBelow >= spaceAbove) {
+      top = rect.bottom + gap;
+      height = Math.min(realH, spaceBelow);
+      placement = "bottom";
+    } else {
+      height = Math.min(realH, spaceAbove);
+      top = rect.top - height - gap;
+      placement = "top";
+    }
+
+    let left = rect.left + rect.width / 2 - modalW / 2;
+    if (left < margin) left = margin;
+    if (left + modalW > winW - margin) left = winW - modalW - margin;
+
+    setPos({top, left, height, placement});
+    requestAnimationFrame(() => setVisible(true));
+  }, [anchorEl, imgUrl, imgLoading]);
+
+  // Recalc on scroll/resize
   useEffect(() => {
+    if (!anchorEl) return;
     const recalc = () => {
+      if (!modalRef.current || !anchorEl) return;
+      const rect = anchorEl.getBoundingClientRect();
+      const winH = window.innerHeight;
       const winW = window.innerWidth;
+      const margin = 12;
+      const gap = 8;
       const modalW = Math.min(winW - 24, 360);
-      setPos(calcTooltipPos(anchorRect, modalW, 400));
+      const realH = modalRef.current.offsetHeight;
+      const spaceBelow = winH - rect.bottom - gap - margin;
+      const spaceAbove = rect.top - gap - margin;
+      let top, height, placement;
+      if (spaceBelow >= spaceAbove) {
+        top = rect.bottom + gap;
+        height = Math.min(realH, spaceBelow);
+        placement = "bottom";
+      } else {
+        height = Math.min(realH, spaceAbove);
+        top = rect.top - height - gap;
+        placement = "top";
+      }
+      let left = rect.left + rect.width / 2 - modalW / 2;
+      if (left < margin) left = margin;
+      if (left + modalW > winW - margin) left = winW - modalW - margin;
+      setPos({top, left, height, placement});
     };
     window.addEventListener("resize", recalc);
     window.addEventListener("scroll", recalc, true);
@@ -675,7 +688,7 @@ const ExModal = ({ex, anchorRect, onClose}) => {
       window.removeEventListener("resize", recalc);
       window.removeEventListener("scroll", recalc, true);
     };
-  }, [anchorRect]);
+  }, [anchorEl]);
 
   const winW = window.innerWidth;
   const modalW = Math.min(winW - 24, 360);
@@ -771,7 +784,7 @@ const TrainPlan = ({userId}) => {
   const [loading,setLoad]=useState(true);
   const [gen,setGen]=useState(false);
   const [selEx,setSelEx]=useState(null);
-  const [anchorRect,setAnchorRect]=useState(null);
+  const [anchorEl,setAnchorEl]=useState(null);
   const load=useCallback(async()=>{
     try{setLoad(true);const r=await apiGet(`/api/client/${userId}/plan`);setData(r.plan);}
     catch(e){console.error(e);}finally{setLoad(false);}
@@ -822,7 +835,7 @@ const TrainPlan = ({userId}) => {
                         <div style={{width:6,height:6,borderRadius:"50%",background:C.acc,flexShrink:0}}/>
                         <div style={{fontSize:14,color:C.tm}}>{ex.name}</div>
                         {getExTip(ex.name)&&(
-                          <div onClick={e=>{e.stopPropagation();setAnchorRect(e.currentTarget.getBoundingClientRect());setSelEx(ex);}}
+                          <div onClick={e=>{e.stopPropagation();setAnchorEl(e.currentTarget);setSelEx(ex);}}
                             style={{fontSize:10,color:"#0a0a0a",background:C.acc,borderRadius:6,padding:"1px 7px",fontWeight:900,flexShrink:0,cursor:"pointer",userSelect:"none"}}>?</div>
                         )}
                       </div>
@@ -847,7 +860,7 @@ const TrainPlan = ({userId}) => {
           <div style={{fontSize:13,color:C.ts,lineHeight:1.6}}>{weekNote}</div>
         </div>}
       </div>
-      {selEx&&<ExModal ex={selEx} anchorRect={anchorRect} onClose={()=>setSelEx(null)}/>}
+      {selEx&&<ExModal ex={selEx} anchorEl={anchorEl} onClose={()=>setSelEx(null)}/>}
     </div>
   );
 };
