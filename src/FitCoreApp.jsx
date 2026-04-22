@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useLayoutEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 const tg = window.Telegram?.WebApp;
@@ -610,89 +611,27 @@ function getExTip(name) {
   return null;
 }
 
-// ═══ EXERCISE MODAL ═══
-const ExModal = ({ex, anchorEl, onClose}) => {
+// ═══ EXERCISE MODAL — центрований оверлей через портал ═══
+const ExModal = ({ex, onClose}) => {
   const info = getExTip(ex?.name);
   const [imgUrl, setImgUrl] = useState(null);
   const [imgLoading, setImgLoading] = useState(true);
   const [imgErr, setImgErr] = useState(false);
   const [visible, setVisible] = useState(false);
-  const [pos, setPos] = useState({top: -9999, left: 12, height: 400, placement: "bottom"});
-  const modalRef = useRef(null);
 
-  // Позиціонування ПІСЛЯ рендеру, з реальною висотою модалки та актуальним rect anchor
-  useLayoutEffect(() => {
-    if (!anchorEl || !modalRef.current) return;
-    const rect = anchorEl.getBoundingClientRect();
-    const winH = window.innerHeight;
-    const winW = window.innerWidth;
-    const margin = 12;
-    const gap = 8;
-    const modalW = Math.min(winW - 24, 360);
-    const realH = modalRef.current.offsetHeight;
-
-    const spaceBelow = winH - rect.bottom - gap - margin;
-    const spaceAbove = rect.top - gap - margin;
-    let top, height, placement;
-
-    if (spaceBelow >= spaceAbove) {
-      top = rect.bottom + gap;
-      height = Math.min(realH, spaceBelow);
-      placement = "bottom";
-    } else {
-      height = Math.min(realH, spaceAbove);
-      top = rect.top - height - gap;
-      placement = "top";
-    }
-
-    let left = rect.left + rect.width / 2 - modalW / 2;
-    if (left < margin) left = margin;
-    if (left + modalW > winW - margin) left = winW - modalW - margin;
-
-    setPos({top, left, height, placement});
-    requestAnimationFrame(() => setVisible(true));
-  }, [anchorEl, imgUrl, imgLoading]);
-
-  // Recalc on scroll/resize
+  // Запустити анімацію появи
   useEffect(() => {
-    if (!anchorEl) return;
-    const recalc = () => {
-      if (!modalRef.current || !anchorEl) return;
-      const rect = anchorEl.getBoundingClientRect();
-      const winH = window.innerHeight;
-      const winW = window.innerWidth;
-      const margin = 12;
-      const gap = 8;
-      const modalW = Math.min(winW - 24, 360);
-      const realH = modalRef.current.offsetHeight;
-      const spaceBelow = winH - rect.bottom - gap - margin;
-      const spaceAbove = rect.top - gap - margin;
-      let top, height, placement;
-      if (spaceBelow >= spaceAbove) {
-        top = rect.bottom + gap;
-        height = Math.min(realH, spaceBelow);
-        placement = "bottom";
-      } else {
-        height = Math.min(realH, spaceAbove);
-        top = rect.top - height - gap;
-        placement = "top";
-      }
-      let left = rect.left + rect.width / 2 - modalW / 2;
-      if (left < margin) left = margin;
-      if (left + modalW > winW - margin) left = winW - modalW - margin;
-      setPos({top, left, height, placement});
-    };
-    window.addEventListener("resize", recalc);
-    window.addEventListener("scroll", recalc, true);
-    return () => {
-      window.removeEventListener("resize", recalc);
-      window.removeEventListener("scroll", recalc, true);
-    };
-  }, [anchorEl]);
+    requestAnimationFrame(() => setVisible(true));
+  }, []);
 
-  const winW = window.innerWidth;
-  const modalW = Math.min(winW - 24, 360);
+  // Блокування body scroll поки модалка відкрита
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
 
+  // Фетч зображення з wger.de
   useEffect(() => {
     if (!info?.search) { setImgLoading(false); return; }
     setImgLoading(true);
@@ -717,53 +656,65 @@ const ExModal = ({ex, anchorEl, onClose}) => {
 
   if (!info) return null;
 
-  const handleClose = () => { setVisible(false); setTimeout(onClose, 140); };
+  const handleClose = () => { setVisible(false); setTimeout(onClose, 160); };
 
-  // Origin для scale анімації — залежить від placement
-  const transformOrigin = pos.placement === "top" ? "center bottom" : "center top";
-
-  return (
-    <div onClick={handleClose}
+  const overlayContent = (
+    <div
+      onClick={handleClose}
       style={{
-        position:"fixed",inset:0,
-        background:visible?"rgba(0,0,0,.55)":"rgba(0,0,0,0)",
-        zIndex:1000,
-        transition:"background .15s ease-out",
-      }}>
+        position: "fixed",
+        inset: 0,
+        background: visible ? "rgba(0,0,0,.7)" : "rgba(0,0,0,0)",
+        backdropFilter: visible ? "blur(4px)" : "blur(0px)",
+        WebkitBackdropFilter: visible ? "blur(4px)" : "blur(0px)",
+        zIndex: 9999,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+        transition: "background .18s ease-out, backdrop-filter .18s ease-out",
+      }}
+    >
       <div
-        ref={modalRef}
-        onClick={e=>e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
         style={{
-          position:"fixed",
-          left:pos.left,
-          width:modalW,
-          top:pos.top,
-          background:C.s1,
-          borderRadius:16,
-          border:`1px solid ${C.bc}`,
-          padding:"14px",
-          maxHeight:pos.height||400,
-          overflowY:"auto",
-          boxShadow:"0 12px 40px rgba(0,0,0,.55), 0 0 0 1px rgba(200,245,58,.08)",
-          zIndex:1001,
-          opacity:visible?1:0,
-          transform:`scale(${visible?1:.92})`,
-          transformOrigin,
-          transition:"opacity .15s ease-out, transform .15s ease-out",
-        }}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-          <div style={{fontSize:16,fontWeight:900,color:C.tm,flex:1,paddingRight:8}}>{ex.name}</div>
-          <button onClick={handleClose} style={{background:C.s2,border:`1px solid ${C.bc}`,borderRadius:10,width:28,height:28,color:C.ts,fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>×</button>
+          position: "relative",
+          width: "100%",
+          maxWidth: 400,
+          maxHeight: "85vh",
+          overflowY: "auto",
+          background: C.s1,
+          borderRadius: 18,
+          border: `1px solid ${C.bc}`,
+          padding: "16px",
+          boxShadow: "0 16px 48px rgba(0,0,0,.6), 0 0 0 1px rgba(200,245,58,.1)",
+          opacity: visible ? 1 : 0,
+          transform: `scale(${visible ? 1 : 0.92})`,
+          transition: "opacity .18s ease-out, transform .18s ease-out",
+        }}
+      >
+        {/* Header */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,gap:10}}>
+          <div style={{fontSize:17,fontWeight:900,color:C.tm,flex:1,lineHeight:1.3}}>{ex.name}</div>
+          <button
+            onClick={handleClose}
+            style={{background:C.s2,border:`1px solid ${C.bc}`,borderRadius:10,width:30,height:30,color:C.ts,fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,cursor:"pointer"}}
+          >×</button>
         </div>
 
-        {/* Зображення з wger.de */}
-        {imgLoading&&<div style={{height:120,background:C.s2,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:12}}>
-          <div className="sp" style={{width:24,height:24,borderRadius:"50%",border:`2px solid ${C.s3}`,borderTopColor:C.acc}}/>
-        </div>}
-        {!imgLoading&&!imgErr&&imgUrl&&(
-          <img src={imgUrl} alt={ex.name}
-            onError={()=>setImgErr(true)}
-            style={{width:"100%",borderRadius:12,marginBottom:12,objectFit:"contain",maxHeight:180,background:"#f5f5f5"}}/>
+        {/* Зображення */}
+        {imgLoading && (
+          <div style={{height:160,background:C.s2,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:14}}>
+            <div className="sp" style={{width:28,height:28,borderRadius:"50%",border:`2.5px solid ${C.s3}`,borderTopColor:C.acc}}/>
+          </div>
+        )}
+        {!imgLoading && !imgErr && imgUrl && (
+          <img
+            src={imgUrl}
+            alt={ex.name}
+            onError={() => setImgErr(true)}
+            style={{width:"100%",borderRadius:12,marginBottom:14,objectFit:"contain",maxHeight:220,background:"#f5f5f5"}}
+          />
         )}
 
         {/* Техніка */}
@@ -772,10 +723,17 @@ const ExModal = ({ex, anchorEl, onClose}) => {
           <div style={{fontSize:14,color:C.tm,lineHeight:1.7}}>{info.tip}</div>
         </div>
 
-        {ex.sets&&<div style={{fontSize:13,color:C.ts,marginTop:8}}>Підходи: <span style={{color:C.acc,fontWeight:700}}>{ex.sets}×{ex.reps}</span></div>}
+        {ex.sets && (
+          <div style={{fontSize:13,color:C.ts,marginTop:10}}>
+            Підходи: <span style={{color:C.acc,fontWeight:700}}>{ex.sets}×{ex.reps}</span>
+          </div>
+        )}
       </div>
     </div>
   );
+
+  // Монтуємо в document.body — поверх усього
+  return createPortal(overlayContent, document.body);
 };
 
 // ═══ TRAINING PLAN ═══
@@ -784,7 +742,6 @@ const TrainPlan = ({userId}) => {
   const [loading,setLoad]=useState(true);
   const [gen,setGen]=useState(false);
   const [selEx,setSelEx]=useState(null);
-  const [anchorEl,setAnchorEl]=useState(null);
   const load=useCallback(async()=>{
     try{setLoad(true);const r=await apiGet(`/api/client/${userId}/plan`);setData(r.plan);}
     catch(e){console.error(e);}finally{setLoad(false);}
@@ -835,7 +792,7 @@ const TrainPlan = ({userId}) => {
                         <div style={{width:6,height:6,borderRadius:"50%",background:C.acc,flexShrink:0}}/>
                         <div style={{fontSize:14,color:C.tm}}>{ex.name}</div>
                         {getExTip(ex.name)&&(
-                          <div onClick={e=>{e.stopPropagation();setAnchorEl(e.currentTarget);setSelEx(ex);}}
+                          <div onClick={e=>{e.stopPropagation();setSelEx(ex);}}
                             style={{fontSize:10,color:"#0a0a0a",background:C.acc,borderRadius:6,padding:"1px 7px",fontWeight:900,flexShrink:0,cursor:"pointer",userSelect:"none"}}>?</div>
                         )}
                       </div>
@@ -860,7 +817,7 @@ const TrainPlan = ({userId}) => {
           <div style={{fontSize:13,color:C.ts,lineHeight:1.6}}>{weekNote}</div>
         </div>}
       </div>
-      {selEx&&<ExModal ex={selEx} anchorEl={anchorEl} onClose={()=>setSelEx(null)}/>}
+      {selEx&&<ExModal ex={selEx} onClose={()=>setSelEx(null)}/>}
     </div>
   );
 };
