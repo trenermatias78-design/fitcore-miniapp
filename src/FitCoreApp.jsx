@@ -611,42 +611,37 @@ function getExTip(name) {
 }
 
 // ═══ EXERCISE MODAL ═══
-// Smart positioning для tooltip — flip/shift у межах viewport
-function calcTooltipPos(anchorRect, modalW, modalH, gap = 8, margin = 12) {
-  if (!anchorRect) return {top: margin, left: margin, placement: "bottom"};
+// Smart positioning для tooltip — завжди біля anchor, адаптивна висота
+function calcTooltipPos(anchorRect, modalW, maxH, gap = 8, margin = 12) {
+  if (!anchorRect) return {top: margin, left: margin, placement: "bottom", height: maxH};
   const winH = window.innerHeight;
   const winW = window.innerWidth;
 
-  // Вертикаль: flip логіка
-  const spaceBelow = winH - anchorRect.bottom;
-  const spaceAbove = anchorRect.top;
-  let top, placement;
-  if (spaceBelow >= modalH + gap + margin) {
-    // Вміщається знизу
+  const spaceBelow = winH - anchorRect.bottom - gap - margin;
+  const spaceAbove = anchorRect.top - gap - margin;
+
+  let top, placement, height;
+
+  // Обираємо сторону де БІЛЬШЕ місця
+  if (spaceBelow >= spaceAbove) {
+    // Знизу — від anchor.bottom + gap, висота обмежена доступним простором
     top = anchorRect.bottom + gap;
+    height = Math.min(maxH, spaceBelow);
     placement = "bottom";
-  } else if (spaceAbove >= modalH + gap + margin) {
-    // Не вміщається знизу, але вміщається зверху → flip
-    top = anchorRect.top - modalH - gap;
-    placement = "top";
   } else {
-    // Не вміщається ні там, ні там — беремо сторону з більшим простором
-    if (spaceBelow >= spaceAbove) {
-      top = Math.max(margin, winH - modalH - margin);
-      placement = "bottom";
-    } else {
-      top = margin;
-      placement = "top";
-    }
+    // Зверху — висота обмежена spaceAbove, top = anchor.top - height - gap
+    height = Math.min(maxH, spaceAbove);
+    top = anchorRect.top - height - gap;
+    placement = "top";
   }
 
-  // Горизонталь: центруємо по anchor + shift у межах екрану
+  // Горизонталь: центруємо по anchor + shift
   const anchorCenterX = anchorRect.left + anchorRect.width / 2;
   let left = anchorCenterX - modalW / 2;
   if (left < margin) left = margin;
   if (left + modalW > winW - margin) left = winW - modalW - margin;
 
-  return {top, left, placement};
+  return {top, left, placement, height};
 }
 
 const ExModal = ({ex, anchorRect, onClose}) => {
@@ -658,25 +653,21 @@ const ExModal = ({ex, anchorRect, onClose}) => {
   const [pos, setPos] = useState({top: 0, left: 0, placement: "bottom"});
   const modalRef = useRef(null);
 
-  // Розрахунок позиції після першого рендеру — враховує реальну висоту модалки
+  // Розрахунок позиції на основі anchor
   useLayoutEffect(() => {
     const winW = window.innerWidth;
     const modalW = Math.min(winW - 24, 360);
-    // Фактична висота модалки (після рендеру) або fallback
-    const modalH = modalRef.current ? Math.min(modalRef.current.offsetHeight, 400) : 360;
-    setPos(calcTooltipPos(anchorRect, modalW, modalH));
-    // Тригер анімації появи
+    const maxH = 400;
+    setPos(calcTooltipPos(anchorRect, modalW, maxH));
     requestAnimationFrame(() => setVisible(true));
-  }, [anchorRect, imgUrl, imgLoading]);
+  }, [anchorRect]);
 
   // Recalc on resize/scroll
   useEffect(() => {
     const recalc = () => {
-      if (!modalRef.current) return;
       const winW = window.innerWidth;
       const modalW = Math.min(winW - 24, 360);
-      const modalH = Math.min(modalRef.current.offsetHeight, 400);
-      setPos(calcTooltipPos(anchorRect, modalW, modalH));
+      setPos(calcTooltipPos(anchorRect, modalW, 400));
     };
     window.addEventListener("resize", recalc);
     window.addEventListener("scroll", recalc, true);
@@ -738,7 +729,7 @@ const ExModal = ({ex, anchorRect, onClose}) => {
           borderRadius:16,
           border:`1px solid ${C.bc}`,
           padding:"14px",
-          maxHeight:400,
+          maxHeight:pos.height||400,
           overflowY:"auto",
           boxShadow:"0 12px 40px rgba(0,0,0,.55), 0 0 0 1px rgba(200,245,58,.08)",
           zIndex:1001,
