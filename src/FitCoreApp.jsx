@@ -611,22 +611,83 @@ function getExTip(name) {
 }
 
 // ═══ EXERCISE MODAL ═══
-const ExModal = ({ex, tapY, tapX, onClose}) => {
+// Smart positioning для tooltip — flip/shift у межах viewport
+function calcTooltipPos(anchorRect, modalW, modalH, gap = 8, margin = 12) {
+  if (!anchorRect) return {top: margin, left: margin, placement: "bottom"};
+  const winH = window.innerHeight;
+  const winW = window.innerWidth;
+
+  // Вертикаль: flip логіка
+  const spaceBelow = winH - anchorRect.bottom;
+  const spaceAbove = anchorRect.top;
+  let top, placement;
+  if (spaceBelow >= modalH + gap + margin) {
+    // Вміщається знизу
+    top = anchorRect.bottom + gap;
+    placement = "bottom";
+  } else if (spaceAbove >= modalH + gap + margin) {
+    // Не вміщається знизу, але вміщається зверху → flip
+    top = anchorRect.top - modalH - gap;
+    placement = "top";
+  } else {
+    // Не вміщається ні там, ні там — беремо сторону з більшим простором
+    if (spaceBelow >= spaceAbove) {
+      top = Math.max(margin, winH - modalH - margin);
+      placement = "bottom";
+    } else {
+      top = margin;
+      placement = "top";
+    }
+  }
+
+  // Горизонталь: центруємо по anchor + shift у межах екрану
+  const anchorCenterX = anchorRect.left + anchorRect.width / 2;
+  let left = anchorCenterX - modalW / 2;
+  if (left < margin) left = margin;
+  if (left + modalW > winW - margin) left = winW - modalW - margin;
+
+  return {top, left, placement};
+}
+
+const ExModal = ({ex, anchorRect, onClose}) => {
   const info = getExTip(ex?.name);
   const [imgUrl, setImgUrl] = useState(null);
   const [imgLoading, setImgLoading] = useState(true);
   const [imgErr, setImgErr] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [pos, setPos] = useState({top: 0, left: 0, placement: "bottom"});
+  const modalRef = useRef(null);
 
-  // Позиція: з'являється поруч з місцем тапу
-  const winH = window.innerHeight;
+  // Розрахунок позиції після першого рендеру — враховує реальну висоту модалки
+  useLayoutEffect(() => {
+    const winW = window.innerWidth;
+    const modalW = Math.min(winW - 24, 360);
+    // Фактична висота модалки (після рендеру) або fallback
+    const modalH = modalRef.current ? Math.min(modalRef.current.offsetHeight, 400) : 360;
+    setPos(calcTooltipPos(anchorRect, modalW, modalH));
+    // Тригер анімації появи
+    requestAnimationFrame(() => setVisible(true));
+  }, [anchorRect, imgUrl, imgLoading]);
+
+  // Recalc on resize/scroll
+  useEffect(() => {
+    const recalc = () => {
+      if (!modalRef.current) return;
+      const winW = window.innerWidth;
+      const modalW = Math.min(winW - 24, 360);
+      const modalH = Math.min(modalRef.current.offsetHeight, 400);
+      setPos(calcTooltipPos(anchorRect, modalW, modalH));
+    };
+    window.addEventListener("resize", recalc);
+    window.addEventListener("scroll", recalc, true);
+    return () => {
+      window.removeEventListener("resize", recalc);
+      window.removeEventListener("scroll", recalc, true);
+    };
+  }, [anchorRect]);
+
   const winW = window.innerWidth;
-  const modalH = 380; // max висота модалки
-  const modalW = Math.min(winW - 24, 400); // ширина з відступами
-  
-  // Вертикально: якщо тапнули нижче середини — вгору, інакше вниз
-  let top = tapY > winH * 0.5 ? Math.max(12, tapY - modalH) : Math.min(tapY + 8, winH - modalH - 12);
-  // Горизонтально: центруємо, але не виходимо за межі
-  let left = Math.max(12, Math.min(tapX - modalW / 2, winW - modalW - 12));
+  const modalW = Math.min(winW - 24, 360);
 
   useEffect(() => {
     if (!info?.search) { setImgLoading(false); return; }
@@ -652,27 +713,43 @@ const ExModal = ({ex, tapY, tapX, onClose}) => {
 
   if (!info) return null;
 
+  const handleClose = () => { setVisible(false); setTimeout(onClose, 140); };
+
+  // Origin для scale анімації — залежить від placement
+  const transformOrigin = pos.placement === "top" ? "center bottom" : "center top";
+
   return (
-    <div onClick={onClose}
-      style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:1000,touchAction:"none"}}>
-      <div onClick={e=>e.stopPropagation()}
+    <div onClick={handleClose}
+      style={{
+        position:"fixed",inset:0,
+        background:visible?"rgba(0,0,0,.55)":"rgba(0,0,0,0)",
+        zIndex:1000,
+        transition:"background .15s ease-out",
+      }}>
+      <div
+        ref={modalRef}
+        onClick={e=>e.stopPropagation()}
         style={{
           position:"fixed",
-          left:left,
+          left:pos.left,
           width:modalW,
-          top:top,
+          top:pos.top,
           background:C.s1,
-          borderRadius:20,
+          borderRadius:16,
           border:`1px solid ${C.bc}`,
-          padding:"16px",
-          maxHeight:380,
+          padding:"14px",
+          maxHeight:400,
           overflowY:"auto",
-          boxShadow:"0 8px 40px rgba(0,0,0,.6)",
+          boxShadow:"0 12px 40px rgba(0,0,0,.55), 0 0 0 1px rgba(200,245,58,.08)",
           zIndex:1001,
+          opacity:visible?1:0,
+          transform:`scale(${visible?1:.92})`,
+          transformOrigin,
+          transition:"opacity .15s ease-out, transform .15s ease-out",
         }}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
           <div style={{fontSize:16,fontWeight:900,color:C.tm,flex:1,paddingRight:8}}>{ex.name}</div>
-          <button onClick={onClose} style={{background:C.s2,border:`1px solid ${C.bc}`,borderRadius:10,width:28,height:28,color:C.ts,fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>×</button>
+          <button onClick={handleClose} style={{background:C.s2,border:`1px solid ${C.bc}`,borderRadius:10,width:28,height:28,color:C.ts,fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>×</button>
         </div>
 
         {/* Зображення з wger.de */}
@@ -703,8 +780,7 @@ const TrainPlan = ({userId}) => {
   const [loading,setLoad]=useState(true);
   const [gen,setGen]=useState(false);
   const [selEx,setSelEx]=useState(null);
-  const [tapY,setTapY]=useState(0);
-  const [tapX,setTapX]=useState(0);
+  const [anchorRect,setAnchorRect]=useState(null);
   const load=useCallback(async()=>{
     try{setLoad(true);const r=await apiGet(`/api/client/${userId}/plan`);setData(r.plan);}
     catch(e){console.error(e);}finally{setLoad(false);}
@@ -755,7 +831,7 @@ const TrainPlan = ({userId}) => {
                         <div style={{width:6,height:6,borderRadius:"50%",background:C.acc,flexShrink:0}}/>
                         <div style={{fontSize:14,color:C.tm}}>{ex.name}</div>
                         {getExTip(ex.name)&&(
-                          <div onClick={e=>{e.stopPropagation();setTapY(e.clientY);setTapX(e.clientX);setSelEx(ex);}}
+                          <div onClick={e=>{e.stopPropagation();setAnchorRect(e.currentTarget.getBoundingClientRect());setSelEx(ex);}}
                             style={{fontSize:10,color:"#0a0a0a",background:C.acc,borderRadius:6,padding:"1px 7px",fontWeight:900,flexShrink:0,cursor:"pointer",userSelect:"none"}}>?</div>
                         )}
                       </div>
@@ -780,7 +856,7 @@ const TrainPlan = ({userId}) => {
           <div style={{fontSize:13,color:C.ts,lineHeight:1.6}}>{weekNote}</div>
         </div>}
       </div>
-      {selEx&&<ExModal ex={selEx} tapY={tapY} tapX={tapX} onClose={()=>setSelEx(null)}/>}
+      {selEx&&<ExModal ex={selEx} anchorRect={anchorRect} onClose={()=>setSelEx(null)}/>}
     </div>
   );
 };
