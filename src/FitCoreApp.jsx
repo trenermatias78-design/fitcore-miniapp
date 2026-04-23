@@ -1446,34 +1446,266 @@ const AdminClients = ({onSelect}) => {
 };
 
 // ═══ ADMIN: CLIENT DETAIL ═══
+// ═══ Message Modal — персональне повідомлення клієнту ═══
+const MessageModal = ({client, onClose}) => {
+  const [text,setText] = useState("");
+  const [sending,setSending] = useState(false);
+  const [done,setDone] = useState(false);
+  const [err,setErr] = useState("");
+  const [visible,setVisible] = useState(false);
+
+  useEffect(()=>{
+    requestAnimationFrame(()=>setVisible(true));
+    const prev=document.body.style.overflow;
+    document.body.style.overflow="hidden";
+    return ()=>{document.body.style.overflow=prev;};
+  },[]);
+
+  const handleClose=()=>{setVisible(false);setTimeout(onClose,160);};
+  const send=async()=>{
+    if(!text.trim()) return;
+    setSending(true); setErr("");
+    try{
+      await apiPost(`/api/admin/message/${client.user_id}`,{text:text.trim()});
+      setDone(true);
+      setTimeout(handleClose, 1200);
+    }catch(e){setErr(e.message||"Помилка");}
+    setSending(false);
+  };
+
+  const overlay = (
+    <div onClick={handleClose}
+      style={{
+        position:"fixed",inset:0,
+        background:visible?"rgba(0,0,0,.7)":"rgba(0,0,0,0)",
+        backdropFilter:visible?"blur(4px)":"blur(0)",
+        WebkitBackdropFilter:visible?"blur(4px)":"blur(0)",
+        zIndex:9999,
+        display:"flex",alignItems:"center",justifyContent:"center",
+        padding:16,
+        transition:"background .18s ease-out, backdrop-filter .18s ease-out",
+      }}>
+      <div onClick={e=>e.stopPropagation()}
+        style={{
+          width:"100%",maxWidth:420,
+          background:C.s1,borderRadius:18,
+          border:`1px solid ${C.bc}`,padding:"18px",
+          boxShadow:"0 16px 48px rgba(0,0,0,.6)",
+          opacity:visible?1:0,
+          transform:`scale(${visible?1:0.94})`,
+          transition:"opacity .18s ease-out, transform .18s ease-out",
+        }}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,gap:10}}>
+          <div style={{display:"flex",flexDirection:"column"}}>
+            <div style={{fontSize:17,fontWeight:900,color:C.tm}}>Повідомлення клієнту</div>
+            <div style={{fontSize:13,color:C.ts,marginTop:2}}>{client.full_name} {client.username?`· @${client.username}`:""}</div>
+          </div>
+          <button onClick={handleClose} style={{background:C.s2,border:`1px solid ${C.bc}`,borderRadius:10,width:30,height:30,color:C.ts,fontSize:18,flexShrink:0}}>×</button>
+        </div>
+
+        {done ? (
+          <div style={{background:"rgba(200,245,58,.1)",border:"1px solid rgba(200,245,58,.3)",borderRadius:12,padding:"16px",fontSize:15,color:C.acc,fontWeight:700,textAlign:"center"}}>
+            ✓ Повідомлення надіслано
+          </div>
+        ) : (
+          <>
+            <textarea
+              value={text}
+              onChange={e=>setText(e.target.value)}
+              placeholder="Текст повідомлення..."
+              rows={5}
+              style={{width:"100%",background:C.s2,border:`1px solid ${C.bc}`,borderRadius:12,padding:"12px 14px",color:C.tm,fontSize:15,lineHeight:1.6,resize:"none",fontFamily:"inherit",boxSizing:"border-box"}}
+            />
+            {err && <div style={{color:C.red,fontSize:13,marginTop:8}}>{err}</div>}
+            <div style={{display:"flex",gap:8,marginTop:14}}>
+              <button onClick={handleClose} style={{flex:1,background:C.s2,color:C.ts,border:`1px solid ${C.bc}`,borderRadius:12,padding:"12px 0",fontSize:14,fontWeight:700}}>Скасувати</button>
+              <button onClick={send} disabled={!text.trim()||sending} style={{flex:2,background:C.acc,color:"#0a0a0a",border:"none",borderRadius:12,padding:"12px 0",fontSize:14,fontWeight:800,opacity:(!text.trim()||sending)?.5:1}}>
+                {sending?"Надсилаю...":"Надіслати"}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
+  return createPortal(overlay, document.body);
+};
+
 const AdminClientDetail = ({client,onBack}) => {
-  const [detail,setDetail]=useState(null);const [loading,setLoad]=useState(true);const [msg,setMsg]=useState("");const [gen,setGen]=useState(false);
+  const [detail,setDetail]=useState(null);
+  const [loading,setLoad]=useState(true);
+  const [msg,setMsg]=useState("");
+  const [gen,setGen]=useState(false);
+  const [showMsgModal,setShowMsgModal]=useState(false);
+
   useEffect(()=>{apiGet(`/api/admin/client/${client.user_id}`).then(r=>{setDetail(r);setLoad(false);}).catch(()=>setLoad(false));},[client.user_id]);
+
   const activate=async plan=>{await apiPost(`/api/admin/client/${client.user_id}/activate`,{plan});setMsg(`✓ Активовано: ${plan.toUpperCase()}`);};
   const block=async()=>{await apiPost(`/api/admin/client/${client.user_id}/block`,{});setMsg("✓ Заблоковано");};
   const generate=async()=>{setGen(true);try{await apiPost(`/api/client/${client.user_id}/generate-plan`,{});setMsg("✓ Новий план згенеровано");}catch(e){setMsg("Помилка: "+e.message);}setGen(false);};
-  if(loading)return <Spin/>;
-  const qst=detail?.questionnaire;
-  const planV={start:"green",premium:"blue",vip:"purple",trial:"amber"};
+
+  if(loading) return <Spin/>;
+
+  const qst = detail?.questionnaire;
+  const sub = detail?.subscription || {};
+  const trial = detail?.trial || {};
+  const act = detail?.activity || {};
+  const lastPay = detail?.last_payment;
+  const planV = {start:"green",premium:"blue",vip:"purple",trial:"amber"};
+
+  const fmtDate = s => s ? (s.slice(0,10) + (s.length>10 ? " " + s.slice(11,16) : "")) : "—";
+  const fmtRel = s => {
+    if(!s) return "—";
+    try{
+      const d = new Date(s.replace(" ","T"));
+      const diff = (Date.now() - d.getTime()) / 1000;
+      if(diff < 60) return "щойно";
+      if(diff < 3600) return `${Math.floor(diff/60)} хв тому`;
+      if(diff < 86400) return `${Math.floor(diff/3600)} год тому`;
+      if(diff < 86400*7) return `${Math.floor(diff/86400)} д тому`;
+      return s.slice(0,10);
+    }catch{return s.slice(0,10);}
+  };
+
   return(
     <Scr>
+      {/* Header card */}
       <div style={{background:C.s1,borderRadius:18,border:`1px solid rgba(200,245,58,.2)`,padding:"16px",display:"flex",gap:14,alignItems:"center"}}>
         <Ava name={client.full_name||"?"} size={56}/>
         <div style={{flex:1}}>
           <div style={{fontSize:20,fontWeight:900,color:C.tm,letterSpacing:-.5}}>{client.full_name}</div>
-          <div style={{fontSize:13,color:C.ts,marginTop:2}}>{client.username?`@${client.username}`:""}</div>
-          <div style={{marginTop:6,display:"flex",gap:6}}><Bdg v={planV[client.plan]||"green"}>{(client.plan||"").toUpperCase()}</Bdg><Bdg v={client.status==="active"?"green":"amber"}>{client.status}</Bdg></div>
+          <div style={{fontSize:13,color:C.ts,marginTop:2}}>{client.username?`@${client.username}`:`ID: ${client.user_id}`}</div>
+          <div style={{marginTop:6,display:"flex",gap:6,flexWrap:"wrap"}}>
+            <Bdg v={planV[client.plan]||"green"}>{(client.plan||"—").toUpperCase()}</Bdg>
+            <Bdg v={client.status==="active"?"green":"amber"}>{client.status}</Bdg>
+          </div>
         </div>
       </div>
-      {qst&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-        {[["Вік",`${qst.age||"—"} р.`],["Стать",qst.gender==="female"?"Жінка":"Чоловік"],["Вага → ціль",`${qst.weight_kg} → ${qst.target_weight} кг`],["Обладнання",qst.equipment||"—"],["Трен./тиж",`${qst.workouts_pw||"—"}×`],["Стрік",`${client.streak||0} днів`]].map(([l,v])=>(
-          <div key={l} style={{background:C.s1,borderRadius:14,border:`1px solid ${C.bc}`,padding:"12px 14px"}}>
-            <div style={{fontSize:12,color:C.ts,fontWeight:600}}>{l}</div>
-            <div style={{fontSize:16,fontWeight:700,color:C.tm,marginTop:3}}>{v}</div>
+
+      {/* Subscription */}
+      <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
+        <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Підписка</div>
+        {client.status === "trial" && trial.days_left !== null ? (
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <span style={{fontSize:14,color:C.ts}}>Пробний період</span>
+            <span style={{fontSize:18,fontWeight:800,color:C.amber}}>{trial.days_left} д залишилось</span>
           </div>
-        ))}
-      </div>}
+        ) : client.status === "active" && sub.days_left !== null ? (
+          <>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+              <span style={{fontSize:14,color:C.ts}}>Залишилось днів</span>
+              <span style={{fontSize:22,fontWeight:900,color:sub.days_left<7?C.red:sub.days_left<30?C.amber:C.acc}}>{sub.days_left}</span>
+            </div>
+            {sub.total_days && (
+              <div style={{height:6,background:C.s2,borderRadius:3,overflow:"hidden",marginTop:6}}>
+                <div style={{height:"100%",width:`${Math.max(5, 100-100*sub.days_left/sub.total_days)}%`,background:sub.days_left<7?C.red:sub.days_left<30?C.amber:C.acc}}/>
+              </div>
+            )}
+            <div style={{fontSize:12,color:C.td,marginTop:6}}>До: {fmtDate(sub.expires_at)}</div>
+          </>
+        ) : (
+          <div style={{fontSize:14,color:C.td}}>{client.status === "expired" ? "Підписка закінчилась" : "Немає активної підписки"}</div>
+        )}
+      </div>
+
+      {/* Last payment */}
+      {lastPay && (
+        <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
+          <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Остання оплата</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <div>
+              <div style={{fontSize:12,color:C.ts}}>Сума</div>
+              <div style={{fontSize:18,fontWeight:800,color:C.tm,marginTop:2}}>{lastPay.amount ? `${lastPay.amount.toLocaleString()} ₴` : "—"}</div>
+            </div>
+            <div>
+              <div style={{fontSize:12,color:C.ts}}>Тариф</div>
+              <div style={{fontSize:15,fontWeight:700,color:C.tm,marginTop:2}}>{(lastPay.plan||"").toUpperCase()}</div>
+            </div>
+            <div>
+              <div style={{fontSize:12,color:C.ts}}>Тривалість</div>
+              <div style={{fontSize:15,fontWeight:700,color:C.tm,marginTop:2}}>{lastPay.duration_months||1} міс.</div>
+            </div>
+            <div>
+              <div style={{fontSize:12,color:C.ts}}>Метод</div>
+              <div style={{fontSize:15,fontWeight:700,color:C.tm,marginTop:2}}>{lastPay.method === "stars" ? "⭐ Stars" : "💳 Monobank"}</div>
+            </div>
+          </div>
+          <div style={{fontSize:12,color:C.td,marginTop:8,paddingTop:8,borderTop:`1px solid ${C.bc}`}}>Підтверджено: {fmtDate(lastPay.confirmed_at)}</div>
+        </div>
+      )}
+
+      {/* Activity */}
+      <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
+        <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Активність в додатку</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          <div>
+            <div style={{fontSize:12,color:C.ts}}>Відкриттів</div>
+            <div style={{fontSize:22,fontWeight:900,color:C.acc,marginTop:2}}>{act.total_opens||0}</div>
+          </div>
+          <div>
+            <div style={{fontSize:12,color:C.ts}}>Чекінів</div>
+            <div style={{fontSize:22,fontWeight:900,color:C.tm,marginTop:2}}>{act.total_checkins||0}</div>
+          </div>
+          <div>
+            <div style={{fontSize:12,color:C.ts}}>Стрік</div>
+            <div style={{fontSize:22,fontWeight:900,color:C.amber,marginTop:2}}>{act.streak||0} 🔥</div>
+          </div>
+          <div>
+            <div style={{fontSize:12,color:C.ts}}>Останній візит</div>
+            <div style={{fontSize:14,fontWeight:700,color:C.tm,marginTop:2}}>{fmtRel(act.last_active)}</div>
+          </div>
+        </div>
+        <div style={{fontSize:12,color:C.td,marginTop:10,paddingTop:8,borderTop:`1px solid ${C.bc}`}}>Реєстрація: {fmtDate(act.registered_at)}{act.activated_at?` · Активація: ${fmtDate(act.activated_at)}`:""}</div>
+      </div>
+
+      {/* Questionnaire */}
+      {qst && (
+        <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
+          <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Анкета</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            {[
+              ["Вік", qst.age ? `${qst.age} р.` : "—"],
+              ["Стать", qst.gender==="female"?"Жінка":"Чоловік"],
+              ["Зріст", qst.height_cm ? `${qst.height_cm} см` : "—"],
+              ["Вага → Ціль", `${qst.weight_kg||"?"} → ${qst.target_weight||"?"} кг`],
+              ["Ціль", qst.goal||"—"],
+              ["Досвід", qst.experience||"—"],
+              ["Обладнання", qst.equipment||"—"],
+              ["Трен./тиждень", qst.workouts_pw ? `${qst.workouts_pw}×` : "—"],
+              ["Пріор. час", qst.pref_time||"—"],
+              ["Бюджет", qst.budget||"—"],
+            ].map(([l,v])=>(
+              <div key={l}>
+                <div style={{fontSize:11,color:C.ts}}>{l}</div>
+                <div style={{fontSize:14,fontWeight:700,color:C.tm,marginTop:2}}>{v}</div>
+              </div>
+            ))}
+          </div>
+          {qst.health_issues && qst.health_issues !== "none" && (
+            <div style={{marginTop:10,paddingTop:10,borderTop:`1px solid ${C.bc}`}}>
+              <div style={{fontSize:11,color:C.ts,marginBottom:3}}>Проблеми зі здоровʼям</div>
+              <div style={{fontSize:13,color:C.tm}}>{qst.health_issues}</div>
+            </div>
+          )}
+          {qst.allergies && qst.allergies !== "none" && (
+            <div style={{marginTop:8}}>
+              <div style={{fontSize:11,color:C.ts,marginBottom:3}}>Алергії</div>
+              <div style={{fontSize:13,color:C.tm}}>{qst.allergies}</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Message button */}
+      <button onClick={()=>setShowMsgModal(true)} style={{background:"rgba(200,245,58,.1)",border:"1.5px solid rgba(200,245,58,.3)",color:C.acc,borderRadius:14,padding:"14px 0",fontSize:15,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+        ✉️ Написати повідомлення
+      </button>
+
       <Div/>
+
+      {/* Management actions */}
+      <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8}}>Керування</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
         <button onClick={generate} disabled={gen} className={gen?"":"pu"} style={{background:C.acc,borderRadius:14,padding:"14px 0",fontSize:14,fontWeight:800,color:"#0a0a0a",display:"flex",alignItems:"center",justifyContent:"center",gap:6,gridColumn:"1/-1"}}>
           {gen&&<div className="sp" style={{width:14,height:14,borderRadius:"50%",border:"2px solid rgba(0,0,0,.2)",borderTopColor:"#0a0a0a"}}/>}
@@ -1484,16 +1716,42 @@ const AdminClientDetail = ({client,onBack}) => {
         ))}
         <button onClick={block} style={{background:"rgba(255,85,85,.08)",color:C.red,border:"1px solid rgba(255,85,85,.2)",borderRadius:14,padding:"12px 0",fontSize:13,fontWeight:700}}>Заблокувати</button>
       </div>
-      {msg&&<div style={{background:"rgba(200,245,58,.08)",border:"1px solid rgba(200,245,58,.2)",borderRadius:14,padding:"14px 16px",fontSize:15,color:C.acc,fontWeight:600}}>{msg}</div>}
-      {(detail?.checkins||[]).length>0&&<div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
-        <div style={{fontSize:15,fontWeight:700,color:C.tm,marginBottom:10}}>Останні чекіни</div>
-        {detail.checkins.slice(0,3).map((c,i)=>(
-          <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",fontSize:14,borderBottom:i<2?`1px solid ${C.bc}`:"none"}}>
-            <span style={{color:C.ts}}>{(c.submitted_at||"").slice(0,10)}</span>
-            <span style={{color:C.tm,fontWeight:600}}>{c.weight_kg} кг · {c.energy_level}/5</span>
-          </div>
-        ))}
-      </div>}
+
+      {msg && <div style={{background:"rgba(200,245,58,.08)",border:"1px solid rgba(200,245,58,.2)",borderRadius:14,padding:"14px 16px",fontSize:15,color:C.acc,fontWeight:600}}>{msg}</div>}
+
+      {/* Recent checkins */}
+      {(detail?.checkins||[]).length>0 && (
+        <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
+          <div style={{fontSize:15,fontWeight:700,color:C.tm,marginBottom:10}}>Останні чекіни</div>
+          {detail.checkins.slice(0,5).map((c,i)=>(
+            <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",fontSize:14,borderBottom:i<Math.min(detail.checkins.length,5)-1?`1px solid ${C.bc}`:"none"}}>
+              <span style={{color:C.ts}}>{(c.submitted_at||"").slice(0,10)}</span>
+              <span style={{color:C.tm,fontWeight:600}}>{c.weight_kg} кг · {c.energy_level}/5</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Payments history */}
+      {(detail?.payments||[]).length>0 && (
+        <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
+          <div style={{fontSize:15,fontWeight:700,color:C.tm,marginBottom:10}}>Історія оплат</div>
+          {detail.payments.map((p,i)=>(
+            <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",fontSize:13,borderBottom:i<detail.payments.length-1?`1px solid ${C.bc}`:"none"}}>
+              <div>
+                <div style={{color:C.tm,fontWeight:600}}>{(p.plan||"").toUpperCase()} · {p.duration_months||1} міс.</div>
+                <div style={{color:C.td,fontSize:11,marginTop:2}}>{(p.submitted_at||"").slice(0,10)}</div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{color:C.tm,fontWeight:700}}>{p.amount ? `${p.amount.toLocaleString()} ₴` : "—"}</div>
+                <Bdg v={p.status==="confirmed"?"green":p.status==="rejected"?"red":"amber"}>{p.status}</Bdg>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showMsgModal && <MessageModal client={client} onClose={()=>setShowMsgModal(false)}/>}
     </Scr>
   );
 };
