@@ -104,9 +104,12 @@ const TNav = ({title,onBack,rightEl}) => (
 
 const BNav = ({active,onChange,isAdmin}) => {
   const tabs = isAdmin
-    ? [{id:"dashboard",l:"Огляд"},{id:"clients",l:"Клієнти"},{id:"payments",l:"Оплати"},{id:"broadcast",l:"Розсилка"},{id:"settings",l:"Налашт."}]
-    : [{id:"plan",l:"План"},{id:"nutrition",l:"Харч."},{id:"progress",l:"Прогрес"},{id:"menu",l:"Меню"},{id:"profile",l:"Профіль"}];
+    ? [{id:"dashboard",l:"Огляд"},{id:"clients",l:"Клієнти"},{id:"chat",l:"Чат"},{id:"payments",l:"Оплати"},{id:"settings",l:"Налашт."}]
+    : [{id:"plan",l:"План"},{id:"nutrition",l:"Харч."},{id:"aichat",l:"Матіас"},{id:"more",l:"Ще"},{id:"profile",l:"Профіль"}];
   const icons = {
+    aichat: c=><><circle cx="9" cy="9" r="6.5" stroke={c} strokeWidth="1.8" fill="none"/><circle cx="6.5" cy="8.5" r="1" fill={c}/><circle cx="11.5" cy="8.5" r="1" fill={c}/><path d="M6 11.5c.8 1 1.9 1.5 3 1.5s2.2-.5 3-1.5" stroke={c} strokeWidth="1.5" strokeLinecap="round" fill="none"/></>,
+    more: c=><><circle cx="4" cy="9" r="1.5" fill={c}/><circle cx="9" cy="9" r="1.5" fill={c}/><circle cx="14" cy="9" r="1.5" fill={c}/></>,
+    chat: c=><path d="M2 5a2 2 0 012-2h10a2 2 0 012 2v6a2 2 0 01-2 2H7l-4 3v-3H4a2 2 0 01-2-2V5z" stroke={c} strokeWidth="1.8" fill="none" strokeLinejoin="round"/>,
     plan: c=><path d="M3 9h12M2 7v4M4 6v6M11 6v6M13 7v4" stroke={c} strokeWidth="1.8" strokeLinecap="round"/>,
     nutrition: c=><><path d="M9 2v5a4 4 0 01-4 4H5M15 2v14" stroke={c} strokeWidth="1.8" strokeLinecap="round" fill="none"/></>,
     progress: c=><path d="M2 14l4.5-5 3.5 3.5 5.5-7" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>,
@@ -713,6 +716,467 @@ const ExModal = ({ex, onClose}) => {
 
   // Монтуємо в document.body — поверх усього
   return createPortal(overlayContent, document.body);
+};
+
+
+// ═══════════════════════════════════════════════════════════════
+// ПРОГРЕС-ФОТО "ДО/ПІСЛЯ"
+// ═══════════════════════════════════════════════════════════════
+const ProgressPhotos = ({userId}) => {
+  const [photos,setPhotos] = useState([]);
+  const [loading,setLoad] = useState(true);
+  const [showHelp,setShowHelp] = useState(false);
+  const [uploading,setUp] = useState(false);
+  const [err,setErr] = useState("");
+  const fileRef = useRef();
+
+  const load = useCallback(async()=>{
+    setLoad(true);
+    try{
+      const r = await apiGet(`/api/client/${userId}/progress-photos`);
+      setPhotos(r.photos||[]);
+    }catch(e){console.error(e);}
+    setLoad(false);
+  },[userId]);
+
+  useEffect(()=>{load();},[load]);
+
+  const onPick = () => fileRef.current?.click();
+
+  const onFile = async (e) => {
+    const f = e.target.files?.[0];
+    if(!f) return;
+    setErr("");
+    if(f.size > 4*1024*1024) {
+      setErr("Фото занадто велике. Максимум 4 МБ.");
+      return;
+    }
+    setUp(true);
+    try{
+      // стискаємо фото
+      const img = await new Promise((res,rej)=>{
+        const r = new FileReader();
+        r.onload = () => { const i = new Image(); i.onload = ()=>res(i); i.onerror=rej; i.src = r.result; };
+        r.onerror = rej; r.readAsDataURL(f);
+      });
+      const maxSide = 1280;
+      const scale = Math.min(1, maxSide/Math.max(img.width, img.height));
+      const w = Math.round(img.width*scale);
+      const h = Math.round(img.height*scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+      const base64 = dataUrl.split(",")[1];
+      await apiPost(`/api/client/${userId}/progress-photos`, {image: base64});
+      await load();
+    }catch(ex){
+      console.error(ex);
+      setErr("Не вдалося завантажити");
+    }
+    setUp(false);
+    if(fileRef.current) fileRef.current.value = "";
+  };
+
+  const removePhoto = async (id) => {
+    if(!confirm("Видалити це фото?")) return;
+    try{
+      await fetch(`${API}/api/client/${userId}/progress-photos/${id}`, {
+        method:"DELETE",
+        headers:{"X-Telegram-Init-Data": window.Telegram?.WebApp?.initData || ""}
+      });
+      await load();
+    }catch(e){console.error(e);}
+  };
+
+  if(loading) return <Spin/>;
+
+  return(
+    <Scr>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+        <div style={{fontSize:22,fontWeight:900,color:C.tm,letterSpacing:-.5}}>Прогрес у фото</div>
+        <button onClick={()=>setShowHelp(true)} style={{background:C.s1,border:`1px solid ${C.bc}`,borderRadius:10,width:34,height:34,color:C.acc,fontSize:16,fontWeight:900}}>?</button>
+      </div>
+
+      <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={onFile} style={{display:"none"}}/>
+
+      <button onClick={onPick} disabled={uploading} style={{background:C.acc,color:"#0a0a0a",border:"none",borderRadius:16,padding:"16px 0",fontSize:15,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+        {uploading?<><div className="sp" style={{width:16,height:16,borderRadius:"50%",border:"2px solid rgba(0,0,0,.2)",borderTopColor:"#0a0a0a"}}/>Завантаження...</> : "📸 Додати нове фото"}
+      </button>
+
+      {err && <div style={{fontSize:13,color:C.red,padding:"6px 4px"}}>{err}</div>}
+
+      {photos.length === 0 ? (
+        <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"22px 18px",textAlign:"center"}}>
+          <div style={{fontSize:40,marginBottom:6}}>📷</div>
+          <div style={{fontSize:15,fontWeight:700,color:C.tm,marginBottom:4}}>Ще немає фото</div>
+          <div style={{fontSize:13,color:C.ts,lineHeight:1.6}}>Роби фото щотижня — через місяць побачиш реальну різницю</div>
+        </div>
+      ) : (
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          {photos.map(p=>(
+            <div key={p.id} style={{position:"relative",background:C.s1,borderRadius:14,overflow:"hidden",border:`1px solid ${C.bc}`}}>
+              <img src={`data:image/jpeg;base64,${p.photo_path}`} alt="" style={{width:"100%",height:180,objectFit:"cover",display:"block"}}/>
+              <div style={{position:"absolute",top:8,right:8,background:"rgba(0,0,0,.7)",color:"#fff",fontSize:11,fontWeight:600,padding:"3px 8px",borderRadius:8}}>
+                {(p.taken_at||"").slice(0,10)}
+              </div>
+              <button onClick={()=>removePhoto(p.id)} style={{position:"absolute",bottom:6,right:6,background:"rgba(0,0,0,.7)",border:"none",color:"#ff6b6b",width:28,height:28,borderRadius:8,fontSize:14,fontWeight:700}}>×</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showHelp && createPortal(
+        <div onClick={()=>setShowHelp(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",backdropFilter:"blur(4px)",WebkitBackdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:C.s1,borderRadius:18,border:`1px solid ${C.bc}`,padding:"18px",maxWidth:420,width:"100%"}}>
+            <div style={{fontSize:18,fontWeight:900,color:C.tm,marginBottom:12}}>📸 Як користуватись</div>
+            <div style={{fontSize:14,color:C.ts,lineHeight:1.7}}>
+              <div style={{marginBottom:10}}>✅ <b style={{color:C.tm}}>Раз на тиждень</b> — одного фото достатньо щоб бачити прогрес</div>
+              <div style={{marginBottom:10}}>✅ <b style={{color:C.tm}}>Однакове освітлення і ракурс</b> — вранці, натщесерце, у дзеркалі</div>
+              <div style={{marginBottom:10}}>✅ <b style={{color:C.tm}}>Мінімум одягу</b> — щоб реально бачити зміни тіла</div>
+              <div style={{marginBottom:10}}>✅ <b style={{color:C.tm}}>Фото — тільки твоє</b> — ніхто крім тебе (і тренера) не бачить</div>
+              <div style={{marginTop:14,padding:"10px 12px",background:"rgba(200,245,58,.08)",border:"1px solid rgba(200,245,58,.2)",borderRadius:10,fontSize:13,color:C.acc}}>💡 Через місяць матимеш 4 фото — різниця буде помітна навіть коли не бачиш її щодня</div>
+            </div>
+            <button onClick={()=>setShowHelp(false)} style={{width:"100%",marginTop:16,background:C.acc,color:"#0a0a0a",border:"none",borderRadius:12,padding:"12px 0",fontSize:14,fontWeight:800}}>Зрозуміло</button>
+          </div>
+        </div>,
+        document.body
+      )}
+    </Scr>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// AI ЧАТ — Матіас 24/7
+// ═══════════════════════════════════════════════════════════════
+const AIChat = ({userId,clientData}) => {
+  const [messages,setMessages] = useState([]);
+  const [input,setInput] = useState("");
+  const [sending,setSend] = useState(false);
+  const [limit,setLimit] = useState(null);
+  const [used,setUsed] = useState(0);
+  const [showHelp,setShowHelp] = useState(false);
+  const [loading,setLoad] = useState(true);
+  const scrollRef = useRef();
+
+  const load = async()=>{
+    try{
+      const r = await apiGet(`/api/client/${userId}/ai-chat`);
+      setMessages(r.messages||[]);
+      setLimit(r.daily_limit);
+      setUsed(r.used_today||0);
+    }catch(e){console.error(e);}
+    setLoad(false);
+  };
+
+  useEffect(()=>{load();},[userId]);
+
+  useEffect(()=>{
+    if(scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  },[messages]);
+
+  // показати вітання якщо історія пуста
+  const isEmpty = messages.length === 0 && !loading;
+
+  const send = async()=>{
+    const text = input.trim();
+    if(!text || sending) return;
+    if(limit !== null && used >= limit){ return; }
+    setSend(true);
+    // оптимістично додаємо
+    setMessages(m=>[...m, {role:"user", content:text, created_at: new Date().toISOString()}]);
+    setInput("");
+    try{
+      const r = await apiPost(`/api/client/${userId}/ai-chat`, {text});
+      setMessages(m=>[...m, {role:"assistant", content:r.reply, created_at: new Date().toISOString()}]);
+      setUsed(r.used);
+    }catch(e){
+      if(e.message && e.message.includes("limit")){
+        setMessages(m=>[...m, {role:"assistant", content:"⚠ Денний ліміт повідомлень вичерпано. Оновлення — о 00:00 (Київ).", created_at:new Date().toISOString()}]);
+      }else{
+        setMessages(m=>[...m, {role:"assistant", content:"⚠ Тимчасово не вдається відповісти. Спробуй через хвилину.", created_at:new Date().toISOString()}]);
+      }
+    }
+    setSend(false);
+  };
+
+  const plan = clientData?.plan || "trial";
+  const planLabel = {trial:"Пробний",start:"START",premium:"PREMIUM",vip:"VIP"}[plan];
+
+  return(
+    <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      {/* Header */}
+      <div style={{padding:"12px 16px",borderBottom:`1px solid ${C.bc}`,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexShrink:0}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,"+C.acc+",#e8a832)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:900,color:"#0a0a0a"}}>М</div>
+          <div>
+            <div style={{fontSize:15,fontWeight:800,color:C.tm}}>Матіас</div>
+            <div style={{fontSize:11,color:C.acc,fontWeight:600}}>● Online · AI-тренер</div>
+          </div>
+        </div>
+        <button onClick={()=>setShowHelp(true)} style={{background:C.s1,border:`1px solid ${C.bc}`,borderRadius:10,width:32,height:32,color:C.acc,fontSize:14,fontWeight:900,flexShrink:0}}>?</button>
+      </div>
+
+      {/* Limit bar */}
+      {limit !== null && (
+        <div style={{padding:"8px 16px",background:C.s2,fontSize:11,color:C.ts,display:"flex",justifyContent:"space-between",flexShrink:0}}>
+          <span>{planLabel} · {used}/{limit===999?"∞":limit} сьогодні</span>
+          {used >= limit && limit<999 && <span style={{color:C.red,fontWeight:700}}>Ліміт вичерпано</span>}
+        </div>
+      )}
+
+      {/* Messages */}
+      <div ref={scrollRef} className="fi" style={{flex:1,overflowY:"auto",padding:"14px 14px 6px",display:"flex",flexDirection:"column",gap:8}}>
+        {loading && <Spin/>}
+        {isEmpty && (
+          <div style={{padding:"16px",background:C.s1,border:`1px solid ${C.bc}`,borderRadius:16,textAlign:"center"}}>
+            <div style={{fontSize:36,marginBottom:8}}>👋</div>
+            <div style={{fontSize:15,fontWeight:700,color:C.tm,marginBottom:6}}>Привіт! Я Матіас — твій AI-тренер</div>
+            <div style={{fontSize:13,color:C.ts,lineHeight:1.6}}>Питай будь-що про тренування, харчування чи відновлення. Відповім за декілька секунд.</div>
+            <div style={{marginTop:14,display:"flex",flexDirection:"column",gap:6}}>
+              {["Що їсти перед тренуванням?","Як правильно робити присідання?","Чому боляче коліно після тренування?"].map(q=>(
+                <button key={q} onClick={()=>setInput(q)} style={{background:"rgba(200,245,58,.06)",border:"1px solid rgba(200,245,58,.2)",borderRadius:10,padding:"10px 12px",fontSize:13,color:C.acc,textAlign:"left"}}>{q}</button>
+              ))}
+            </div>
+          </div>
+        )}
+        {messages.map((m,i)=>(
+          <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
+            <div style={{maxWidth:"85%",padding:"10px 14px",borderRadius:16,background:m.role==="user"?C.acc:C.s1,color:m.role==="user"?"#0a0a0a":C.tm,border:m.role==="assistant"?`1px solid ${C.bc}`:"none",fontSize:14,lineHeight:1.55,whiteSpace:"pre-wrap"}}>{m.content}</div>
+          </div>
+        ))}
+        {sending && (
+          <div style={{display:"flex",justifyContent:"flex-start"}}>
+            <div style={{padding:"12px 16px",borderRadius:16,background:C.s1,border:`1px solid ${C.bc}`,display:"flex",gap:4}}>
+              {[0,1,2].map(i=><div key={i} className="sp" style={{width:6,height:6,borderRadius:"50%",background:C.ts,animation:`pulse 1.4s ease-in-out ${i*0.2}s infinite`}}/>)}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Input */}
+      <div style={{padding:"10px 14px 14px",borderTop:`1px solid ${C.bc}`,display:"flex",gap:8,background:C.bg,flexShrink:0}}>
+        <input
+          value={input}
+          onChange={e=>setInput(e.target.value)}
+          onKeyDown={e=>{if(e.key==="Enter")send();}}
+          placeholder="Запитай мене..."
+          disabled={sending||(limit!==null && used>=limit && limit<999)}
+          style={{flex:1,background:C.s1,border:`1px solid ${C.bc}`,borderRadius:16,padding:"12px 14px",color:C.tm,fontSize:14,outline:"none"}}
+        />
+        <button onClick={send} disabled={!input.trim()||sending||(limit!==null&&used>=limit&&limit<999)} style={{background:C.acc,color:"#0a0a0a",border:"none",borderRadius:14,padding:"0 18px",fontSize:14,fontWeight:800,opacity:(!input.trim()||sending)?.5:1}}>↑</button>
+      </div>
+
+      {showHelp && createPortal(
+        <div onClick={()=>setShowHelp(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",backdropFilter:"blur(4px)",WebkitBackdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:C.s1,borderRadius:18,border:`1px solid ${C.bc}`,padding:"18px",maxWidth:420,width:"100%"}}>
+            <div style={{fontSize:18,fontWeight:900,color:C.tm,marginBottom:12}}>🤖 Як користуватись чатом</div>
+            <div style={{fontSize:14,color:C.ts,lineHeight:1.7}}>
+              <div style={{marginBottom:10}}>💬 Питай про <b style={{color:C.tm}}>тренування, харчування, техніку вправ, відновлення</b> — відповім одразу</div>
+              <div style={{marginBottom:10}}>🧠 Памʼятаю останні <b style={{color:C.tm}}>8 повідомлень</b> — можна задавати уточнюючі запитання</div>
+              <div style={{marginBottom:10}}>📊 Твій ліміт залежить від тарифу:<br/>• Trial — 5 повідомлень/день<br/>• Start — 10<br/>• Premium — 30<br/>• VIP — безліміт</div>
+              <div style={{marginTop:14,padding:"10px 12px",background:"rgba(255,180,0,.08)",border:"1px solid rgba(255,180,0,.2)",borderRadius:10,fontSize:13,color:"#f6c90e"}}>⚠ Якщо сильно болить або травма — звертайся до тренера Матіаса особисто</div>
+            </div>
+            <button onClick={()=>setShowHelp(false)} style={{width:"100%",marginTop:16,background:C.acc,color:"#0a0a0a",border:"none",borderRadius:12,padding:"12px 0",fontSize:14,fontWeight:800}}>Зрозуміло</button>
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// РЕЦЕПТИ (VIP)
+// ═══════════════════════════════════════════════════════════════
+const Recipes = ({userId,clientData}) => {
+  const [category,setCat] = useState("breakfast");
+  const [recipes,setRec] = useState([]);
+  const [loading,setLoad] = useState(false);
+  const [err,setErr] = useState("");
+  const [expanded,setExpanded] = useState(null);
+
+  const isVIP = clientData?.plan === "vip";
+
+  const load = async(refresh=false)=>{
+    if(!isVIP) return;
+    setLoad(true); setErr("");
+    try{
+      const r = await apiGet(`/api/client/${userId}/recipes?category=${category}${refresh?"&refresh=1":""}`);
+      setRec(r.recipes||[]);
+    }catch(e){
+      setErr("Не вдалося завантажити. Спробуй пізніше.");
+    }
+    setLoad(false);
+  };
+
+  useEffect(()=>{if(isVIP)load();},[category,isVIP]);
+
+  if(!isVIP){
+    return(
+      <Scr>
+        <div style={{background:C.s1,borderRadius:18,border:"1.5px solid rgba(168,85,247,.3)",padding:"24px 20px",textAlign:"center"}}>
+          <div style={{fontSize:48,marginBottom:12}}>🍽</div>
+          <div style={{fontSize:20,fontWeight:900,color:C.tm,marginBottom:8}}>Рецепти — VIP</div>
+          <div style={{fontSize:14,color:C.ts,lineHeight:1.6,marginBottom:20}}>Персональні рецепти під твій КБЖУ. Генеруються під твою вагу, ціль і алергії. Доступно на тарифі VIP.</div>
+          <div style={{padding:"14px",background:"rgba(168,85,247,.08)",border:"1px solid rgba(168,85,247,.2)",borderRadius:12,fontSize:13,color:"#d8b4fe",lineHeight:1.6}}>Перейди на VIP щоб отримати:<br/>✓ 5 рецептів на кожен прийом їжі<br/>✓ Точний КБЖУ під твої цілі<br/>✓ Врахування алергій</div>
+        </div>
+      </Scr>
+    );
+  }
+
+  const cats = [
+    {id:"breakfast", label:"🌅 Сніданок"},
+    {id:"lunch",     label:"☀️ Обід"},
+    {id:"dinner",    label:"🌙 Вечеря"},
+    {id:"snack",     label:"🍎 Перекус"},
+  ];
+
+  return(
+    <Scr>
+      <div style={{fontSize:22,fontWeight:900,color:C.tm,letterSpacing:-.5}}>Рецепти під твій КБЖУ</div>
+
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
+        {cats.map(c=>(
+          <button key={c.id} onClick={()=>setCat(c.id)} style={{background:category===c.id?C.acc:C.s1,color:category===c.id?"#0a0a0a":C.ts,border:`1px solid ${category===c.id?C.acc:C.bc}`,borderRadius:12,padding:"10px 4px",fontSize:12,fontWeight:700}}>{c.label}</button>
+        ))}
+      </div>
+
+      <button onClick={()=>load(true)} disabled={loading} style={{background:"transparent",border:`1px solid ${C.bc}`,color:C.ts,borderRadius:12,padding:"10px 0",fontSize:13,fontWeight:600}}>🔄 Оновити список</button>
+
+      {loading && <div style={{textAlign:"center",padding:"30px 0"}}><div className="sp" style={{display:"inline-block",width:32,height:32,borderRadius:"50%",border:`3px solid ${C.s2}`,borderTopColor:C.acc}}/><div style={{fontSize:12,color:C.ts,marginTop:10}}>Генеруємо рецепти...</div></div>}
+
+      {err && <div style={{color:C.red,fontSize:13,padding:"8px 0"}}>{err}</div>}
+
+      {!loading && recipes.map((r,i)=>(
+        <div key={i} onClick={()=>setExpanded(expanded===i?null:i)} style={{background:C.s1,borderRadius:14,border:`1px solid ${C.bc}`,padding:"14px 16px",cursor:"pointer"}}>
+          <div style={{fontSize:16,fontWeight:800,color:C.tm,marginBottom:6}}>{r.name}</div>
+          <div style={{display:"flex",gap:10,flexWrap:"wrap",fontSize:12,color:C.ts,marginBottom:expanded===i?10:0}}>
+            <span>🔥 {r.kcal} ккал</span>
+            <span>🥩 {r.protein_g}г</span>
+            <span>🍞 {r.carbs_g}г</span>
+            <span>🥑 {r.fat_g}г</span>
+            {r.time_min && <span>⏱ {r.time_min} хв</span>}
+          </div>
+          {expanded===i && (
+            <div style={{marginTop:8,paddingTop:10,borderTop:`1px solid ${C.bc}`}}>
+              <div style={{fontSize:12,color:C.acc,fontWeight:700,marginBottom:6,textTransform:"uppercase",letterSpacing:.8}}>Інгредієнти</div>
+              {(r.ingredients||[]).map((ing,j)=>(
+                <div key={j} style={{fontSize:13,color:C.ts,marginBottom:3,paddingLeft:8}}>• {ing}</div>
+              ))}
+              <div style={{fontSize:12,color:C.acc,fontWeight:700,marginTop:10,marginBottom:6,textTransform:"uppercase",letterSpacing:.8}}>Приготування</div>
+              {(r.steps||[]).map((s,j)=>(
+                <div key={j} style={{fontSize:13,color:C.ts,marginBottom:5,display:"flex",gap:6}}><span style={{color:C.acc,fontWeight:700,flexShrink:0}}>{j+1}.</span><span>{s}</span></div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </Scr>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// КАЛЕНДАР ТРЕНУВАНЬ
+// ═══════════════════════════════════════════════════════════════
+const TrainingSchedule = ({userId}) => {
+  const [days,setDays] = useState([]);
+  const [time,setTime] = useState("18:00");
+  const [loading,setLoad] = useState(true);
+  const [saving,setSave] = useState(false);
+  const [saved,setSaved] = useState(false);
+
+  const weekdays = [
+    {id:0,label:"Пн"},{id:1,label:"Вт"},{id:2,label:"Ср"},
+    {id:3,label:"Чт"},{id:4,label:"Пт"},{id:5,label:"Сб"},{id:6,label:"Нд"},
+  ];
+
+  useEffect(()=>{
+    apiGet(`/api/client/${userId}/training-schedule`).then(r=>{
+      setDays(r.days||[]);
+      setTime(r.time||"18:00");
+      setLoad(false);
+    }).catch(()=>setLoad(false));
+  },[userId]);
+
+  const toggleDay = (d)=>{
+    setDays(prev => prev.includes(d) ? prev.filter(x=>x!==d) : [...prev, d].sort());
+    setSaved(false);
+  };
+
+  const save = async()=>{
+    setSave(true);
+    try{
+      await apiPost(`/api/client/${userId}/training-schedule`, {days, time});
+      setSaved(true);
+      setTimeout(()=>setSaved(false), 2500);
+    }catch(e){}
+    setSave(false);
+  };
+
+  if(loading) return <Spin/>;
+
+  return(
+    <Scr>
+      <div style={{fontSize:22,fontWeight:900,color:C.tm,letterSpacing:-.5}}>Календар тренувань</div>
+      <div style={{fontSize:13,color:C.ts,lineHeight:1.6,marginTop:-4,marginBottom:6}}>Обери дні тижня. За 5 годин до тренування — надійде нагадування в бот.</div>
+
+      <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"16px"}}>
+        <div style={{fontSize:12,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Дні тренувань</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:6}}>
+          {weekdays.map(d=>(
+            <button key={d.id} onClick={()=>toggleDay(d.id)} style={{background:days.includes(d.id)?C.acc:C.s2,color:days.includes(d.id)?"#0a0a0a":C.ts,border:`1px solid ${days.includes(d.id)?C.acc:C.bc}`,borderRadius:12,padding:"12px 0",fontSize:13,fontWeight:800}}>{d.label}</button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"16px"}}>
+        <div style={{fontSize:12,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Час тренування</div>
+        <input type="time" value={time} onChange={e=>{setTime(e.target.value);setSaved(false);}} style={{width:"100%",background:C.s2,border:`1px solid ${C.bc}`,borderRadius:12,padding:"12px 14px",color:C.tm,fontSize:18,textAlign:"center",fontWeight:700,colorScheme:"dark"}}/>
+        <div style={{fontSize:12,color:C.td,marginTop:8,textAlign:"center"}}>Нагадування прийде за 5 годин до цього часу</div>
+      </div>
+
+      <button onClick={save} disabled={saving} style={{background:C.acc,color:"#0a0a0a",border:"none",borderRadius:14,padding:"14px 0",fontSize:15,fontWeight:800}}>{saving?"Збереження...":saved?"✓ Збережено":"Зберегти розклад"}</button>
+
+      {days.length>0 && (
+        <div style={{background:"rgba(200,245,58,.06)",border:"1px solid rgba(200,245,58,.2)",borderRadius:14,padding:"12px 14px",fontSize:13,color:C.acc,lineHeight:1.6}}>
+          📅 Тренуєшся <b>{days.length}</b> {days.length===1?"день":days.length<5?"дні":"днів"} на тиждень о <b>{time}</b>. Нагадування — о {(()=>{const[h,m]=time.split(":").map(Number);const nh=(h-5+24)%24;return `${String(nh).padStart(2,"0")}:${String(m).padStart(2,"0")}`;})()}.
+        </div>
+      )}
+    </Scr>
+  );
+};
+
+
+// ═══════════════════════════════════════════════════════════════
+// EЩЕ — хаб додаткових фіч
+// ═══════════════════════════════════════════════════════════════
+const MoreScreen = ({clientData, onNav}) => {
+  const isVIP = clientData?.plan === "vip";
+  const items = [
+    {id:"photos", icon:"📸", title:"Прогрес у фото", desc:"Роби фото щотижня і бачь реальну різницю", locked:false},
+    {id:"schedule", icon:"📅", title:"Календар тренувань", desc:"Обери дні + нагадування за 5 годин", locked:false},
+    {id:"progress", icon:"📊", title:"Чекіни і прогрес", desc:"Повна історія твоїх показників", locked:false},
+    {id:"recipes", icon:"🍽", title:"Рецепти під КБЖУ", desc:isVIP?"Персональні рецепти від AI":"Доступно на VIP", locked:!isVIP},
+  ];
+  return(
+    <Scr>
+      <div style={{fontSize:22,fontWeight:900,color:C.tm,letterSpacing:-.5}}>Додатково</div>
+      {items.map(it=>(
+        <div key={it.id} onClick={()=>!it.locked && onNav(it.id)} style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px",display:"flex",alignItems:"center",gap:14,cursor:it.locked?"default":"pointer",opacity:it.locked?.55:1}}>
+          <div style={{fontSize:28}}>{it.icon}</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:15,fontWeight:800,color:C.tm,display:"flex",alignItems:"center",gap:6}}>
+              {it.title}
+              {it.locked && <span style={{fontSize:10,color:"#d8b4fe",background:"rgba(168,85,247,.15)",padding:"2px 6px",borderRadius:6,fontWeight:700}}>VIP</span>}
+            </div>
+            <div style={{fontSize:12,color:C.ts,marginTop:3}}>{it.desc}</div>
+          </div>
+          {!it.locked && <div style={{color:C.ts,fontSize:18}}>›</div>}
+        </div>
+      ))}
+    </Scr>
+  );
 };
 
 // ═══ TRAINING PLAN ═══
@@ -1532,6 +1996,198 @@ const MessageModal = ({client, onClose}) => {
   return createPortal(overlay, document.body);
 };
 
+
+// ═══════════════════════════════════════════════════════════════
+// АДМІН ЧАТ — діалоги з клієнтами
+// ═══════════════════════════════════════════════════════════════
+const AdminChat = () => {
+  const [convs,setConvs] = useState([]);
+  const [sel,setSel] = useState(null);
+  const [messages,setMsgs] = useState([]);
+  const [input,setInput] = useState("");
+  const [loading,setLoad] = useState(true);
+  const [sending,setSend] = useState(false);
+  const scrollRef = useRef();
+
+  const loadList = async()=>{
+    try{
+      const r = await apiGet("/api/admin/conversations");
+      setConvs(r.conversations||[]);
+    }catch(e){console.error(e);}
+    setLoad(false);
+  };
+
+  useEffect(()=>{loadList();const t=setInterval(loadList,15000);return()=>clearInterval(t);},[]);
+
+  const openConv = async(c)=>{
+    setSel(c);
+    try{
+      const r = await apiGet(`/api/admin/conversation/${c.user_id}`);
+      setMsgs(r.messages||[]);
+      setTimeout(()=>{if(scrollRef.current)scrollRef.current.scrollTop=scrollRef.current.scrollHeight;},50);
+    }catch(e){}
+  };
+
+  const send = async()=>{
+    const text = input.trim();
+    if(!text || sending || !sel) return;
+    setSend(true);
+    try{
+      await apiPost(`/api/admin/conversation/${sel.user_id}/reply`, {text});
+      setMsgs(m=>[...m,{direction:"out",text,created_at:new Date().toISOString()}]);
+      setInput("");
+      setTimeout(()=>{if(scrollRef.current)scrollRef.current.scrollTop=scrollRef.current.scrollHeight;},50);
+    }catch(e){}
+    setSend(false);
+  };
+
+  // Відкрито конкретний чат — бачимо повідомлення
+  if(sel){
+    return(
+      <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+        <div style={{padding:"12px 14px",borderBottom:`1px solid ${C.bc}`,display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+          <button onClick={()=>{setSel(null);loadList();}} style={{background:"transparent",color:C.acc,fontSize:14,fontWeight:600,border:"none"}}>← Назад</button>
+          <div style={{flex:1}}>
+            <div style={{fontSize:15,fontWeight:800,color:C.tm}}>{sel.full_name || `User ${sel.user_id}`}</div>
+            <div style={{fontSize:11,color:C.ts}}>{sel.username?`@${sel.username}`:""} {sel.plan && <span style={{color:C.acc}}>· {sel.plan.toUpperCase()}</span>}</div>
+          </div>
+        </div>
+        <div ref={scrollRef} style={{flex:1,overflowY:"auto",padding:"12px 14px",display:"flex",flexDirection:"column",gap:8}}>
+          {messages.length===0 && <div style={{textAlign:"center",color:C.td,fontSize:13,padding:"20px 0"}}>Історія порожня</div>}
+          {messages.map((m,i)=>(
+            <div key={i} style={{display:"flex",justifyContent:m.direction==="out"?"flex-end":"flex-start"}}>
+              <div style={{maxWidth:"85%",padding:"10px 14px",borderRadius:14,background:m.direction==="out"?C.acc:C.s1,color:m.direction==="out"?"#0a0a0a":C.tm,border:m.direction==="in"?`1px solid ${C.bc}`:"none",fontSize:14,lineHeight:1.5,whiteSpace:"pre-wrap"}}>
+                {m.text}
+                <div style={{fontSize:10,opacity:.6,marginTop:4}}>{(m.created_at||"").slice(11,16)}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{padding:"10px 14px 14px",borderTop:`1px solid ${C.bc}`,display:"flex",gap:8,background:C.bg,flexShrink:0}}>
+          <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")send();}} placeholder="Написати відповідь..." disabled={sending} style={{flex:1,background:C.s1,border:`1px solid ${C.bc}`,borderRadius:14,padding:"12px 14px",color:C.tm,fontSize:14,outline:"none"}}/>
+          <button onClick={send} disabled={!input.trim()||sending} style={{background:C.acc,color:"#0a0a0a",border:"none",borderRadius:12,padding:"0 18px",fontSize:14,fontWeight:800,opacity:(!input.trim()||sending)?.5:1}}>↑</button>
+        </div>
+      </div>
+    );
+  }
+
+  // Список діалогів
+  if(loading) return <Spin/>;
+
+  return(
+    <Scr>
+      <div style={{fontSize:22,fontWeight:900,color:C.tm,letterSpacing:-.5}}>Чат з клієнтами</div>
+      {convs.length===0 ? (
+        <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"30px 18px",textAlign:"center"}}>
+          <div style={{fontSize:40,marginBottom:8}}>💬</div>
+          <div style={{fontSize:15,fontWeight:700,color:C.tm,marginBottom:4}}>Поки немає повідомлень</div>
+          <div style={{fontSize:13,color:C.ts,lineHeight:1.5}}>Коли клієнт напише в бот — зʼявиться тут</div>
+        </div>
+      ) : convs.map(c=>(
+        <div key={c.user_id} onClick={()=>openConv(c)} style={{background:C.s1,borderRadius:14,border:`1px solid ${C.bc}`,padding:"12px 14px",cursor:"pointer",display:"flex",gap:12,alignItems:"center"}}>
+          <Ava name={c.full_name||"?"} size={44}/>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:6}}>
+              <div style={{fontSize:14,fontWeight:700,color:C.tm,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{c.full_name||`User ${c.user_id}`}</div>
+              <div style={{fontSize:11,color:C.td,flexShrink:0}}>{(c.last_at||"").slice(11,16) || (c.last_at||"").slice(0,10)}</div>
+            </div>
+            <div style={{fontSize:12,color:C.ts,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",marginTop:2}}>
+              {c.last_dir==="out" && <span style={{color:C.acc,fontWeight:700}}>Ти: </span>}
+              {c.last_text}
+            </div>
+          </div>
+          {(c.unread||0) > 0 && (
+            <div style={{background:C.acc,color:"#0a0a0a",fontSize:11,fontWeight:800,padding:"2px 7px",borderRadius:10,minWidth:20,textAlign:"center"}}>{c.unread}</div>
+          )}
+        </div>
+      ))}
+    </Scr>
+  );
+};
+
+
+// ═══════════════════════════════════════════════════════════════
+// ГРАФІКИ ПРОГРЕСУ (АДМІН) — вкладка в картці клієнта
+// ═══════════════════════════════════════════════════════════════
+const ProgressCharts = ({userId}) => {
+  const [data,setData] = useState(null);
+  const [weeks,setWeeks] = useState(8);
+  const [loading,setLoad] = useState(true);
+
+  const load = async()=>{
+    setLoad(true);
+    try{
+      const r = await apiGet(`/api/admin/client/${userId}/progress-charts?weeks=${weeks}`);
+      setData(r);
+    }catch(e){}
+    setLoad(false);
+  };
+
+  useEffect(()=>{load();const t=setInterval(load,30000);return()=>clearInterval(t);},[userId,weeks]);
+
+  const Chart = ({title, series, unit, color, formatY=v=>v}) => {
+    if(!series || series.length===0) return(
+      <div style={{background:C.s1,borderRadius:14,border:`1px solid ${C.bc}`,padding:"16px"}}>
+        <div style={{fontSize:13,color:C.ts,fontWeight:600,marginBottom:6}}>{title}</div>
+        <div style={{color:C.td,fontSize:12,textAlign:"center",padding:"20px 0"}}>Немає даних</div>
+      </div>
+    );
+    const values = series.map(p=>Number(p.v)||0);
+    const max = Math.max(...values);
+    const min = Math.min(...values);
+    const range = max-min || 1;
+    const W = 260, H = 90, pad = 6;
+    const step = series.length>1 ? (W - 2*pad) / (series.length-1) : 0;
+    const points = series.map((p,i)=>{
+      const x = pad + i*step;
+      const y = H - pad - ((Number(p.v)-min)/range) * (H - 2*pad);
+      return [x,y];
+    });
+    const path = points.map(([x,y],i) => (i===0?"M":"L")+x.toFixed(1)+","+y.toFixed(1)).join(" ");
+    const last = series[series.length-1];
+    const first = series[0];
+    const delta = Number(last.v) - Number(first.v);
+    return(
+      <div style={{background:C.s1,borderRadius:14,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:8}}>
+          <div style={{fontSize:13,color:C.ts,fontWeight:600}}>{title}</div>
+          <div style={{display:"flex",gap:8,alignItems:"baseline"}}>
+            <span style={{fontSize:18,fontWeight:900,color:C.tm}}>{formatY(Number(last.v))}{unit}</span>
+            {series.length>1 && <span style={{fontSize:12,fontWeight:700,color:delta>0?C.acc:delta<0?C.red:C.ts}}>{delta>0?"+":""}{formatY(delta)}</span>}
+          </div>
+        </div>
+        <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",height:90,display:"block"}}>
+          <path d={path} stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+          {points.map(([x,y],i)=><circle key={i} cx={x} cy={y} r="2.5" fill={color}/>)}
+        </svg>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:C.td,marginTop:4}}>
+          <span>{(first.t||"").slice(5)}</span>
+          <span>{(last.t||"").slice(5)}</span>
+        </div>
+      </div>
+    );
+  };
+
+  return(
+    <div>
+      <div style={{display:"flex",gap:6,marginBottom:10}}>
+        {[4,8,12,26].map(w=>(
+          <button key={w} onClick={()=>setWeeks(w)} style={{flex:1,background:weeks===w?C.acc:C.s1,color:weeks===w?"#0a0a0a":C.ts,border:`1px solid ${weeks===w?C.acc:C.bc}`,borderRadius:10,padding:"8px 0",fontSize:12,fontWeight:700}}>{w} тижнів</button>
+        ))}
+      </div>
+      {loading && !data ? <Spin/> : (
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <Chart title="Вага" series={data?.weight} unit=" кг" color={C.acc} formatY={v=>v.toFixed(1)}/>
+          <Chart title="Енергія" series={data?.energy} unit="/5" color="#4a9fdf"/>
+          <Chart title="Сон" series={data?.sleep} unit=" год" color="#a855f7" formatY={v=>v.toFixed(1)}/>
+          <Chart title="Чекінів на тиждень" series={data?.checkins_per_week} unit="" color="#e8a832"/>
+          <div style={{fontSize:11,color:C.td,textAlign:"center",marginTop:4}}>Оновлюється кожні 30 сек</div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AdminClientDetail = ({client,onBack}) => {
   const [detail,setDetail]=useState(null);
   const [loading,setLoad]=useState(true);
@@ -1718,6 +2374,12 @@ const AdminClientDetail = ({client,onBack}) => {
       </div>
 
       {msg && <div style={{background:"rgba(200,245,58,.08)",border:"1px solid rgba(200,245,58,.2)",borderRadius:14,padding:"14px 16px",fontSize:15,color:C.acc,fontWeight:600}}>{msg}</div>}
+
+      {/* Графіки прогресу */}
+      <div>
+        <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:8}}>Графіки прогресу</div>
+        <ProgressCharts userId={client.user_id}/>
+      </div>
 
       {/* Recent checkins */}
       {(detail?.checkins||[]).length>0 && (
@@ -1928,7 +2590,7 @@ export default function FitCoreApp() {
 
   const isAdminMode=screen==="admin";
   const showNav=["client","admin"].includes(screen)&&!checkinMode;
-  const titles={plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",menu:"Тарифи і меню",supplements:"БАДи",profile:"Профіль",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування"};
+  const titles={plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",menu:"Тарифи і меню",supplements:"БАДи",profile:"Профіль",aichat:"Чат з Матіасом",more:"Додатково",photos:"Прогрес у фото",recipes:"Рецепти",schedule:"Календар",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування",chat:"Чат з клієнтами"};
   const topTitle=checkinMode?"Чекін":isAdminMode?(selClient?"Профіль клієнта":titles[adminTab]):titles[clientTab];
   const showTopNav=["client","admin"].includes(screen)&&clientTab!=="profile"&&!(isAdminMode&&adminTab==="dashboard");
 
@@ -1970,6 +2632,7 @@ export default function FitCoreApp() {
       const onExitAdmin=()=>{setScreen("client");setAdminTab("dashboard");};
       if(adminTab==="dashboard")return <AdminDash/>;
       if(adminTab==="clients")return <AdminClients onSelect={c=>setSelClient(c)}/>;
+      if(adminTab==="chat")return <AdminChat/>;
       if(adminTab==="payments")return <AdminPayments/>;
       if(adminTab==="broadcast")return <AdminBroadcast/>;
       if(adminTab==="settings")return <AdminSettings settings={settings} onExitAdmin={onExitAdmin}/>;
@@ -1978,6 +2641,11 @@ export default function FitCoreApp() {
       if(checkinMode)return <Checkin userId={userId} onDone={()=>setCheckin(false)}/>;
       if(clientTab==="plan")return <TrainPlan userId={userId}/>;
       if(clientTab==="nutrition")return <Nutrition userId={userId}/>;
+      if(clientTab==="aichat")return <AIChat userId={userId} clientData={clientData}/>;
+      if(clientTab==="photos")return <ProgressPhotos userId={userId}/>;
+      if(clientTab==="recipes")return <Recipes userId={userId} clientData={clientData}/>;
+      if(clientTab==="schedule")return <TrainingSchedule userId={userId}/>;
+      if(clientTab==="more")return <MoreScreen clientData={clientData} onNav={setClientTab}/>;
       if(clientTab==="progress")return <Progress userId={userId}/>;
       if(clientTab==="menu")return <MenuScreen plans={plans} payLinks={payLinks} onSelectPlan={(p,m)=>{setSelPlan(p);setSelMonths(m||1);setScreen("payment");}} clientPlan={clientData?.plan} onShowReviews={()=>setClientTab("reviews")}/>;
       if(clientTab==="supplements")return <SupplementsScreen userId={userId} clientPlan={clientData?.plan} isAdmin={isAdmin}/>;
