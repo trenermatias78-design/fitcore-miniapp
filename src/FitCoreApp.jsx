@@ -1877,6 +1877,15 @@ export default function FitCoreApp() {
   const [checkinMode,setCheckin]=useState(false);
 
   useEffect(()=>{
+    // Telegram Mini App — розтягнути на весь екран і вимкнути свайпи які згортають додаток
+    try{
+      const tg = window.Telegram?.WebApp;
+      if (tg) {
+        tg.ready?.();
+        tg.expand?.();
+        tg.disableVerticalSwipes?.();
+      }
+    }catch{}
     const init=async()=>{
       try{
         const auth=await apiPost("/api/auth",{});
