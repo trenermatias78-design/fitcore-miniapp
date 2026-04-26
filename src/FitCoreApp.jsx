@@ -2637,12 +2637,27 @@ export default function FitCoreApp() {
           if(auth.is_admin)setScreen("admin");
           else if(["active","trial"].includes(st))setScreen("client");
           else if(["pending_approval","pending_payment"].includes(st))setScreen("pending");
-          else if(st==="expired")setScreen("expired");
+          else if(["expired","trial_expired"].includes(st))setScreen("expired");
           else setScreen("goto_bot");
         }else{setScreen("goto_bot");}
       }catch(e){console.error("Init:",e);setScreen("goto_bot");}
     };
     init();
+
+    // Перевіряти статус кожні 5 хв — якщо trial/active експерувався, перенаправити
+    const statusCheckInterval = setInterval(async () => {
+      try {
+        const r = await apiPost("/api/auth", {});
+        if (r.client) {
+          setClient(r.client);
+          const st = r.client.status;
+          if (["expired","trial_expired"].includes(st) && screen !== "expired") {
+            setScreen("expired");
+          }
+        }
+      } catch {}
+    }, 300000);
+    return () => clearInterval(statusCheckInterval);
   },[]);
 
   if(screen==="loading")return(
@@ -2687,15 +2702,23 @@ export default function FitCoreApp() {
     );
     if(screen==="plans")return <PlanSelect plans={plans} payLinks={payLinks} onSelect={(p,m)=>{setSelPlan(p);setSelMonths(m||1);setScreen("payment");}}/>;
     if(screen==="payment")return <Payment planKey={selPlan} months={selMonths||1} plans={plans} payLinks={payLinks} onBack={()=>{setClientTab("menu");setScreen("client");}} onPaid={()=>setScreen("pending")} userId={userId}/>;
-    if(screen==="expired")return(
-      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 28px",textAlign:"center"}}>
-        <div style={{fontSize:48}}>🔒</div>
-        <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-1}}>Пакет закінчився</div>
-        <div style={{fontSize:15,color:C.ts,lineHeight:1.7}}>Твій тариф завершився.<br/>Придбай новий пакет щоб відновити доступ.</div>
-        <PBtn onClick={()=>{setClientTab("menu");setScreen("client");}}>Придбати тариф</PBtn>
-        <div style={{fontSize:13,color:C.td}}>Всі твої дані збережені</div>
-      </div>
-    );
+    if(screen==="expired"){
+      const isTrialExpired = client?.status === "trial_expired";
+      return(
+        <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 28px",textAlign:"center"}}>
+          <div style={{fontSize:48}}>{isTrialExpired ? "⏳" : "🔒"}</div>
+          <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-1}}>{isTrialExpired ? "Пробний доступ завершено" : "Пакет закінчився"}</div>
+          <div style={{fontSize:15,color:C.ts,lineHeight:1.7}}>
+            {isTrialExpired
+              ? <>За ці 3 дні ти побачив можливості системи.<br/>Обери тариф щоб продовжити роботу.</>
+              : <>Твій тариф завершився.<br/>Придбай новий пакет щоб відновити доступ.</>
+            }
+          </div>
+          <PBtn onClick={()=>{setClientTab("menu");setScreen("client");}}>Обрати тариф</PBtn>
+          <div style={{fontSize:13,color:C.td}}>Всі твої дані збережені</div>
+        </div>
+      );
+    }
     if(screen==="pending")return(
       <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 24px"}}>
         <div style={{width:72,height:72,borderRadius:"50%",background:"rgba(232,168,50,.1)",border:`2px solid ${C.amber}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
