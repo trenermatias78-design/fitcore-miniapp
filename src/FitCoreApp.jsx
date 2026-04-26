@@ -182,6 +182,11 @@ const PLANS_STATIC = {
 const TRAINER_LINK = "https://t.me/matmatias";
 // ═══ MENU — тарифи + тривалість в одному місці ═══
 const MenuScreen = ({plans,payLinks,onSelectPlan,clientPlan,onShowReviews}) => {
+  const [stats,setStats] = useState(null);
+  useEffect(()=>{
+    apiGet("/api/social-stats").then(r=>setStats(r)).catch(()=>{});
+  },[]);
+
   const p = plans || PLANS_STATIC;
   const [months,setMonths] = useState(1);
 
@@ -335,6 +340,49 @@ const PlanSelect = ({plans,payLinks,onSelect}) => {
   return (
     <Scr>
       <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-1}}>Обери тариф</div>
+
+      {/* Соц.доказ — реальна статистика */}
+      {stats && (stats.active_now>0 || stats.checkins_today>0 || stats.purchases_week>0) && (
+        <div style={{background:"linear-gradient(135deg, rgba(200,245,58,.08), rgba(232,168,50,.06))",border:"1px solid rgba(200,245,58,.25)",borderRadius:16,padding:"14px 16px"}}>
+          <div style={{fontSize:11,color:C.acc,fontWeight:800,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Що відбувається в FitCore</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            {stats.active_now > 0 && (
+              <div>
+                <div style={{fontSize:22,fontWeight:900,color:C.tm,letterSpacing:-.5}}>{stats.active_now}</div>
+                <div style={{fontSize:11,color:C.ts,marginTop:2,lineHeight:1.3}}>клієнтів зараз<br/>активні</div>
+              </div>
+            )}
+            {stats.checkins_today > 0 && (
+              <div>
+                <div style={{fontSize:22,fontWeight:900,color:C.tm,letterSpacing:-.5}}>{stats.checkins_today}</div>
+                <div style={{fontSize:11,color:C.ts,marginTop:2,lineHeight:1.3}}>чекінів<br/>сьогодні</div>
+              </div>
+            )}
+            {stats.purchases_week > 0 && (
+              <div>
+                <div style={{fontSize:22,fontWeight:900,color:C.acc,letterSpacing:-.5}}>+{stats.purchases_week}</div>
+                <div style={{fontSize:11,color:C.ts,marginTop:2,lineHeight:1.3}}>купили підписку<br/>цього тижня</div>
+              </div>
+            )}
+            {stats.total_kg_lost > 0 && (
+              <div>
+                <div style={{fontSize:22,fontWeight:900,color:C.acc,letterSpacing:-.5}}>−{stats.total_kg_lost}</div>
+                <div style={{fontSize:11,color:C.ts,marginTop:2,lineHeight:1.3}}>кг скинуто<br/>клієнтами разом</div>
+              </div>
+            )}
+          </div>
+          {(stats.top_streak>=7 || stats.loyal_clients>0) && (
+            <div style={{marginTop:10,paddingTop:10,borderTop:`1px solid rgba(200,245,58,.15)`,display:"flex",justifyContent:"space-around",gap:12,fontSize:12}}>
+              {stats.top_streak >= 7 && (
+                <div style={{color:C.ts,textAlign:"center"}}>🔥 топ стрік<br/><b style={{color:C.tm,fontSize:14}}>{stats.top_streak} днів</b></div>
+              )}
+              {stats.loyal_clients > 0 && (
+                <div style={{color:C.ts,textAlign:"center"}}>💪 з нами 30+ днів<br/><b style={{color:C.tm,fontSize:14}}>{stats.loyal_clients} {stats.loyal_clients===1?"клієнт":"клієнтів"}</b></div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
       <div style={{fontSize:14,color:C.ts,marginBottom:2}}>3 дні безкоштовно · оплата після</div>
 
       {/* Duration switcher */}
@@ -994,25 +1042,34 @@ const Recipes = ({userId,clientData}) => {
   const [recipes,setRec] = useState([]);
   const [loading,setLoad] = useState(false);
   const [err,setErr] = useState("");
+  const [trialBlock,setTrialBlock] = useState(null);
   const [expanded,setExpanded] = useState(null);
 
   const isVIP = clientData?.plan === "vip";
+  const isTrial = clientData?.status === "trial";
+  const hasAccess = isVIP || isTrial;
 
   const load = async(refresh=false)=>{
-    if(!isVIP) return;
-    setLoad(true); setErr("");
+    if(!hasAccess) return;
+    setLoad(true); setErr(""); setTrialBlock(null);
     try{
       const r = await apiGet(`/api/client/${userId}/recipes?category=${category}${refresh?"&refresh=1":""}`);
       setRec(r.recipes||[]);
     }catch(e){
-      setErr("Не вдалося завантажити. Спробуй пізніше.");
+      const msg = e.message||"";
+      if(msg.includes("trial_limit")){
+        setTrialBlock(true);
+        setRec([]);
+      }else{
+        setErr("Не вдалося завантажити. Спробуй пізніше.");
+      }
     }
     setLoad(false);
   };
 
-  useEffect(()=>{if(isVIP)load();},[category,isVIP]);
+  useEffect(()=>{if(hasAccess)load();},[category,hasAccess]);
 
-  if(!isVIP){
+  if(!hasAccess){
     return(
       <Scr>
         <div style={{background:C.s1,borderRadius:18,border:"1.5px solid rgba(168,85,247,.3)",padding:"24px 20px",textAlign:"center"}}>
@@ -1035,6 +1092,11 @@ const Recipes = ({userId,clientData}) => {
   return(
     <Scr>
       <div style={{fontSize:22,fontWeight:900,color:C.tm,letterSpacing:-.5}}>Рецепти під твій КБЖУ</div>
+      {isTrial && (
+        <div style={{background:"rgba(168,85,247,.1)",border:"1px solid rgba(168,85,247,.25)",borderRadius:12,padding:"10px 12px",fontSize:13,color:"#d8b4fe",lineHeight:1.5}}>
+          ⚡ <b>Пробний доступ:</b> 1 категорія рецептів на день. На VIP — без обмежень.
+        </div>
+      )}
 
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
         {cats.map(c=>(
@@ -1047,6 +1109,13 @@ const Recipes = ({userId,clientData}) => {
       {loading && <div style={{textAlign:"center",padding:"30px 0"}}><div className="sp" style={{display:"inline-block",width:32,height:32,borderRadius:"50%",border:`3px solid ${C.s2}`,borderTopColor:C.acc}}/><div style={{fontSize:12,color:C.ts,marginTop:10}}>Генеруємо рецепти...</div></div>}
 
       {err && <div style={{color:C.red,fontSize:13,padding:"8px 0"}}>{err}</div>}
+      {trialBlock && (
+        <div style={{background:"rgba(168,85,247,.08)",border:"1.5px solid rgba(168,85,247,.3)",borderRadius:14,padding:"16px",textAlign:"center"}}>
+          <div style={{fontSize:32,marginBottom:6}}>🔒</div>
+          <div style={{fontSize:15,fontWeight:800,color:C.tm,marginBottom:6}}>Сьогодні ліміт вичерпано</div>
+          <div style={{fontSize:13,color:C.ts,lineHeight:1.6}}>На пробному доступі — 1 категорія на день. Завтра відкриється нова, або обери <b style={{color:"#d8b4fe"}}>VIP</b> щоб отримати всі 4 категорії одразу і без обмежень.</div>
+        </div>
+      )}
 
       {!loading && recipes.map((r,i)=>(
         <div key={i} onClick={()=>setExpanded(expanded===i?null:i)} style={{background:C.s1,borderRadius:14,border:`1px solid ${C.bc}`,padding:"14px 16px",cursor:"pointer"}}>
@@ -1153,11 +1222,19 @@ const TrainingSchedule = ({userId}) => {
 // ═══════════════════════════════════════════════════════════════
 const MoreScreen = ({clientData, onNav}) => {
   const isVIP = clientData?.plan === "vip";
+  const isTrial = clientData?.status === "trial";
   const items = [
     {id:"photos", icon:"📸", title:"Прогрес у фото", desc:"Роби фото щотижня і бачь реальну різницю", locked:false},
     {id:"schedule", icon:"📅", title:"Календар тренувань", desc:"Обери дні + нагадування за 5 годин", locked:false},
     {id:"progress", icon:"📊", title:"Чекіни і прогрес", desc:"Повна історія твоїх показників", locked:false},
-    {id:"recipes", icon:"🍽", title:"Рецепти під КБЖУ", desc:isVIP?"Персональні рецепти від AI":"Доступно на VIP", locked:!isVIP},
+    {
+      id:"recipes",
+      icon:"🍽",
+      title:"Рецепти під КБЖУ",
+      desc: isVIP ? "Персональні рецепти від AI" : isTrial ? "✨ Доступно на пробному (1 категорія/день)" : "Доступно на VIP",
+      locked: !(isVIP || isTrial),
+      vipBadge: isTrial,
+    },
   ];
   return(
     <Scr>
@@ -1169,6 +1246,7 @@ const MoreScreen = ({clientData, onNav}) => {
             <div style={{fontSize:15,fontWeight:800,color:C.tm,display:"flex",alignItems:"center",gap:6}}>
               {it.title}
               {it.locked && <span style={{fontSize:10,color:"#d8b4fe",background:"rgba(168,85,247,.15)",padding:"2px 6px",borderRadius:6,fontWeight:700}}>VIP</span>}
+            {it.vipBadge && !it.locked && <span style={{fontSize:10,color:C.acc,background:"rgba(200,245,58,.12)",padding:"2px 6px",borderRadius:6,fontWeight:700}}>TRIAL</span>}
             </div>
             <div style={{fontSize:12,color:C.ts,marginTop:3}}>{it.desc}</div>
           </div>
