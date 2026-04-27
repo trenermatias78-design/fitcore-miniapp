@@ -161,19 +161,19 @@ const Welcome = ({onStart,onLogin}) => (
 // ═══ PLAN SELECT ═══
 const PLANS_STATIC = {
   start:{
-    name:"START", price:799, stars:500,
+    name:"START", price:799, stars:1450,
     desc:"Базовий старт для новачків",
     features:["Шаблонний тренувальний план","Базовий план харчування (КБЖУ)","Трекінг ваги і прогресу","Чекіни без фідбеку"],
     no:["AI персоналізація","Фідбек тренера","БАДи"]
   },
   premium:{
-    name:"PREMIUM", price:1699, stars:999, hot:true,
+    name:"PREMIUM", price:1699, stars:3100, hot:true,
     desc:"Персональний підхід від ШІ-тренера",
     features:["Персональний план від Claude AI","Щотижневе оновлення плану","Чекіни 2× на тиждень з AI фідбеком","Індивідуальне харчування з грамами","Відповіді тренера на питання"],
     no:["Прямий зв'язок з тренером","Пропись БАДів"]
   },
   vip:{
-    name:"VIP", price:3499, stars:1999,
+    name:"VIP", price:3499, stars:6350,
     desc:"Максимальний результат з особистим супроводом",
     features:["Все що в PREMIUM","Прямий зв'язок з тренером особисто","Пропись БАДів під твої цілі","Корекція плану в будь-який момент","Пріоритетна відповідь 24/7"],
     no:[]
@@ -221,7 +221,7 @@ const MenuScreen = ({plans,payLinks,onSelectPlan,clientPlan,onShowReviews}) => {
       {/* Plan cards */}
       {Object.entries(p).map(([k,plan])=>{
         const price=dCalc(plan.price,months);
-        const stars=dStars(plan.stars||500,months);
+        const stars=dStars(plan.stars||1450,months);
         const saved=dSaved(plan.price,months);
         const perMo=months>1?Math.round(price/months):null;
         const isMine=clientPlan===k;
@@ -411,7 +411,7 @@ const PlanSelect = ({plans,payLinks,onSelect}) => {
       {/* Plan cards */}
       {Object.entries(p).map(([k,plan])=>{
         const price=dCalc(plan.price,months);
-        const stars=dStars(plan.stars||500,months);
+        const stars=dStars(plan.stars||1450,months);
         const saved=dSaved(plan.price,months);
         const perMo=months>1?Math.round(price/months):null;
         return(
@@ -454,7 +454,7 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
   const plan=(plans||PLANS_STATIC)[planKey];
   const link=(payLinks||{})[planKey]||"#";
   const totalPrice=dCalc((plan?.price)||0,months);
-  const totalStars=dStars((plan?.stars)||500,months);
+  const totalStars=dStars((plan?.stars)||1450,months);
   const saved=dSaved((plan?.price)||0,months);
   const disc=DUR_DISC[months]||0;
   const [sending,setSending]=useState(false);
@@ -500,68 +500,123 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
     </div>
   );
 
+  const perMonth = months > 1 ? Math.round(totalPrice/months) : null;
+  const perMonthStars = months > 1 ? Math.round(totalStars/months) : null;
+
   return (
     <Scr>
       <TNav title="Оплата" onBack={onBack}/>
-      <div style={{background:C.s1,borderRadius:18,border:`1px solid ${C.bc}`,padding:"16px"}}>
-        <div style={{fontSize:12,color:C.ts,textTransform:"uppercase",letterSpacing:.8,marginBottom:10,fontWeight:600}}>Замовлення</div>
-        {[
-          ["Тариф",plan?.name],
-          ["Тривалість",DUR_LABEL[months]||"1 місяць"],
-          ["Пробний","3 дні безкоштовно"],
-          ...(disc>0?[["Знижка",`-${disc}%  (-${saved.toLocaleString()} ₴)`]]:[]),
-        ].map(([l,v])=>(
-          <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",fontSize:15}}>
-            <span style={{color:C.ts}}>{l}</span>
-            <span style={{color:l==="Знижка"||l==="Пробний"?C.acc:C.tm,fontWeight:600}}>{v}</span>
+
+      {/* Order summary — clear and clean */}
+      <div style={{background:C.s1,borderRadius:18,border:`1px solid ${C.bc}`,padding:"18px"}}>
+        <div style={{fontSize:11,color:C.ts,textTransform:"uppercase",letterSpacing:.8,marginBottom:14,fontWeight:700}}>Твоє замовлення</div>
+
+        {/* Plan name + tariff */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+          <div>
+            <div style={{fontSize:18,fontWeight:900,color:C.tm,letterSpacing:-.5}}>{plan?.name}</div>
+            <div style={{fontSize:13,color:C.ts,marginTop:2}}>{DUR_LABEL[months]||"1 місяць"} доступу</div>
           </div>
-        ))}
-        <Div style={{margin:"8px 0"}}/>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <span style={{fontSize:16,fontWeight:700,color:C.tm}}>До сплати</span>
-          <span style={{fontSize:32,fontWeight:900,color:C.acc}}>{totalPrice.toLocaleString()} ₴</span>
+          {disc>0 && (
+            <div style={{background:"rgba(200,245,58,.12)",border:"1px solid rgba(200,245,58,.3)",borderRadius:8,padding:"4px 10px"}}>
+              <div style={{fontSize:11,color:C.acc,fontWeight:800}}>−{disc}%</div>
+            </div>
+          )}
+        </div>
+
+        {/* Breakdown */}
+        <div style={{borderTop:`1px solid ${C.bc}`,paddingTop:12,fontSize:14}}>
+          {disc > 0 && (
+            <>
+              <div style={{display:"flex",justifyContent:"space-between",padding:"4px 0",color:C.ts}}>
+                <span>Базова ціна</span>
+                <span style={{textDecoration:"line-through",opacity:.6}}>{((plan?.price||0)*months).toLocaleString()} ₴</span>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",padding:"4px 0",color:C.acc}}>
+                <span>Знижка {disc}%</span>
+                <span style={{fontWeight:700}}>−{saved.toLocaleString()} ₴</span>
+              </div>
+            </>
+          )}
+          {perMonth && (
+            <div style={{display:"flex",justifyContent:"space-between",padding:"4px 0",color:C.ts}}>
+              <span>Ціна за місяць</span>
+              <span>{perMonth.toLocaleString()} ₴/міс</span>
+            </div>
+          )}
+          <div style={{display:"flex",justifyContent:"space-between",padding:"4px 0",color:C.acc}}>
+            <span>Пробний доступ</span>
+            <span style={{fontWeight:700}}>3 дні безкоштовно</span>
+          </div>
+        </div>
+
+        <div style={{borderTop:`1px solid ${C.bc}`,marginTop:12,paddingTop:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div>
+            <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8}}>До сплати</div>
+            <div style={{fontSize:11,color:C.td,marginTop:2}}>або {totalStars.toLocaleString()} ⭐</div>
+          </div>
+          <div style={{fontSize:32,fontWeight:900,color:C.acc,letterSpacing:-1}}>{totalPrice.toLocaleString()} ₴</div>
         </div>
       </div>
-      <div className="bl" style={{background:"rgba(200,245,58,.05)",borderRadius:18,border:`1.5px solid ${C.acc}`,padding:"16px",display:"flex",alignItems:"center",gap:12}}>
-        <div style={{width:44,height:44,background:C.s2,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="2" y="5" width="18" height="13" rx="2.5" stroke={C.acc} strokeWidth="1.6" fill="none"/><path d="M2 10h18" stroke={C.acc} strokeWidth="1.6"/><circle cx="7" cy="14.5" r="1.8" fill={C.acc}/></svg>
+
+      {/* Choose method */}
+      <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginTop:6}}>Спосіб оплати</div>
+
+      {/* Monobank — primary */}
+      <div style={{background:C.s1,borderRadius:18,border:`1.5px solid ${C.acc}`,padding:"16px",position:"relative"}}>
+        <div style={{position:"absolute",top:-9,left:14,background:C.acc,color:"#0a0a0a",fontSize:9,fontWeight:900,padding:"3px 8px",borderRadius:6,letterSpacing:.5}}>РЕКОМЕНДУЄМО</div>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+          <div style={{width:44,height:44,background:"rgba(200,245,58,.1)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:24}}>💳</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:16,fontWeight:800,color:C.tm}}>Monobank · {totalPrice.toLocaleString()} ₴</div>
+            <div style={{fontSize:12,color:C.ts,marginTop:2}}>Оплата через банку MatiasFitness</div>
+          </div>
         </div>
-        <div style={{flex:1}}>
-          <div style={{fontSize:15,fontWeight:700,color:C.tm}}>Monobank jar</div>
-          <div style={{fontSize:12,color:C.ts,marginTop:2}}>MatiasFitness — {plan?.name}</div>
+        <PBtn onClick={()=>{
+          if(link&&link!=="#"){
+            if(window.Telegram?.WebApp?.openLink){window.Telegram.WebApp.openLink(link);}
+            else{window.open(link,"_blank");}
+          }
+        }}>Оплатити {totalPrice.toLocaleString()} ₴</PBtn>
+        <div style={{fontSize:12,color:C.td,marginTop:10,lineHeight:1.5}}>
+          Після оплати — натисни кнопку нижче «Я оплатив», тренер активує доступ протягом 1 години.
         </div>
       </div>
-      <PBtn onClick={()=>{
-        if(link&&link!=="#"){
-          if(window.Telegram?.WebApp?.openLink){window.Telegram.WebApp.openLink(link);}
-          else{window.open(link,"_blank");}
-        }
-      }}>💳 Monobank</PBtn>
-      <div style={{display:"flex",alignItems:"center",gap:10,margin:"4px 0"}}>
-        <div style={{flex:1,height:1,background:C.bc}}/>
-        <div style={{fontSize:12,color:C.td}}>або</div>
-        <div style={{flex:1,height:1,background:C.bc}}/>
+
+      {/* Stars — alternative */}
+      <div style={{background:C.s1,borderRadius:18,border:`1px solid ${C.bc}`,padding:"16px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+          <div style={{width:44,height:44,background:"rgba(246,201,14,.1)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:24}}>⭐</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:16,fontWeight:800,color:C.tm}}>Telegram Stars · {totalStars.toLocaleString()} ⭐</div>
+            <div style={{fontSize:12,color:C.ts,marginTop:2}}>≈ {totalPrice.toLocaleString()} ₴ · активація автоматична</div>
+          </div>
+        </div>
+        <button onClick={()=>{
+          const tg=window.Telegram?.WebApp;
+          // Bot deep-link: pay_<plan>_<months> → бот шле інвойс, після оплати клієнт повертається в Mini App
+          const link = `https://t.me/fitcore_matias_bot?start=pay_${planKey}_${months}`;
+          if(tg && tg.openTelegramLink){
+            tg.openTelegramLink(link);
+          } else {
+            window.location.href = link;
+          }
+        }} style={{width:"100%",background:"linear-gradient(135deg,#f6c90e,#e4a200)",color:"#0a0a0a",border:"none",borderRadius:14,padding:"14px 0",fontSize:15,fontWeight:800}}>Оплатити {totalStars.toLocaleString()} ⭐</button>
+        <div style={{fontSize:12,color:C.td,marginTop:10,lineHeight:1.5}}>
+          Доступ активується миттєво після підтвердження Telegram.
+        </div>
       </div>
-      <PBtn onClick={async()=>{
-        const tg=window.Telegram?.WebApp;
-        try{
-          await fetch(`${API_BASE}/api/client/${userId}/request-stars-payment`,{
-            method:"POST",
-            headers:{"Content-Type":"application/json","X-Telegram-Init-Data":getInitData(),"X-Dev-User-Id":String(userId)},
-            body:JSON.stringify({plan:planKey,months})
-          });
-          if(tg){tg.close();}
-        }catch(e){
-          console.error(e);
-          alert("Помилка. Спробуй ще раз.");
-        }
-      }} style={{background:"linear-gradient(135deg,#f6c90e,#e4a200)",color:"#000"}}>⭐ Оплатити зірками Telegram</PBtn>
-      <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
-        <div style={{fontSize:14,fontWeight:700,color:C.tm,marginBottom:6}}>Вже оплатив?</div>
-        <div style={{fontSize:13,color:C.ts,marginBottom:12,lineHeight:1.6}}>Натисни кнопку — тренер отримає сповіщення і надішле запит на скріншот прямо в бот.</div>
-        <PBtn onClick={sendScreenshot} loading={sending} style={{background:C.s2,color:C.tm}}>
-          {sending?"Надсилаю...":"📸 Надіслати скріншот оплати"}
-        </PBtn>
+
+      {/* Already paid */}
+      <div style={{background:"rgba(200,245,58,.05)",borderRadius:14,border:"1px dashed rgba(200,245,58,.25)",padding:"14px 16px",textAlign:"center"}}>
+        <div style={{fontSize:13,color:C.ts,marginBottom:10,lineHeight:1.5}}>Вже оплатив через Monobank?</div>
+        <button onClick={sendScreenshot} disabled={sending} style={{width:"100%",background:"transparent",border:`1px solid ${C.acc}`,borderRadius:12,padding:"11px 0",fontSize:14,fontWeight:700,color:C.acc}}>
+          {sending?"Надсилаю...":"✓ Я оплатив — повідомити тренера"}
+        </button>
+      </div>
+
+      <div style={{fontSize:11,color:C.td,textAlign:"center",lineHeight:1.6,padding:"4px 12px"}}>
+        Гарантія повернення: якщо щось не сподобається — пиши тренеру в перші 7 днів.
       </div>
     </Scr>
   );
@@ -766,6 +821,392 @@ const ExModal = ({ex, onClose}) => {
   return createPortal(overlayContent, document.body);
 };
 
+
+
+// ═══════════════════════════════════════════════════════════════
+// WELCOME (для нових клієнтів — після відео в боті)
+// ═══════════════════════════════════════════════════════════════
+const WelcomeScreen = ({onStart}) => (
+  <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 28px",textAlign:"center"}}>
+    <div style={{width:96,height:96,borderRadius:24,background:"linear-gradient(135deg,"+C.acc+",#a8d624)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:44,boxShadow:"0 12px 40px rgba(200,245,58,.3)"}}>💪</div>
+    <div style={{fontSize:30,fontWeight:900,color:C.tm,letterSpacing:-1,lineHeight:1.1}}>Привіт!</div>
+    <div style={{fontSize:16,color:C.ts,lineHeight:1.6,maxWidth:340}}>Заповни коротку анкету — і я побудую персональну програму під твої цілі. Це займе 2 хвилини.</div>
+
+    <div style={{width:"100%",maxWidth:340,marginTop:8,display:"flex",flexDirection:"column",gap:8}}>
+      {[
+        {ic:"🎯", t:"Персональний план тренувань"},
+        {ic:"🍽", t:"Харчування під твій КБЖУ"},
+        {ic:"🤖", t:"AI-тренер 24/7"},
+      ].map((it,i)=>(
+        <div key={i} style={{background:C.s1,border:`1px solid ${C.bc}`,borderRadius:14,padding:"12px 14px",display:"flex",alignItems:"center",gap:12,fontSize:14,color:C.tm,fontWeight:600,textAlign:"left"}}>
+          <span style={{fontSize:20}}>{it.ic}</span>
+          <span>{it.t}</span>
+        </div>
+      ))}
+    </div>
+
+    <button onClick={onStart} style={{width:"100%",maxWidth:340,marginTop:12,background:C.acc,color:"#0a0a0a",border:"none",borderRadius:16,padding:"16px 0",fontSize:16,fontWeight:800,cursor:"pointer"}}>Заповнити анкету · 3 дні безкоштовно</button>
+    <div style={{fontSize:12,color:C.td}}>Без карти. Без зобовʼязань.</div>
+  </div>
+);
+
+// ═══════════════════════════════════════════════════════════════
+// ONBOARDING — анкета на 12 кроків
+// ═══════════════════════════════════════════════════════════════
+const OnboardingFlow = ({userId, onComplete}) => {
+  const [step, setStep] = useState(0);
+  const [data, setData] = useState({
+    age: "", gender: "", height_cm: "", weight_kg: "", target_weight: "",
+    goal: "", experience: "", equipment: "", workouts_pw: "", pref_time: "",
+    health_issues: "none", health_comment: "", allergies: "none",
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [err, setErr] = useState("");
+
+  const update = (k,v) => { setData(d => ({...d, [k]:v})); setErr(""); };
+
+  const steps = [
+    // 0 — Вік
+    {
+      title: "Скільки тобі років?",
+      sub: "Це впливає на розрахунок калорій і навантаження",
+      render: () => (
+        <input type="number" inputMode="numeric" placeholder="наприклад 27"
+          value={data.age} onChange={e=>update("age", e.target.value)}
+          style={{width:"100%",background:C.s2,border:`1px solid ${C.bc}`,borderRadius:14,padding:"16px 18px",color:C.tm,fontSize:20,fontWeight:700,textAlign:"center",outline:"none"}}
+        />
+      ),
+      validate: () => {
+        const n = parseInt(data.age);
+        if (!n || n < 10 || n > 80) return "Введи вік від 10 до 80";
+        return null;
+      },
+    },
+    // 1 — Стать
+    {
+      title: "Твоя стать?",
+      sub: "Впливає на гормональний контекст програми",
+      render: () => (
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          {[{id:"male",l:"♂ Чоловік"},{id:"female",l:"♀ Жінка"}].map(o=>(
+            <button key={o.id} onClick={()=>update("gender",o.id)}
+              style={{background:data.gender===o.id?C.acc:C.s2,color:data.gender===o.id?"#0a0a0a":C.tm,
+                border:`1.5px solid ${data.gender===o.id?C.acc:C.bc}`,borderRadius:14,padding:"18px 0",fontSize:15,fontWeight:800,cursor:"pointer"}}>{o.l}</button>
+          ))}
+        </div>
+      ),
+      validate: () => data.gender ? null : "Обери стать",
+    },
+    // 2 — Зріст
+    {
+      title: "Який твій зріст?",
+      sub: "У сантиметрах",
+      render: () => (
+        <input type="number" inputMode="numeric" placeholder="наприклад 178"
+          value={data.height_cm} onChange={e=>update("height_cm", e.target.value)}
+          style={{width:"100%",background:C.s2,border:`1px solid ${C.bc}`,borderRadius:14,padding:"16px 18px",color:C.tm,fontSize:20,fontWeight:700,textAlign:"center",outline:"none"}}
+        />
+      ),
+      validate: () => {
+        const n = parseInt(data.height_cm);
+        if (!n || n < 100 || n > 230) return "Введи зріст від 100 до 230 см";
+        return null;
+      },
+    },
+    // 3 — Вага зараз
+    {
+      title: "Скільки ти зараз важиш?",
+      sub: "У кілограмах. Можна з десятковою (78.5)",
+      render: () => (
+        <input type="number" inputMode="decimal" placeholder="наприклад 82" step="0.1"
+          value={data.weight_kg} onChange={e=>update("weight_kg", e.target.value)}
+          style={{width:"100%",background:C.s2,border:`1px solid ${C.bc}`,borderRadius:14,padding:"16px 18px",color:C.tm,fontSize:20,fontWeight:700,textAlign:"center",outline:"none"}}
+        />
+      ),
+      validate: () => {
+        const n = parseFloat(data.weight_kg);
+        if (!n || n < 30 || n > 250) return "Введи вагу від 30 до 250 кг";
+        return null;
+      },
+    },
+    // 4 — Цільова вага
+    {
+      title: "Куди хочеш прийти?",
+      sub: "Цільова вага у кг",
+      render: () => (
+        <input type="number" inputMode="decimal" placeholder="наприклад 75" step="0.1"
+          value={data.target_weight} onChange={e=>update("target_weight", e.target.value)}
+          style={{width:"100%",background:C.s2,border:`1px solid ${C.bc}`,borderRadius:14,padding:"16px 18px",color:C.tm,fontSize:20,fontWeight:700,textAlign:"center",outline:"none"}}
+        />
+      ),
+      validate: () => {
+        const n = parseFloat(data.target_weight);
+        if (!n || n < 30 || n > 250) return "Введи цільову вагу від 30 до 250 кг";
+        return null;
+      },
+    },
+    // 5 — Ціль
+    {
+      title: "Яка твоя головна ціль?",
+      sub: "Обери одну",
+      render: () => (
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[
+            {id:"lose_weight",l:"📉 Схуднути"},
+            {id:"gain_muscle",l:"💪 Набір маси"},
+            {id:"recomp",l:"🔄 Рекомпозиція"},
+            {id:"strength",l:"🏋 Сила"},
+            {id:"endurance",l:"🏃 Витривалість"},
+            {id:"health",l:"❤️ Здоровʼя"},
+          ].map(o=>(
+            <button key={o.id} onClick={()=>update("goal",o.id)}
+              style={{background:data.goal===o.id?C.acc:C.s2,color:data.goal===o.id?"#0a0a0a":C.tm,
+                border:`1.5px solid ${data.goal===o.id?C.acc:C.bc}`,borderRadius:12,padding:"14px 16px",fontSize:14,fontWeight:700,textAlign:"left",cursor:"pointer"}}>{o.l}</button>
+          ))}
+        </div>
+      ),
+      validate: () => data.goal ? null : "Обери ціль",
+    },
+    // 6 — Досвід
+    {
+      title: "Твій досвід тренувань?",
+      sub: "Це визначить початкову складність",
+      render: () => (
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[
+            {id:"beginner",l:"🌱 Новачок",d:"Менше року або взагалі ніколи"},
+            {id:"intermediate",l:"💪 Середній",d:"1-3 роки регулярно"},
+            {id:"advanced",l:"🔥 Досвідчений",d:"Більше 3 років"},
+          ].map(o=>(
+            <button key={o.id} onClick={()=>update("experience",o.id)}
+              style={{background:data.experience===o.id?C.acc:C.s2,color:data.experience===o.id?"#0a0a0a":C.tm,
+                border:`1.5px solid ${data.experience===o.id?C.acc:C.bc}`,borderRadius:12,padding:"14px 16px",cursor:"pointer",textAlign:"left"}}>
+              <div style={{fontSize:15,fontWeight:800}}>{o.l}</div>
+              <div style={{fontSize:12,opacity:.7,marginTop:2}}>{o.d}</div>
+            </button>
+          ))}
+        </div>
+      ),
+      validate: () => data.experience ? null : "Обери досвід",
+    },
+    // 7 — Обладнання
+    {
+      title: "Де ти тренуєшся?",
+      sub: "Обери своє основне місце",
+      render: () => (
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[
+            {id:"gym",l:"🏋 Тренажерний зал"},
+            {id:"home_dumbs",l:"🏠 Вдома з гантелями"},
+            {id:"home_no_eq",l:"🛋 Вдома без обладнання"},
+            {id:"outdoor",l:"🌳 Вулиця / воркаут"},
+          ].map(o=>(
+            <button key={o.id} onClick={()=>update("equipment",o.id)}
+              style={{background:data.equipment===o.id?C.acc:C.s2,color:data.equipment===o.id?"#0a0a0a":C.tm,
+                border:`1.5px solid ${data.equipment===o.id?C.acc:C.bc}`,borderRadius:12,padding:"14px 16px",fontSize:14,fontWeight:700,textAlign:"left",cursor:"pointer"}}>{o.l}</button>
+          ))}
+        </div>
+      ),
+      validate: () => data.equipment ? null : "Обери місце",
+    },
+    // 8 — Тренувань на тиждень
+    {
+      title: "Скільки днів на тиждень готовий тренуватись?",
+      sub: "Реалістичний графік — кращий за амбітний",
+      render: () => (
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+          {[2,3,4,5,6].map(n=>(
+            <button key={n} onClick={()=>update("workouts_pw",String(n))}
+              style={{gridColumn: n===6?"span 4":"auto",background:String(data.workouts_pw)===String(n)?C.acc:C.s2,color:String(data.workouts_pw)===String(n)?"#0a0a0a":C.tm,
+                border:`1.5px solid ${String(data.workouts_pw)===String(n)?C.acc:C.bc}`,borderRadius:12,padding:"16px 0",fontSize:18,fontWeight:800,cursor:"pointer"}}>{n}</button>
+          ))}
+        </div>
+      ),
+      validate: () => data.workouts_pw ? null : "Обери частоту",
+    },
+    // 9 — Час
+    {
+      title: "Зручний час тренувань?",
+      sub: "Підлаштуємо нагадування",
+      render: () => (
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[
+            {id:"morning",l:"🌅 Ранок (5-10:00)"},
+            {id:"day",l:"☀️ День (10-16:00)"},
+            {id:"evening",l:"🌆 Вечір (16-22:00)"},
+            {id:"flex",l:"🔄 Гнучкий — як вийде"},
+          ].map(o=>(
+            <button key={o.id} onClick={()=>update("pref_time",o.id)}
+              style={{background:data.pref_time===o.id?C.acc:C.s2,color:data.pref_time===o.id?"#0a0a0a":C.tm,
+                border:`1.5px solid ${data.pref_time===o.id?C.acc:C.bc}`,borderRadius:12,padding:"14px 16px",fontSize:14,fontWeight:700,textAlign:"left",cursor:"pointer"}}>{o.l}</button>
+          ))}
+        </div>
+      ),
+      validate: () => data.pref_time ? null : "Обери час",
+    },
+    // 10 — Здоровʼя
+    {
+      title: "Чи є проблеми зі здоровʼям?",
+      sub: "Адаптуємо програму щоб не нашкодити",
+      render: () => (
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[
+            {id:"none",l:"✅ Все добре"},
+            {id:"back",l:"🦴 Спина / поперек"},
+            {id:"knees",l:"🦵 Коліна"},
+            {id:"shoulders",l:"💪 Плечі"},
+            {id:"heart",l:"❤️ Серцево-судинні"},
+            {id:"other",l:"⚠️ Інше"},
+          ].map(o=>(
+            <button key={o.id} onClick={()=>update("health_issues",o.id)}
+              style={{background:data.health_issues===o.id?C.acc:C.s2,color:data.health_issues===o.id?"#0a0a0a":C.tm,
+                border:`1.5px solid ${data.health_issues===o.id?C.acc:C.bc}`,borderRadius:12,padding:"14px 16px",fontSize:14,fontWeight:700,textAlign:"left",cursor:"pointer"}}>{o.l}</button>
+          ))}
+          {(data.health_issues!=="none" && data.health_issues) && (
+            <input type="text" placeholder="Уточни (необовʼязково)..."
+              value={data.health_comment} onChange={e=>update("health_comment", e.target.value)}
+              style={{marginTop:6,width:"100%",background:C.s2,border:`1px solid ${C.bc}`,borderRadius:12,padding:"12px 14px",color:C.tm,fontSize:14,outline:"none",boxSizing:"border-box"}}
+            />
+          )}
+        </div>
+      ),
+      validate: () => data.health_issues ? null : "Обери варіант",
+    },
+    // 11 — Алергії (фінальний крок)
+    {
+      title: "Алергії або обмеження?",
+      sub: "Якщо немає — пропусти",
+      render: () => (
+        <input type="text" placeholder="наприклад: лактоза, горіхи..."
+          value={data.allergies==="none"?"":data.allergies}
+          onChange={e=>update("allergies", e.target.value || "none")}
+          style={{width:"100%",background:C.s2,border:`1px solid ${C.bc}`,borderRadius:14,padding:"16px 18px",color:C.tm,fontSize:16,outline:"none",boxSizing:"border-box"}}
+        />
+      ),
+      validate: () => null, // optional
+    },
+  ];
+
+  const cur = steps[step];
+  const progress = ((step+1) / steps.length) * 100;
+  const isLast = step === steps.length - 1;
+
+  const next = async () => {
+    const e = cur.validate();
+    if (e) { setErr(e); return; }
+    if (isLast) {
+      // Submit
+      setSubmitting(true);
+      try {
+        const r = await apiPost("/api/client/onboarding", {
+          ...data,
+          age: parseInt(data.age),
+          height_cm: parseInt(data.height_cm),
+          weight_kg: parseFloat(data.weight_kg),
+          target_weight: parseFloat(data.target_weight),
+          workouts_pw: parseInt(data.workouts_pw),
+        });
+        if (r && r.ok) {
+          onComplete(r.client);
+        } else {
+          setErr(r?.error || "Помилка. Спробуй ще раз.");
+          setSubmitting(false);
+        }
+      } catch (ex) {
+        setErr("Помилка підключення. Спробуй ще раз.");
+        setSubmitting(false);
+      }
+    } else {
+      setStep(step + 1);
+    }
+  };
+
+  const back = () => {
+    if (step > 0) { setStep(step - 1); setErr(""); }
+  };
+
+  return (
+    <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",background:C.bg}}>
+      {/* Header — progress bar */}
+      <div style={{padding:"16px 16px 0",flexShrink:0}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+          {step > 0 ? (
+            <button onClick={back} style={{background:"transparent",border:"none",color:C.acc,fontSize:14,fontWeight:600,padding:0,cursor:"pointer"}}>← Назад</button>
+          ) : <div/>}
+          <div style={{fontSize:12,color:C.ts,fontWeight:600}}>{step+1} / {steps.length}</div>
+        </div>
+        <div style={{height:4,background:C.s2,borderRadius:2,overflow:"hidden"}}>
+          <div style={{height:"100%",width:`${progress}%`,background:C.acc,transition:"width .25s ease"}}/>
+        </div>
+      </div>
+
+      {/* Body — scrollable */}
+      <div style={{flex:1,overflowY:"auto",padding:"24px 20px"}}>
+        <div style={{maxWidth:420,margin:"0 auto"}}>
+          <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-.5,lineHeight:1.2,marginBottom:6}}>{cur.title}</div>
+          <div style={{fontSize:14,color:C.ts,marginBottom:24,lineHeight:1.5}}>{cur.sub}</div>
+          {cur.render()}
+          {err && <div style={{marginTop:12,padding:"10px 12px",background:"rgba(255,85,85,.08)",border:"1px solid rgba(255,85,85,.25)",borderRadius:10,fontSize:13,color:C.red}}>{err}</div>}
+        </div>
+      </div>
+
+      {/* Footer — next */}
+      <div style={{padding:"12px 16px 16px",borderTop:`1px solid ${C.bc}`,flexShrink:0}}>
+        <div style={{maxWidth:420,margin:"0 auto"}}>
+          <button onClick={next} disabled={submitting} style={{width:"100%",background:C.acc,color:"#0a0a0a",border:"none",borderRadius:14,padding:"15px 0",fontSize:15,fontWeight:800,cursor:submitting?"default":"pointer",opacity:submitting?.6:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            {submitting ? (<><div className="sp" style={{width:16,height:16,borderRadius:"50%",border:"2px solid rgba(0,0,0,.25)",borderTopColor:"#0a0a0a"}}/>Створюю твій план...</>) : (isLast ? "✓ Завершити та активувати" : "Далі →")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// ONBOARDING SUCCESS — після завершення анкети
+// ═══════════════════════════════════════════════════════════════
+const OnboardingSuccess = ({onContinue}) => {
+  const [seconds, setSeconds] = useState(3);
+  useEffect(() => {
+    if (seconds === 0) { onContinue(); return; }
+    const t = setTimeout(() => setSeconds(s => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [seconds, onContinue]);
+
+  return (
+    <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:24,padding:"0 28px",textAlign:"center"}}>
+      <div style={{width:96,height:96,borderRadius:"50%",background:"rgba(200,245,58,.1)",border:`3px solid ${C.acc}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:48}}>✓</div>
+      <div style={{fontSize:28,fontWeight:900,color:C.tm,letterSpacing:-1,lineHeight:1.1}}>Готово!</div>
+      <div style={{fontSize:16,color:C.ts,lineHeight:1.7,maxWidth:340}}>3 дні безкоштовного доступу активовано. Зараз я готую твій персональний план — це займе хвилину.</div>
+      <button onClick={onContinue} style={{width:"100%",maxWidth:340,background:C.acc,color:"#0a0a0a",border:"none",borderRadius:14,padding:"14px 0",fontSize:15,fontWeight:800,cursor:"pointer"}}>Перейти в додаток</button>
+      <div style={{fontSize:12,color:C.td}}>Автоматично через {seconds}с</div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// PENDING PAYMENT — після надсилання Monobank скріна
+// ═══════════════════════════════════════════════════════════════
+const PendingPaymentScreen = ({onRefresh}) => {
+  const [refreshing, setR] = useState(false);
+  const refresh = async () => {
+    setR(true);
+    setTimeout(()=>{setR(false); onRefresh && onRefresh();}, 800);
+  };
+  return (
+    <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 28px",textAlign:"center"}}>
+      <div style={{width:80,height:80,borderRadius:"50%",background:"rgba(232,168,50,.1)",border:`2.5px solid ${C.amber}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <svg width="36" height="36" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="6.5" stroke={C.amber} strokeWidth="1.6"/><path d="M9 5.5v4l2.5 2.5" stroke={C.amber} strokeWidth="1.6" strokeLinecap="round"/></svg>
+      </div>
+      <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-.5}}>Чекаємо підтвердження</div>
+      <div style={{fontSize:15,color:C.ts,lineHeight:1.7,maxWidth:340}}>Ми отримали твій скріншот. Тренер підтвердить оплату протягом 5-30 хвилин — ти отримаєш повідомлення в боті.</div>
+      <div style={{background:C.s1,border:`1px solid ${C.bc}`,borderRadius:14,padding:"14px 16px",fontSize:13,color:C.ts,lineHeight:1.6,maxWidth:340}}>
+        💡 Якщо чекаєш довше за годину — напиши <a href="https://t.me/fitcore_matias_bot" style={{color:C.acc,textDecoration:"none"}}>@fitcore_matias_bot</a>
+      </div>
+      <button onClick={refresh} disabled={refreshing} style={{width:"100%",maxWidth:340,marginTop:8,background:"transparent",color:C.acc,border:`1.5px solid ${C.acc}`,borderRadius:14,padding:"13px 0",fontSize:14,fontWeight:700,cursor:"pointer",opacity:refreshing?.6:1}}>{refreshing?"Перевірка...":"🔄 Перевірити статус"}</button>
+    </div>
+  );
+};
 
 // ═══════════════════════════════════════════════════════════════
 // ПРОГРЕС-ФОТО "ДО/ПІСЛЯ"
@@ -2581,6 +3022,127 @@ const AdminSettings = ({settings,onExitAdmin}) => {
   );
 };
 
+// ═══ EXPIRED SCREEN — повноцінний екран з тарифами для клієнтів з закінченим пакетом ═══
+const ExpiredScreen = ({client, plans, onSelectPlan}) => {
+  const [months, setMonths] = useState(3); // дефолт 3 — підказуємо вигідну тривалість
+  const isTrialExpired = client?.status === "trial_expired";
+  const p = plans || PLANS_STATIC;
+
+  const monthsOptions = [
+    {m:1, label:"1 міс"},
+    {m:3, label:"3 міс"},
+    {m:6, label:"6 міс"},
+    {m:12, label:"1 рік"},
+  ];
+
+  return (
+    <div style={{minHeight:"100vh",background:C.bg,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
+      <div style={{padding:"24px 18px 40px",display:"flex",flexDirection:"column",gap:18}}>
+
+        {/* Header */}
+        <div style={{textAlign:"center",paddingTop:8}}>
+          <div style={{width:72,height:72,borderRadius:"50%",background:isTrialExpired?"rgba(232,168,50,.1)":"rgba(255,85,85,.1)",border:`2px solid ${isTrialExpired?C.amber:C.red}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:34,margin:"0 auto 14px"}}>
+            {isTrialExpired ? "⏳" : "🔒"}
+          </div>
+          <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-1,marginBottom:8}}>
+            {isTrialExpired ? "Пробний доступ завершено" : "Пакет закінчився"}
+          </div>
+          <div style={{fontSize:14,color:C.ts,lineHeight:1.6,maxWidth:340,margin:"0 auto"}}>
+            {isTrialExpired
+              ? "Щоб продовжити користуватись додатком — обери тариф нижче."
+              : "Щоб відновити доступ до додатку — обери новий пакет."
+            }
+          </div>
+        </div>
+
+        {/* Інструкція */}
+        <div style={{background:"rgba(200,245,58,.06)",border:"1px solid rgba(200,245,58,.2)",borderRadius:14,padding:"12px 14px",fontSize:13,color:C.ts,lineHeight:1.6}}>
+          <div style={{color:C.acc,fontWeight:700,marginBottom:6}}>Як відновити доступ:</div>
+          <div>1. Обери тривалість пакета</div>
+          <div>2. Натисни на тариф</div>
+          <div>3. Сплати через Monobank або Telegram Stars</div>
+          <div style={{marginTop:6,fontSize:12,color:C.td}}>Усі твої дані збережені — після оплати все на місці.</div>
+        </div>
+
+        {/* Перемикач тривалості */}
+        <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 14px"}}>
+          <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>На скільки часу</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
+            {monthsOptions.map(opt=>{
+              const isAct = months === opt.m;
+              const disc = DUR_DISC[opt.m];
+              return (
+                <div key={opt.m} onClick={()=>setMonths(opt.m)}
+                  style={{position:"relative",borderRadius:12,border:`2px solid ${isAct?C.acc:C.bc}`,background:isAct?"rgba(200,245,58,.08)":C.s2,padding:"10px 4px",cursor:"pointer",textAlign:"center"}}>
+                  {disc>0 && (
+                    <div style={{position:"absolute",top:-9,left:"50%",transform:"translateX(-50%)",background:opt.m===12?C.acc:opt.m===6?"#e8a832":"#4a9fdf",color:"#080808",fontSize:9,fontWeight:900,padding:"2px 6px",borderRadius:6,whiteSpace:"nowrap",lineHeight:1.4}}>−{disc}%</div>
+                  )}
+                  <div style={{fontSize:13,fontWeight:800,color:isAct?C.acc:C.ts}}>{opt.label}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Тарифи */}
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {Object.entries(p).map(([key, plan])=>{
+            const monthly = plan.price * months;
+            const total = dCalc(plan.price, months);
+            const stars = dStars(plan.stars||1450, months);
+            const saved = monthly - total;
+            const perMonth = months > 1 ? Math.round(total / months) : null;
+
+            return (
+              <div key={key} onClick={()=>onSelectPlan(key, months)}
+                style={{background:C.s1,borderRadius:16,border:`1.5px solid ${plan.hot?C.acc:C.bc}`,padding:"14px 16px",cursor:"pointer",position:"relative"}}>
+                {plan.hot && (
+                  <div style={{position:"absolute",top:14,right:14,fontSize:10,color:"#0a0a0a",background:C.acc,borderRadius:8,padding:"3px 8px",fontWeight:800}}>Популярний</div>
+                )}
+
+                <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:4}}>
+                  <div style={{fontSize:18,fontWeight:900,color:C.tm,letterSpacing:-.3}}>{plan.name}</div>
+                </div>
+
+                <div style={{display:"flex",alignItems:"baseline",gap:6,marginBottom:perMonth?4:8}}>
+                  <span style={{fontSize:26,fontWeight:900,color:C.acc,letterSpacing:-1}}>{total.toLocaleString()}</span>
+                  <span style={{fontSize:13,color:C.ts}}>₴ за {DUR_LABEL[months]||"1 міс"}</span>
+                </div>
+
+                {perMonth && (
+                  <div style={{fontSize:12,color:C.ts,marginBottom:6}}>= {perMonth.toLocaleString()} ₴/міс</div>
+                )}
+
+                {saved > 0 && (
+                  <div style={{display:"inline-block",background:"rgba(200,245,58,.1)",border:"1px solid rgba(200,245,58,.25)",borderRadius:8,padding:"4px 10px",fontSize:11,color:C.acc,fontWeight:700,marginBottom:8}}>
+                    Економія {saved.toLocaleString()} ₴ проти місячного
+                  </div>
+                )}
+
+                <div style={{fontSize:11,color:"#f6c90e",marginTop:saved>0?0:6}}>⭐ або {stars.toLocaleString()} зірок Telegram</div>
+
+                {(plan.features||[]).slice(0,3).map(f=>(
+                  <div key={f} style={{display:"flex",alignItems:"center",gap:6,fontSize:12,color:C.ts,marginTop:5}}>
+                    <div style={{width:3,height:3,borderRadius:"50%",background:C.acc,flexShrink:0}}/>{f}
+                  </div>
+                ))}
+
+                <div style={{marginTop:12,padding:"10px 0",background:"rgba(200,245,58,.08)",border:"1px solid rgba(200,245,58,.2)",borderRadius:10,textAlign:"center",fontSize:13,fontWeight:800,color:C.acc}}>
+                  Обрати — {total.toLocaleString()} ₴
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{fontSize:11,color:C.td,textAlign:"center",lineHeight:1.6,padding:"4px 12px"}}>
+          Питання? Напиши тренеру через бот @fitcore_matias_bot
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ═══ MAIN APP ═══
 // ═══ DUMBBELL LOADER ═══
 const DumbbellLoader = () => {
@@ -2636,13 +3198,33 @@ export default function FitCoreApp() {
           const st=auth.client.status;
           if(auth.is_admin)setScreen("admin");
           else if(["active","trial"].includes(st))setScreen("client");
-          else if(["pending_approval","pending_payment"].includes(st))setScreen("pending");
-          else if(st==="expired")setScreen("expired");
-          else setScreen("goto_bot");
-        }else{setScreen("goto_bot");}
-      }catch(e){console.error("Init:",e);setScreen("goto_bot");}
+          else if(st==="pending_approval")setScreen("pending_approval");
+          else if(st==="pending_payment")setScreen("pending_payment");
+          else if(["expired","trial_expired"].includes(st))setScreen("expired");
+          else if(st==="pending_questionnaire")setScreen("welcome");
+          else setScreen("welcome");
+        }else{
+          // Новий клієнт — нема в БД — показуємо WelcomeScreen + анкета
+          setScreen("welcome");
+        }
+      }catch(e){console.error("Init:",e);setScreen("welcome");}
     };
     init();
+
+    // Перевіряти статус кожні 5 хв — якщо trial/active експерувався, перенаправити
+    const statusCheckInterval = setInterval(async () => {
+      try {
+        const r = await apiPost("/api/auth", {});
+        if (r.client) {
+          setClient(r.client);
+          const st = r.client.status;
+          if (["expired","trial_expired"].includes(st) && screen !== "expired") {
+            setScreen("expired");
+          }
+        }
+      } catch {}
+    }, 300000);
+    return () => clearInterval(statusCheckInterval);
   },[]);
 
   if(screen==="loading")return(
@@ -2667,44 +3249,70 @@ export default function FitCoreApp() {
   );
 
   const isAdminMode=screen==="admin";
-  const showNav=["client","admin"].includes(screen)&&!checkinMode;
+  const showNav=["client","admin"].includes(screen)&&!checkinMode&&!["expired","trial_expired"].includes(client?.status||"")&&!["welcome","onboarding","onboarding_success","pending_approval","pending_payment"].includes(screen);
   const titles={plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",menu:"Тарифи і меню",supplements:"БАДи",profile:"Профіль",aichat:"Чат з Матіасом",more:"Додатково",photos:"Прогрес у фото",recipes:"Рецепти",schedule:"Календар",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування",chat:"Чат з клієнтами"};
   const topTitle=checkinMode?"Чекін":isAdminMode?(selClient?"Профіль клієнта":titles[adminTab]):titles[clientTab];
-  const showTopNav=["client","admin"].includes(screen)&&clientTab!=="profile"&&!(isAdminMode&&adminTab==="dashboard");
+  const showTopNav=["client","admin"].includes(screen)&&clientTab!=="profile"&&!(isAdminMode&&adminTab==="dashboard")&&!["expired","trial_expired"].includes(client?.status||"")&&!["welcome","onboarding","onboarding_success","pending_approval","pending_payment"].includes(screen);
 
   const renderContent=()=>{
-    if(screen==="welcome")return <Welcome onStart={()=>setScreen("goto_bot")} onLogin={()=>setScreen("goto_bot")}/>;
-    if(screen==="goto_bot")return(
-      <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,padding:"0 28px",textAlign:"center"}}>
-        <img src="/photo2.jpg" alt="" style={{width:100,height:100,borderRadius:"50%",objectFit:"cover",objectPosition:"center 20%",border:`3px solid ${C.acc}`}}/>
-        <div style={{fontSize:28,fontWeight:900,color:C.tm,letterSpacing:-1,lineHeight:1.1}}>Привіт!</div>
-        <div style={{fontSize:16,color:C.ts,lineHeight:1.7}}>Щоб розпочати — пройди коротку анкету в боті. Це займе 2 хвилини.</div>
-        <a href="https://t.me/fitcore_matias_bot" style={{textDecoration:"none",width:"100%"}}>
-          <PBtn>Відкрити бота</PBtn>
-        </a>
-        <div style={{fontSize:13,color:C.td}}>Вже пройшов анкету? Зачекай — доступ відкриється автоматично.</div>
-      </div>
-    );
-    if(screen==="plans")return <PlanSelect plans={plans} payLinks={payLinks} onSelect={(p,m)=>{setSelPlan(p);setSelMonths(m||1);setScreen("payment");}}/>;
-    if(screen==="payment")return <Payment planKey={selPlan} months={selMonths||1} plans={plans} payLinks={payLinks} onBack={()=>{setClientTab("menu");setScreen("client");}} onPaid={()=>setScreen("pending")} userId={userId}/>;
-    if(screen==="expired")return(
-      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 28px",textAlign:"center"}}>
-        <div style={{fontSize:48}}>🔒</div>
-        <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-1}}>Пакет закінчився</div>
-        <div style={{fontSize:15,color:C.ts,lineHeight:1.7}}>Твій тариф завершився.<br/>Придбай новий пакет щоб відновити доступ.</div>
-        <PBtn onClick={()=>{setClientTab("menu");setScreen("client");}}>Придбати тариф</PBtn>
-        <div style={{fontSize:13,color:C.td}}>Всі твої дані збережені</div>
-      </div>
-    );
-    if(screen==="pending")return(
-      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 24px"}}>
+    // Захист: якщо статус expired/trial_expired — завжди показуємо блок-екран
+    if(client && ["expired","trial_expired"].includes(client.status) && !["expired","plans","payment","pending"].includes(screen)){
+      setTimeout(()=>setScreen("expired"),0);
+    }
+    if(screen==="welcome")return <WelcomeScreen onStart={()=>setScreen("onboarding")}/>;
+    if(screen==="onboarding")return <OnboardingFlow userId={userId} onComplete={(newClient)=>{
+      setClient(newClient);
+      setScreen("onboarding_success");
+    }}/>;
+    if(screen==="onboarding_success")return <OnboardingSuccess onContinue={async()=>{
+      // Reload client data after plan is generated
+      try{
+        const auth = await apiPost("/api/auth", {});
+        if(auth?.client) setClient(auth.client);
+      }catch{}
+      setScreen("client");
+      setClientTab("plan");
+    }}/>;
+    if(screen==="pending_approval")return(
+      <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 28px",textAlign:"center"}}>
         <div style={{width:72,height:72,borderRadius:"50%",background:"rgba(232,168,50,.1)",border:`2px solid ${C.amber}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
           <svg width="32" height="32" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="6.5" stroke={C.amber} strokeWidth="1.6"/><path d="M9 5.5v4l2.5 2.5" stroke={C.amber} strokeWidth="1.6" strokeLinecap="round"/></svg>
         </div>
         <div style={{fontSize:24,fontWeight:900,color:C.tm}}>Очікуємо підтвердження</div>
-        <div style={{fontSize:16,color:C.ts,textAlign:"center",lineHeight:1.7}}>Тренер перевіряє оплату.<br/>Отримаєш доступ одразу після підтвердження.</div>
+        <div style={{fontSize:15,color:C.ts,textAlign:"center",lineHeight:1.7,maxWidth:340}}>Тренер перевіряє твою оплату.<br/>Доступ відкриється одразу після підтвердження.</div>
+        <div style={{fontSize:13,color:C.td,marginTop:8}}>Якщо потрібно — напиши <a href="https://t.me/fitcore_matias_bot" style={{color:C.acc,textDecoration:"none"}}>@fitcore_matias_bot</a></div>
       </div>
     );
+    if(screen==="pending_payment")return <PendingPaymentScreen onRefresh={async()=>{
+      try{
+        const auth = await apiPost("/api/auth", {});
+        if(auth?.client){
+          setClient(auth.client);
+          const st = auth.client.status;
+          if(["active","trial"].includes(st)){setScreen("client");setClientTab("plan");}
+        }
+      }catch{}
+    }}/>;
+    if(screen==="plans"){
+      return(
+        <div style={{minHeight:"100vh",background:C.bg}}>
+          <div style={{position:"sticky",top:0,zIndex:10,background:C.bg,padding:"12px 16px",borderBottom:`1px solid ${C.bc}`,display:"flex",alignItems:"center",gap:12}}>
+            {client && ["expired","trial_expired"].includes(client.status) ? (
+              <button onClick={()=>setScreen("expired")} style={{background:"transparent",border:"none",color:C.acc,fontSize:15,fontWeight:600,padding:0}}>← Назад</button>
+            ) : (
+              <button onClick={()=>{setClientTab("menu");setScreen("client");}} style={{background:"transparent",border:"none",color:C.acc,fontSize:15,fontWeight:600,padding:0}}>← Назад</button>
+            )}
+            <div style={{fontSize:16,fontWeight:700,color:C.tm}}>Обери тариф</div>
+          </div>
+          <PlanSelect plans={plans} payLinks={payLinks} onSelect={(p,m)=>{setSelPlan(p);setSelMonths(m||1);setScreen("payment");}}/>
+        </div>
+      );
+    }
+    if(screen==="payment")return <Payment planKey={selPlan} months={selMonths||1} plans={plans} payLinks={payLinks} onBack={()=>{setClientTab("menu");setScreen("client");}} onPaid={()=>setScreen("pending_payment")} userId={userId}/>;
+    if(screen==="expired"){
+      return <ExpiredScreen client={client} plans={plans} onSelectPlan={(p,m)=>{setSelPlan(p);setSelMonths(m||1);setScreen("payment");}}/>;
+    }
+
     if(screen==="admin"){
       if(selClient)return <AdminClientDetail client={selClient} onBack={()=>setSelClient(null)}/>;
       const onExitAdmin=()=>{setScreen("client");setAdminTab("dashboard");};
