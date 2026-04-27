@@ -1113,7 +1113,41 @@ const OnboardingFlow = ({userId, onComplete}) => {
           setSubmitting(false);
         }
       } catch (ex) {
-        setErr("Помилка підключення. Спробуй ще раз.");
+        const msg = (ex?.message || "").toLowerCase();
+        // 409 = клієнт уже onboarded — оновлюємо стан і йдемо далі
+        if (msg.includes("409")) {
+          try {
+            const auth = await apiPost("/api/auth", {});
+            if (auth?.client) {
+              onComplete(auth.client);
+              return;
+            }
+          } catch {}
+          setErr("Анкета вже заповнена раніше. Перезавантаж додаток.");
+          setSubmitting(false);
+          return;
+        }
+        // 403 = заблокований
+        if (msg.includes("403")) {
+          setErr("Доступ заблоковано. Звернись до тренера.");
+          setSubmitting(false);
+          return;
+        }
+        // 400 = валідація
+        if (msg.includes("400")) {
+          setErr("Перевір правильність відповідей у попередніх кроках.");
+          setSubmitting(false);
+          return;
+        }
+        // 401 = немає авторизації
+        if (msg.includes("401")) {
+          setErr("Сесію втрачено. Закрий і відкрий додаток заново.");
+          setSubmitting(false);
+          return;
+        }
+        // інше
+        console.error("Onboarding submit:", ex);
+        setErr("Не вдалося зберегти. Перевір інтернет і спробуй ще раз.");
         setSubmitting(false);
       }
     } else {
@@ -2717,7 +2751,21 @@ const AdminClientDetail = ({client,onBack}) => {
   useEffect(()=>{apiGet(`/api/admin/client/${client.user_id}`).then(r=>{setDetail(r);setLoad(false);}).catch(()=>setLoad(false));},[client.user_id]);
 
   const activate=async plan=>{await apiPost(`/api/admin/client/${client.user_id}/activate`,{plan});setMsg(`✓ Активовано: ${plan.toUpperCase()}`);};
-  const block=async()=>{await apiPost(`/api/admin/client/${client.user_id}/block`,{});setMsg("✓ Заблоковано");};
+  const block=async()=>{
+    if(!confirm("Заблокувати клієнта? Він втратить доступ до додатку."))return;
+    await apiPost(`/api/admin/client/${client.user_id}/block`,{});
+    setMsg("✓ Заблоковано");
+    // Локально оновлюємо статус щоб кнопки одразу перемкнулися
+    if(detail?.client) setDetail({...detail, client:{...detail.client, status:"blocked"}});
+  };
+  const unblockReset=async()=>{
+    if(!confirm("Розблокувати і скинути? Клієнт зможе пройти анкету заново і отримати trial 3 дні. Анкета, план і AI-чат будуть видалені."))return;
+    try{
+      await apiPost(`/api/admin/client/${client.user_id}/unblock-and-reset`,{});
+      setMsg("✓ Розблоковано. Клієнт може пройти анкету заново");
+      if(detail?.client) setDetail({...detail, client:{...detail.client, status:"pending_questionnaire", plan:null}});
+    }catch(e){setMsg("Помилка: "+e.message);}
+  };
   const generate=async()=>{setGen(true);try{await apiPost(`/api/client/${client.user_id}/generate-plan`,{});setMsg("✓ Новий план згенеровано");}catch(e){setMsg("Помилка: "+e.message);}setGen(false);};
 
   if(loading) return <Spin/>;
@@ -2889,7 +2937,11 @@ const AdminClientDetail = ({client,onBack}) => {
         {["start","premium","vip"].map(p=>(
           <button key={p} onClick={()=>activate(p)} style={{background:C.s1,color:C.ts,border:`1px solid ${C.bc}`,borderRadius:14,padding:"12px 0",fontSize:13,fontWeight:700}}>Активувати {p.toUpperCase()}</button>
         ))}
-        <button onClick={block} style={{background:"rgba(255,85,85,.08)",color:C.red,border:"1px solid rgba(255,85,85,.2)",borderRadius:14,padding:"12px 0",fontSize:13,fontWeight:700}}>Заблокувати</button>
+        {(detail?.client?.status||client.status)==="blocked" ? (
+          <button onClick={unblockReset} style={{background:"rgba(74,159,223,.1)",color:"#4a9fdf",border:"1px solid rgba(74,159,223,.3)",borderRadius:14,padding:"12px 8px",fontSize:13,fontWeight:700,gridColumn:"1/-1",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>🔓 Розблокувати + скинути на trial</button>
+        ) : (
+          <button onClick={block} style={{background:"rgba(255,85,85,.08)",color:C.red,border:"1px solid rgba(255,85,85,.2)",borderRadius:14,padding:"12px 0",fontSize:13,fontWeight:700}}>Заблокувати</button>
+        )}
       </div>
 
       {msg && <div style={{background:"rgba(200,245,58,.08)",border:"1px solid rgba(200,245,58,.2)",borderRadius:14,padding:"14px 16px",fontSize:15,color:C.acc,fontWeight:600}}>{msg}</div>}
