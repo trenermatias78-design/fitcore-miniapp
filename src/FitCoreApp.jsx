@@ -3249,14 +3249,14 @@ export default function FitCoreApp() {
   );
 
   const isAdminMode=screen==="admin";
-  const showNav=["client","admin"].includes(screen)&&!checkinMode&&!["expired","trial_expired"].includes(client?.status||"")&&!["welcome","onboarding","onboarding_success","pending_approval","pending_payment"].includes(screen);
+  const showNav=["client","admin"].includes(screen)&&!checkinMode&&!["expired","trial_expired"].includes(clientData?.status||"")&&!["welcome","onboarding","onboarding_success","pending_approval","pending_payment"].includes(screen);
   const titles={plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",menu:"Тарифи і меню",supplements:"БАДи",profile:"Профіль",aichat:"Чат з Матіасом",more:"Додатково",photos:"Прогрес у фото",recipes:"Рецепти",schedule:"Календар",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування",chat:"Чат з клієнтами"};
   const topTitle=checkinMode?"Чекін":isAdminMode?(selClient?"Профіль клієнта":titles[adminTab]):titles[clientTab];
-  const showTopNav=["client","admin"].includes(screen)&&clientTab!=="profile"&&!(isAdminMode&&adminTab==="dashboard")&&!["expired","trial_expired"].includes(client?.status||"")&&!["welcome","onboarding","onboarding_success","pending_approval","pending_payment"].includes(screen);
+  const showTopNav=["client","admin"].includes(screen)&&clientTab!=="profile"&&!(isAdminMode&&adminTab==="dashboard")&&!["expired","trial_expired"].includes(clientData?.status||"")&&!["welcome","onboarding","onboarding_success","pending_approval","pending_payment"].includes(screen);
 
   const renderContent=()=>{
     // Захист: якщо статус expired/trial_expired — завжди показуємо блок-екран
-    if(client && ["expired","trial_expired"].includes(client.status) && !["expired","plans","payment","pending"].includes(screen)){
+    if(clientData && ["expired","trial_expired"].includes(clientData.status) && !["expired","plans","payment","pending"].includes(screen)){
       setTimeout(()=>setScreen("expired"),0);
     }
     if(screen==="welcome")return <WelcomeScreen onStart={()=>setScreen("onboarding")}/>;
@@ -3297,7 +3297,7 @@ export default function FitCoreApp() {
       return(
         <div style={{minHeight:"100vh",background:C.bg}}>
           <div style={{position:"sticky",top:0,zIndex:10,background:C.bg,padding:"12px 16px",borderBottom:`1px solid ${C.bc}`,display:"flex",alignItems:"center",gap:12}}>
-            {client && ["expired","trial_expired"].includes(client.status) ? (
+            {clientData && ["expired","trial_expired"].includes(clientData.status) ? (
               <button onClick={()=>setScreen("expired")} style={{background:"transparent",border:"none",color:C.acc,fontSize:15,fontWeight:600,padding:0}}>← Назад</button>
             ) : (
               <button onClick={()=>{setClientTab("menu");setScreen("client");}} style={{background:"transparent",border:"none",color:C.acc,fontSize:15,fontWeight:600,padding:0}}>← Назад</button>
@@ -3310,7 +3310,7 @@ export default function FitCoreApp() {
     }
     if(screen==="payment")return <Payment planKey={selPlan} months={selMonths||1} plans={plans} payLinks={payLinks} onBack={()=>{setClientTab("menu");setScreen("client");}} onPaid={()=>setScreen("pending_payment")} userId={userId}/>;
     if(screen==="expired"){
-      return <ExpiredScreen client={client} plans={plans} onSelectPlan={(p,m)=>{setSelPlan(p);setSelMonths(m||1);setScreen("payment");}}/>;
+      return <ExpiredScreen client={clientData} plans={plans} onSelectPlan={(p,m)=>{setSelPlan(p);setSelMonths(m||1);setScreen("payment");}}/>;
     }
 
     if(screen==="admin"){
