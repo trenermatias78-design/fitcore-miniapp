@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useLayoutEffect, useRef } from "react";
+import { useState, useEffect, useCallback, useLayoutEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
@@ -109,6 +109,48 @@ const G = () => (
     @keyframes drawPath{from{stroke-dashoffset:1000;}to{stroke-dashoffset:0;}}
     @keyframes pulseDot{0%,100%{opacity:.3;transform:scale(.8);}50%{opacity:1;transform:scale(1.2);}}
     @keyframes slideInRight{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+
+    /* — LIVING APP animations — */
+    @keyframes meshShift{
+      0%,100%{background-position:0% 0%, 100% 100%, 50% 50%;}
+      33%{background-position:30% 20%, 70% 80%, 80% 30%;}
+      66%{background-position:60% 60%, 30% 30%, 20% 80%;}
+    }
+    @keyframes glowBreathe{
+      0%,100%{box-shadow:0 0 20px rgba(200,245,58,0.18), 0 0 40px rgba(200,245,58,0.08);}
+      50%{box-shadow:0 0 35px rgba(200,245,58,0.35), 0 0 70px rgba(200,245,58,0.18);}
+    }
+    @keyframes floatUp{
+      from{transform:translateY(110vh) scale(0.5);opacity:0;}
+      10%{opacity:0.6;}
+      90%{opacity:0.6;}
+      to{transform:translateY(-10vh) scale(1.2);opacity:0;}
+    }
+    @keyframes parallaxZoom{
+      0%,100%{transform:scale(1) translateY(0);}
+      50%{transform:scale(1.04) translateY(-8px);}
+    }
+
+    /* — CINEMATIC onboarding transitions — */
+    @keyframes slideInFromRight{
+      from{opacity:0;transform:translateX(40px);filter:blur(8px);}
+      to{opacity:1;transform:translateX(0);filter:blur(0);}
+    }
+    @keyframes slideInFromLeft{
+      from{opacity:0;transform:translateX(-40px);filter:blur(8px);}
+      to{opacity:1;transform:translateX(0);filter:blur(0);}
+    }
+    @keyframes cinematicReveal{
+      0%{opacity:0;transform:translateY(20px) scale(0.95);filter:blur(12px);}
+      to{opacity:1;transform:translateY(0) scale(1);filter:blur(0);}
+    }
+
+    /* — utility classes — */
+    .glow{animation:glowBreathe 4s ease-in-out infinite;}
+    .parallax{animation:parallaxZoom 15s ease-in-out infinite;}
+    .slR{animation:slideInFromRight 350ms ${E.out} forwards;}
+    .slL{animation:slideInFromLeft 350ms ${E.out} forwards;}
+    .cnm{animation:cinematicReveal 500ms ${E.out} forwards;}
 
     /* — utility classes — */
     .fi{animation:fadeIn ${T.base} ${E.out} forwards;}
@@ -427,9 +469,9 @@ const TNav = ({title,onBack,rightEl}) => (
     display:"flex",alignItems:"center",justifyContent:"space-between",
     padding:"16px 18px 14px",
     borderBottom:`1px solid ${C.bc}`,flexShrink:0,
-    background:"rgba(10,10,10,0.85)",
-    backdropFilter:"blur(12px)",
-    WebkitBackdropFilter:"blur(12px)",
+    background:"rgba(10,10,10,0.6)",
+    backdropFilter:"blur(20px) saturate(140%)",
+    WebkitBackdropFilter:"blur(20px) saturate(140%)",
     position:"relative",zIndex:5,
   }}>
     <div style={{width:64}}>
@@ -466,8 +508,8 @@ const BNav = ({active,onChange,isAdmin}) => {
   return (
     <div style={{
       display:"flex",borderTop:`1px solid ${C.bc}`,flexShrink:0,
-      background:"rgba(10,10,10,0.92)",
-      backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",
+      background:"rgba(10,10,10,0.6)",
+      backdropFilter:"blur(22px) saturate(140%)",WebkitBackdropFilter:"blur(22px) saturate(140%)",
       paddingBottom:"env(safe-area-inset-bottom,0px)",
       position:"relative",zIndex:5,
     }}>
@@ -1207,19 +1249,118 @@ const ExModal = ({ex, onClose}) => {
 
 
 
+
+// ═══════════════════════════════════════════════════════════════
+// LIVING BACKGROUND — повільний mesh-gradient що рухається
+// ═══════════════════════════════════════════════════════════════
+const LivingBackground = ({intensity=1}) => (
+  <div style={{
+    position:"absolute", inset:0, pointerEvents:"none", zIndex:0, overflow:"hidden",
+    background:`
+      radial-gradient(ellipse 600px 400px at 0% 0%, rgba(200,245,58,${0.08*intensity}) 0%, transparent 60%),
+      radial-gradient(ellipse 500px 700px at 100% 100%, rgba(74,159,223,${0.06*intensity}) 0%, transparent 55%),
+      radial-gradient(ellipse 700px 500px at 50% 50%, rgba(168,85,247,${0.05*intensity}) 0%, transparent 50%)
+    `,
+    backgroundSize:"200% 200%, 200% 200%, 200% 200%",
+    animation:"meshShift 40s ease-in-out infinite",
+    filter:"blur(40px)",
+  }}/>
+);
+
+// ═══════════════════════════════════════════════════════════════
+// FLOATING PARTICLES — пилок акценту що повільно пливе вгору
+// ═══════════════════════════════════════════════════════════════
+const FloatingParticles = ({count=18}) => {
+  const particles = useMemo(() => Array.from({length:count}).map((_,i) => ({
+    id: i,
+    left: Math.random() * 100,
+    size: 2 + Math.random() * 4,
+    duration: 18 + Math.random() * 22,
+    delay: -Math.random() * 30,
+    opacity: 0.3 + Math.random() * 0.5,
+  })), [count]);
+
+  return (
+    <div style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:1,overflow:"hidden"}}>
+      {particles.map(p => (
+        <div key={p.id} style={{
+          position:"absolute",
+          left:`${p.left}%`, bottom:0,
+          width:p.size, height:p.size,
+          borderRadius:"50%",
+          background:C.acc,
+          opacity:p.opacity,
+          filter:`blur(${p.size > 4 ? 1 : 0}px)`,
+          boxShadow:`0 0 ${p.size*3}px rgba(200,245,58,0.4)`,
+          animation:`floatUp ${p.duration}s linear ${p.delay}s infinite`,
+        }}/>
+      ))}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// CINEMATIC LOADER — 3-секундний кадр створення плану
+// ═══════════════════════════════════════════════════════════════
+const CinematicLoader = ({onComplete}) => {
+  const stages = [
+    {ic:"🎯", text:"Аналізую твої цілі"},
+    {ic:"💪", text:"Підбираю вправи"},
+    {ic:"📋", text:"Створюю твій план"},
+  ];
+  const [stage, setStage] = useState(0);
+
+  useEffect(() => {
+    if (stage >= stages.length) { onComplete(); return; }
+    const t = setTimeout(() => setStage(s => s + 1), 1000);
+    return () => clearTimeout(t);
+  }, [stage]);
+
+  return (
+    <div style={{position:"absolute",inset:0,background:C.bg,zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 32px"}}>
+      <LivingBackground intensity={1.4}/>
+      <div style={{position:"relative",zIndex:2,textAlign:"center",width:"100%",maxWidth:380}}>
+        <div className="cnm" key={stage} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:24}}>
+          <div className="glow" style={{
+            width:96,height:96,borderRadius:R.full,
+            background:C.gradAcc,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            fontSize:44,
+          }}>{stages[Math.min(stage,2)].ic}</div>
+          <H level={1} style={{textAlign:"center"}}>{stages[Math.min(stage,2)].text}</H>
+        </div>
+
+        {/* Progress segments — 3 episode markers */}
+        <div style={{display:"flex",gap:6,marginTop:40,justifyContent:"center"}}>
+          {[0,1,2].map(i => (
+            <div key={i} style={{
+              width:60,height:4,borderRadius:R.full,
+              background:i < stage ? C.gradAcc : i === stage ? "rgba(200,245,58,0.4)" : C.s2,
+              boxShadow:i <= stage ? "0 0 8px rgba(200,245,58,0.4)" : "none",
+              transition:`all ${T.slow} ${E.out}`,
+              animation:i === stage ? "accentPulse 1s ease-in-out infinite" : "none",
+            }}/>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ═══════════════════════════════════════════════════════════════
 // WELCOME (для нових клієнтів — після відео в боті)
 // ═══════════════════════════════════════════════════════════════
 const WelcomeScreen = ({onStart}) => (
-  <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"space-between",padding:"40px 24px 24px",textAlign:"center",minHeight:"100%"}}>
-    {/* Hero icon з glow */}
-    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:24,marginTop:20}}>
-      <div className="si" style={{
-        width:108, height:108, borderRadius:R.xl,
+  <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"space-between",padding:"40px 24px 24px",textAlign:"center",minHeight:"100%",position:"relative",overflow:"hidden"}}>
+    <LivingBackground intensity={1.2}/>
+    <FloatingParticles count={20}/>
+    {/* Hero icon з glow + breathing */}
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:24,marginTop:20,position:"relative",zIndex:2}}>
+      <div className="si glow" style={{
+        width:120, height:120, borderRadius:R.xl,
         background:C.gradAcc,
         display:"flex", alignItems:"center", justifyContent:"center",
-        fontSize:50,
-        boxShadow:"0 16px 50px rgba(200,245,58,0.35), inset 0 1px 0 rgba(255,255,255,0.2)",
+        fontSize:54,
         position:"relative",
       }}>
         💪
@@ -1238,7 +1379,7 @@ const WelcomeScreen = ({onStart}) => (
     </div>
 
     {/* Features list */}
-    <div className="stg" style={{display:"flex",flexDirection:"column",gap:SP[2],margin:"0 auto",width:"100%",maxWidth:340}}>
+    <div className="stg" style={{display:"flex",flexDirection:"column",gap:SP[2],margin:"0 auto",width:"100%",maxWidth:340,position:"relative",zIndex:2}}>
       {[
         {ic:"🎯", t:"Персональний план тренувань", d:"Кожна вправа — під твої цілі"},
         {ic:"🍽", t:"Харчування під твій КБЖУ",   d:"Підрахунок калорій та макро"},
@@ -1260,7 +1401,7 @@ const WelcomeScreen = ({onStart}) => (
     </div>
 
     {/* CTA */}
-    <div className="fu" style={{display:"flex",flexDirection:"column",gap:SP[3],animationDelay:"300ms",maxWidth:340,margin:"0 auto",width:"100%"}}>
+    <div className="fu" style={{display:"flex",flexDirection:"column",gap:SP[3],animationDelay:"300ms",maxWidth:340,margin:"0 auto",width:"100%",position:"relative",zIndex:2}}>
       <Btn variant="primary" size="lg" onClick={onStart} hapticKind="medium">
         Заповнити анкету · 3 дні безкоштовно
       </Btn>
@@ -1274,6 +1415,9 @@ const WelcomeScreen = ({onStart}) => (
 // ═══════════════════════════════════════════════════════════════
 const OnboardingFlow = ({userId, onComplete}) => {
   const [step, setStep] = useState(0);
+  const [direction, setDirection] = useState("forward"); // forward / back — для slide animation
+  const [showLoader, setShowLoader] = useState(false);
+  const [completedClient, setCompletedClient] = useState(null);
   const [data, setData] = useState({
     age: "", gender: "", height_cm: "", weight_kg: "", target_weight: "",
     goal: "", experience: "", equipment: "", workouts_pw: "", pref_time: "",
@@ -1536,19 +1680,21 @@ const OnboardingFlow = ({userId, onComplete}) => {
           workouts_pw: parseInt(data.workouts_pw),
         });
         if (r && r.ok) {
-          onComplete(r.client);
+          // Cinematic loader перед onComplete
+          setCompletedClient(r.client);
+          setShowLoader(true);
         } else {
           setErr(r?.error || "Помилка. Спробуй ще раз.");
           setSubmitting(false);
         }
       } catch (ex) {
         const msg = (ex?.message || "").toLowerCase();
-        // 409 = клієнт уже onboarded — оновлюємо стан і йдемо далі
         if (msg.includes("409")) {
           try {
             const auth = await apiPost("/api/auth", {});
             if (auth?.client) {
-              onComplete(auth.client);
+              setCompletedClient(auth.client);
+              setShowLoader(true);
               return;
             }
           } catch {}
@@ -1556,66 +1702,100 @@ const OnboardingFlow = ({userId, onComplete}) => {
           setSubmitting(false);
           return;
         }
-        // 403 = заблокований
-        if (msg.includes("403")) {
-          setErr("Доступ заблоковано. Звернись до тренера.");
-          setSubmitting(false);
-          return;
-        }
-        // 400 = валідація
-        if (msg.includes("400")) {
-          setErr("Перевір правильність відповідей у попередніх кроках.");
-          setSubmitting(false);
-          return;
-        }
-        // 401 = немає авторизації
-        if (msg.includes("401")) {
-          setErr("Сесію втрачено. Закрий і відкрий додаток заново.");
-          setSubmitting(false);
-          return;
-        }
-        // інше
+        if (msg.includes("403")) { setErr("Доступ заблоковано. Звернись до тренера."); setSubmitting(false); return; }
+        if (msg.includes("400")) { setErr("Перевір правильність відповідей у попередніх кроках."); setSubmitting(false); return; }
+        if (msg.includes("401")) { setErr("Сесію втрачено. Закрий і відкрий додаток заново."); setSubmitting(false); return; }
         console.error("Onboarding submit:", ex);
         setErr("Не вдалося зберегти. Перевір інтернет і спробуй ще раз.");
         setSubmitting(false);
       }
     } else {
+      setDirection("forward");
       setStep(step + 1);
     }
   };
 
   const back = () => {
-    if (step > 0) { setStep(step - 1); setErr(""); }
+    if (step > 0) {
+      setDirection("back");
+      setStep(step - 1);
+      setErr("");
+    }
   };
 
+  // Show cinematic loader before onComplete
+  if (showLoader && completedClient) {
+    return <CinematicLoader onComplete={() => onComplete(completedClient)}/>;
+  }
+
+  // Cinematic color theme for each step — warm → cool → accent journey
+  const stepThemes = [
+    {bg:"radial-gradient(ellipse at top, rgba(232,168,50,0.08), transparent 60%)", accent:"#e8a832"},  // age — warm
+    {bg:"radial-gradient(ellipse at top, rgba(168,85,247,0.08), transparent 60%)", accent:"#a855f7"},  // gender — purple
+    {bg:"radial-gradient(ellipse at top, rgba(74,159,223,0.08), transparent 60%)", accent:"#4a9fdf"},  // height — blue
+    {bg:"radial-gradient(ellipse at top, rgba(74,159,223,0.10), transparent 60%)", accent:"#4a9fdf"},  // weight
+    {bg:"radial-gradient(ellipse at top, rgba(74,222,128,0.08), transparent 60%)", accent:"#4ade80"},  // target — green
+    {bg:"radial-gradient(ellipse at top, rgba(200,245,58,0.10), transparent 60%)", accent:"#c8f53a"},  // goal — accent
+    {bg:"radial-gradient(ellipse at top, rgba(200,245,58,0.08), transparent 60%)", accent:"#c8f53a"},  // experience
+    {bg:"radial-gradient(ellipse at top, rgba(200,245,58,0.08), transparent 60%)", accent:"#c8f53a"},  // equipment
+    {bg:"radial-gradient(ellipse at top, rgba(232,168,50,0.08), transparent 60%)", accent:"#e8a832"},  // workouts/week
+    {bg:"radial-gradient(ellipse at top, rgba(232,168,50,0.10), transparent 60%)", accent:"#e8a832"},  // pref_time
+    {bg:"radial-gradient(ellipse at top, rgba(255,85,85,0.06), transparent 60%)",  accent:"#ff5555"},  // health
+    {bg:"radial-gradient(ellipse at top, rgba(200,245,58,0.12), transparent 60%)", accent:"#c8f53a"},  // allergies — final accent
+  ];
+  const theme = stepThemes[step] || stepThemes[0];
+
   return (
-    <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",background:C.bg}}>
-      {/* Header — premium progress bar with glow */}
-      <div style={{padding:"18px 18px 0",flexShrink:0}}>
+    <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",background:C.bg,position:"relative",overflow:"hidden"}}>
+      {/* Cinematic theme background — слабо видимий тонізатор */}
+      <div style={{
+        position:"absolute",inset:0,pointerEvents:"none",zIndex:0,
+        background:theme.bg,
+        transition:"background 600ms ease-out",
+      }}/>
+
+      {/* Header — episode markers progress */}
+      <div style={{padding:"18px 18px 0",flexShrink:0,position:"relative",zIndex:2}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
           {step > 0 ? (
             <button onClick={()=>{haptic("selection");back();}} style={{background:"transparent",border:"none",color:C.acc,fontSize:14,fontWeight:700,padding:"4px 0",cursor:"pointer",letterSpacing:-0.1}}>← Назад</button>
           ) : <div style={{height:24}}/>}
           <SectionLabel style={{marginBottom:0}}>Крок {step+1} / {steps.length}</SectionLabel>
         </div>
-        <div style={{height:6,background:C.s2,borderRadius:R.full,overflow:"hidden",position:"relative"}}>
-          <div style={{
-            height:"100%",
-            width:`${progress}%`,
-            background:C.gradAcc,
-            borderRadius:R.full,
-            transition:`width ${T.slow} ${E.out}`,
-            boxShadow:"0 0 12px rgba(200,245,58,0.5)",
-          }}/>
+
+        {/* Episode markers — 12 segments */}
+        <div style={{display:"flex",gap:3,height:5}}>
+          {steps.map((_, i) => {
+            const isPast = i < step;
+            const isCurrent = i === step;
+            return (
+              <div key={i} style={{
+                flex:1,
+                background: isPast ? C.gradAcc : isCurrent ? "rgba(200,245,58,0.5)" : C.s2,
+                borderRadius:R.full,
+                boxShadow: isPast || isCurrent ? "0 0 6px rgba(200,245,58,0.4)" : "none",
+                transition:`all ${T.slow} ${E.out}`,
+                animation: isCurrent ? "accentPulse 2s ease-in-out infinite" : "none",
+              }}/>
+            );
+          })}
         </div>
       </div>
 
-      {/* Body — scrollable */}
-      <div key={step} className="fu" style={{flex:1,overflowY:"auto",padding:"32px 20px 16px"}}>
+      {/* Body — slide animation depending on direction */}
+      <div key={step} className={direction==="back"?"slL":"slR"} style={{flex:1,overflowY:"auto",padding:"36px 20px 16px",position:"relative",zIndex:2}}>
         <div style={{maxWidth:420,margin:"0 auto"}}>
-          <H level={1} style={{marginBottom:8}}>{cur.title}</H>
-          <div style={{fontSize:F.bodyLg.size,color:C.ts,marginBottom:28,lineHeight:1.55}}>{cur.sub}</div>
-          {cur.render()}
+          <div className="cnm" style={{
+            fontSize:32, fontWeight:900, lineHeight:1.1, color:C.tm,
+            letterSpacing:"-1.4px", marginBottom:10,
+          }}>{cur.title}</div>
+          <div className="cnm" style={{
+            fontSize:F.bodyLg.size, color:C.ts, marginBottom:32, lineHeight:1.55,
+            animationDelay:"100ms", animationFillMode:"backwards",
+          }}>{cur.sub}</div>
+          <div className="cnm" style={{animationDelay:"200ms",animationFillMode:"backwards"}}>
+            {cur.render()}
+          </div>
           {err && (
             <div style={{marginTop:16,padding:"12px 14px",background:"rgba(255,85,85,0.08)",border:"1px solid rgba(255,85,85,0.25)",borderRadius:R.md,fontSize:13,color:C.red,fontWeight:600,display:"flex",alignItems:"center",gap:8}}>
               <span>⚠</span><span>{err}</span>
@@ -1625,7 +1805,7 @@ const OnboardingFlow = ({userId, onComplete}) => {
       </div>
 
       {/* Footer — next button */}
-      <div style={{padding:"14px 18px 18px",borderTop:`1px solid ${C.bc}`,flexShrink:0,background:C.bg}}>
+      <div style={{padding:"14px 18px 18px",borderTop:`1px solid ${C.bc}`,flexShrink:0,background:"rgba(10,10,10,0.85)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",position:"relative",zIndex:2}}>
         <div style={{maxWidth:420,margin:"0 auto"}}>
           <Btn variant="primary" size="lg" loading={submitting} onClick={next} hapticKind={isLast?"success":"medium"}>
             {submitting ? "Створюю твій план..." : (isLast ? "✓ Завершити та активувати" : "Далі →")}
@@ -1652,7 +1832,7 @@ const OnboardingSuccess = ({onContinue}) => {
 
   return (
     <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:SP[6],padding:"0 28px",textAlign:"center"}}>
-      <div className="si" style={{
+      <div className="si glow" style={{
         width:108, height:108, borderRadius:R.full,
         background:C.gradAccSubtle,
         border:`2.5px solid ${C.acc}`,
@@ -1814,7 +1994,7 @@ const ProgressPhotos = ({userId}) => {
       )}
 
       {showHelp && createPortal(
-        <div onClick={()=>setShowHelp(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",backdropFilter:"blur(4px)",WebkitBackdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+        <div onClick={()=>setShowHelp(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(20px) saturate(140%)",WebkitBackdropFilter:"blur(20px) saturate(140%)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
           <div onClick={e=>e.stopPropagation()} style={{background:C.s1,borderRadius:18,border:`1px solid ${C.bc}`,padding:"18px",maxWidth:420,width:"100%"}}>
             <div style={{fontSize:18,fontWeight:900,color:C.tm,marginBottom:12}}>📸 Як користуватись</div>
             <div style={{fontSize:14,color:C.ts,lineHeight:1.7}}>
@@ -1986,7 +2166,7 @@ const AIChat = ({userId,clientData}) => {
       </div>
 
       {showHelp && createPortal(
-        <div onClick={()=>setShowHelp(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",backdropFilter:"blur(4px)",WebkitBackdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+        <div onClick={()=>setShowHelp(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(20px) saturate(140%)",WebkitBackdropFilter:"blur(20px) saturate(140%)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
           <div onClick={e=>e.stopPropagation()} style={{background:C.s1,borderRadius:18,border:`1px solid ${C.bc}`,padding:"18px",maxWidth:420,width:"100%"}}>
             <div style={{fontSize:18,fontWeight:900,color:C.tm,marginBottom:12}}>🤖 Як користуватись чатом</div>
             <div style={{fontSize:14,color:C.ts,lineHeight:1.7}}>
@@ -2918,7 +3098,7 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
   return(
     <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
       <div style={{position:"relative",height:220,flexShrink:0,overflow:"hidden"}}>
-        <img src={PHOTOS.trainer_profile} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 30%"}}/>
+        <img className="parallax" src={PHOTOS.trainer_profile} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 30%"}}/>
         <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(10,10,10,0.2) 0%,rgba(10,10,10,0.5) 50%,rgba(10,10,10,0.95) 100%)"}}/>
         <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"20px 18px",display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:12}}>
           <div style={{flex:1,minWidth:0}}>
@@ -3140,8 +3320,8 @@ const MessageModal = ({client, onClose}) => {
       style={{
         position:"fixed",inset:0,
         background:visible?"rgba(0,0,0,.7)":"rgba(0,0,0,0)",
-        backdropFilter:visible?"blur(4px)":"blur(0)",
-        WebkitBackdropFilter:visible?"blur(4px)":"blur(0)",
+        backdropFilter:visible?"blur(20px) saturate(140%)":"blur(0)",
+        WebkitBackdropFilter:visible?"blur(20px) saturate(140%)":"blur(0)",
         zIndex:9999,
         display:"flex",alignItems:"center",justifyContent:"center",
         padding:16,
