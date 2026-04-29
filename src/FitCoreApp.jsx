@@ -23,30 +23,363 @@ const PHOTOS = {
   trainer_plan:    "/photo3.jpg",
 };
 
+// ═══════════════════════════════════════════════════════════════
+// DESIGN TOKENS — єдина мова дизайну для всього додатку
+// ═══════════════════════════════════════════════════════════════
 const C = {
+  // Кольори фону (від темнішого до світлішого)
   bg:"#0a0a0a", s1:"#111111", s2:"#161616", s3:"#1c1c1c",
-  acc:"#c8f53a", acc2:"#a8d420",
-  tm:"#ffffff", ts:"#888888", td:"#444444", bc:"#222222",
-  red:"#ff5555", amber:"#e8a832", blue:"#4a9fdf",
+  // Акцент
+  acc:"#c8f53a", acc2:"#a8d420", accDim:"rgba(200,245,58,0.12)",
+  // Текст
+  tm:"#ffffff", ts:"#888888", td:"#444444", tt:"#666666",
+  // Межі
+  bc:"#222222", bcStrong:"#2a2a2a",
+  // Семантика
+  red:"#ff5555", amber:"#e8a832", blue:"#4a9fdf", green:"#4ade80", purple:"#a855f7",
+  // Градієнти
+  gradAcc:"linear-gradient(135deg,#c8f53a 0%,#a8d420 100%)",
+  gradAccSubtle:"linear-gradient(135deg,rgba(200,245,58,0.18) 0%,rgba(200,245,58,0.04) 100%)",
+  gradDark:"linear-gradient(180deg,#161616 0%,#0e0e0e 100%)",
+};
+
+// Простір — кратний 4
+const SP = {1:4, 2:8, 3:12, 4:16, 5:20, 6:24, 8:32, 10:40, 12:48};
+
+// Радіуси (кутки)
+const R = {sm:8, md:12, lg:16, xl:20, full:9999};
+
+// Розмір шрифтів і висота рядка
+const F = {
+  hero:    {size:34, height:1.05, weight:900, ls:-1.4},
+  h1:      {size:26, height:1.15, weight:900, ls:-0.8},
+  h2:      {size:20, height:1.2,  weight:800, ls:-0.4},
+  h3:      {size:17, height:1.3,  weight:800, ls:-0.2},
+  body:    {size:14, height:1.55, weight:500, ls:0},
+  bodyLg:  {size:15, height:1.55, weight:500, ls:0},
+  caption: {size:12, height:1.4,  weight:600, ls:0},
+  meta:    {size:11, height:1.3,  weight:700, ls:0.6},  // для CAPS-міток
+};
+
+// Тіні (елевація)
+const SH = {
+  sm: "0 2px 8px rgba(0,0,0,0.3)",
+  md: "0 4px 16px rgba(0,0,0,0.4)",
+  lg: "0 8px 28px rgba(0,0,0,0.5)",
+  xl: "0 16px 48px rgba(0,0,0,0.6)",
+  glow: "0 0 24px rgba(200,245,58,0.25)",
+  inner: "inset 0 1px 0 rgba(255,255,255,0.04)",
+};
+
+// Тривалості анімацій
+const T = {fast:"150ms", base:"220ms", slow:"320ms"};
+
+// Easing (cubic-bezier)
+const E = {
+  out:    "cubic-bezier(0.16, 1, 0.3, 1)",     // плавний spring
+  inOut:  "cubic-bezier(0.65, 0, 0.35, 1)",
+  bounce: "cubic-bezier(0.34, 1.56, 0.64, 1)",
 };
 
 const G = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
     *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-    body{background:${C.bg};color:${C.tm};font-family:'Inter',sans-serif;min-height:100vh;}
-    button{cursor:pointer;border:none;outline:none;font-family:'Inter',sans-serif;}
-    input,textarea{font-family:'Inter',sans-serif;outline:none;}
-    ::-webkit-scrollbar{width:0;}
-    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(200,245,58,0);}50%{box-shadow:0 0 0 8px rgba(200,245,58,0.15);}}
+    body{
+      background:${C.bg};color:${C.tm};
+      font-family:'Inter','-apple-system','BlinkMacSystemFont','SF Pro Display',sans-serif;
+      min-height:100vh;
+      font-feature-settings:'cv02','cv03','cv04','cv11';
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    button{cursor:pointer;border:none;outline:none;font-family:inherit;}
+    button:active:not(:disabled){transform:scale(0.97);transition:transform 100ms ${E.out};}
+    input,textarea,select{font-family:inherit;outline:none;}
+    ::-webkit-scrollbar{width:0;height:0;}
+
+    /* — keyframes — */
+    @keyframes spin{to{transform:rotate(360deg);}}
     @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-    @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
-    @keyframes blink{0%,100%{border-color:${C.acc};}50%{border-color:#e8ff80;}}
-    .fi{animation:fadeIn .3s ease forwards;}
-    .pu{animation:pulse 2.5s ease-in-out infinite;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes shimmer{0%{background-position:-1000px 0;}100%{background-position:1000px 0;}}
+    @keyframes accentPulse{0%,100%{box-shadow:0 0 0 0 rgba(200,245,58,0);}50%{box-shadow:0 0 0 8px rgba(200,245,58,0.15);}}
+    @keyframes blinkBorder{0%,100%{border-color:${C.acc};}50%{border-color:#e8ff80;}}
+    @keyframes scaleIn{from{opacity:0;transform:scale(0.94);}to{opacity:1;transform:scale(1);}}
+    @keyframes drawPath{from{stroke-dashoffset:1000;}to{stroke-dashoffset:0;}}
+    @keyframes pulseDot{0%,100%{opacity:.3;transform:scale(.8);}50%{opacity:1;transform:scale(1.2);}}
+    @keyframes slideInRight{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+
+    /* — utility classes — */
+    .fi{animation:fadeIn ${T.base} ${E.out} forwards;}
+    .fu{animation:fadeUp ${T.slow} ${E.out} forwards;}
+    .si{animation:scaleIn ${T.base} ${E.out} forwards;}
+    .pu{animation:accentPulse 2.5s ease-in-out infinite;}
     .sp{animation:spin 1s linear infinite;}
-    .bl{animation:blink 2s ease-in-out infinite;}
+    .bl{animation:blinkBorder 2s ease-in-out infinite;}
+
+    /* stagger for lists — items animate one after another */
+    .stg > *{animation:fadeUp ${T.slow} ${E.out} backwards;}
+    .stg > *:nth-child(1){animation-delay:0ms;}
+    .stg > *:nth-child(2){animation-delay:50ms;}
+    .stg > *:nth-child(3){animation-delay:100ms;}
+    .stg > *:nth-child(4){animation-delay:150ms;}
+    .stg > *:nth-child(5){animation-delay:200ms;}
+    .stg > *:nth-child(6){animation-delay:250ms;}
+    .stg > *:nth-child(7){animation-delay:300ms;}
+    .stg > *:nth-child(8){animation-delay:350ms;}
+    .stg > *:nth-child(n+9){animation-delay:400ms;}
+
+    /* skeleton shimmer for loading states */
+    .sk{
+      background:linear-gradient(90deg,${C.s2} 0%,${C.s3} 50%,${C.s2} 100%);
+      background-size:1000px 100%;
+      animation:shimmer 1.6s ease-in-out infinite;
+      border-radius:${R.md}px;
+    }
+
+    /* number counter animation — used inline */
+    .num{font-variant-numeric:tabular-nums;font-feature-settings:'tnum';}
   `}</style>
+);
+
+// ═══════════════════════════════════════════════════════════════
+// HAPTICS — тактильний відгук через Telegram WebApp
+// ═══════════════════════════════════════════════════════════════
+const haptic = (kind="light") => {
+  try {
+    const tg = window.Telegram?.WebApp;
+    if (!tg?.HapticFeedback) return;
+    if (kind === "success" || kind === "warning" || kind === "error") {
+      tg.HapticFeedback.notificationOccurred(kind);
+    } else if (kind === "selection") {
+      tg.HapticFeedback.selectionChanged();
+    } else {
+      tg.HapticFeedback.impactOccurred(kind); // light, medium, heavy, rigid, soft
+    }
+  } catch {}
+};
+
+// ═══════════════════════════════════════════════════════════════
+// ANIMATED NUMBER — плавно прокручує цифру при зміні значення
+// ═══════════════════════════════════════════════════════════════
+const AnimatedNum = ({value, decimals=0, duration=600, suffix=""}) => {
+  const [display, setDisplay] = useState(value);
+  const prevRef = useRef(value);
+  useEffect(() => {
+    const start = prevRef.current;
+    const end = Number(value) || 0;
+    if (start === end) return;
+    const startTime = Date.now();
+    const tick = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      // easeOutCubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = start + (end - start) * eased;
+      setDisplay(current);
+      if (progress < 1) requestAnimationFrame(tick);
+      else { setDisplay(end); prevRef.current = end; }
+    };
+    requestAnimationFrame(tick);
+  }, [value, duration]);
+  return <span className="num">{Number(display).toFixed(decimals)}{suffix}</span>;
+};
+
+// ═══════════════════════════════════════════════════════════════
+// BUTTON — універсальна кнопка з усіма варіантами
+// variant: primary | secondary | ghost | danger | success
+// size: sm (40px) | md (48px) | lg (56px)
+// ═══════════════════════════════════════════════════════════════
+const Btn = ({children, variant="primary", size="md", disabled, loading, fullWidth=true, onClick, leftIcon, rightIcon, hapticKind="light", style={}, ...rest}) => {
+  const sizes = {
+    sm: {h:40, px:14, fs:13, gap:6, radius:R.md},
+    md: {h:48, px:18, fs:14, gap:8, radius:R.md},
+    lg: {h:56, px:22, fs:15, gap:10, radius:R.lg},
+  };
+  const s = sizes[size] || sizes.md;
+
+  const variants = {
+    primary: {
+      background: C.gradAcc, color: "#0a0a0a", border: "none",
+      boxShadow: SH.glow, hoverBg: C.gradAcc,
+    },
+    secondary: {
+      background: C.s2, color: C.tm, border: `1px solid ${C.bc}`,
+      boxShadow: SH.inner,
+    },
+    ghost: {
+      background: "transparent", color: C.tm, border: `1px solid ${C.bc}`,
+      boxShadow: "none",
+    },
+    danger: {
+      background: "rgba(255,85,85,0.1)", color: C.red,
+      border: "1px solid rgba(255,85,85,0.25)", boxShadow: "none",
+    },
+    success: {
+      background: "rgba(74,222,128,0.1)", color: C.green,
+      border: "1px solid rgba(74,222,128,0.25)", boxShadow: "none",
+    },
+  };
+  const v = variants[variant] || variants.primary;
+
+  const handleClick = (e) => {
+    if (disabled || loading) return;
+    haptic(hapticKind);
+    onClick && onClick(e);
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={disabled || loading}
+      style={{
+        width: fullWidth ? "100%" : "auto",
+        height: s.h,
+        padding: `0 ${s.px}px`,
+        fontSize: s.fs,
+        fontWeight: 800,
+        letterSpacing: -0.2,
+        borderRadius: s.radius,
+        background: v.background,
+        color: v.color,
+        border: v.border,
+        boxShadow: v.boxShadow,
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: s.gap,
+        opacity: disabled ? 0.45 : 1,
+        cursor: (disabled || loading) ? "default" : "pointer",
+        transition: `transform 100ms ${E.out}, box-shadow ${T.base} ${E.out}`,
+        ...style,
+      }}
+      {...rest}
+    >
+      {loading ? (
+        <div className="sp" style={{width:16, height:16, borderRadius:"50%", border:`2px solid ${variant==="primary"?"rgba(0,0,0,0.25)":"rgba(255,255,255,0.18)"}`, borderTopColor: variant==="primary" ? "#0a0a0a" : C.acc}}/>
+      ) : (
+        <>
+          {leftIcon}
+          <span>{children}</span>
+          {rightIcon}
+        </>
+      )}
+    </button>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// CARD — стандартизована картка
+// elevated: bg s1+border  |  flat: bg s1 без бордера  |  outline: тільки border
+// ═══════════════════════════════════════════════════════════════
+const Card = ({children, variant="elevated", padding=16, onClick, glow, style={}, ...rest}) => {
+  const variants = {
+    elevated: {background: C.s1, border: `1px solid ${C.bc}`, boxShadow: SH.inner},
+    flat: {background: C.s1, border: "none", boxShadow: "none"},
+    outline: {background: "transparent", border: `1px solid ${C.bc}`, boxShadow: "none"},
+    accent: {background: C.gradAccSubtle, border: `1px solid rgba(200,245,58,0.25)`, boxShadow: glow ? SH.glow : SH.inner},
+  };
+  const v = variants[variant] || variants.elevated;
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        background: v.background,
+        border: v.border,
+        boxShadow: v.boxShadow,
+        borderRadius: R.lg,
+        padding: typeof padding === "number" ? `${padding}px` : padding,
+        cursor: onClick ? "pointer" : "default",
+        transition: `transform ${T.fast} ${E.out}, border-color ${T.base} ${E.out}`,
+        ...style,
+      }}
+      {...rest}
+    >
+      {children}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION TITLE — капс-мітки секцій ("СЬОГОДНІ · ПОНЕДІЛОК")
+// ═══════════════════════════════════════════════════════════════
+const SectionLabel = ({children, accent, style={}}) => (
+  <div style={{
+    fontSize: F.meta.size,
+    fontWeight: F.meta.weight,
+    letterSpacing: F.meta.ls,
+    textTransform: "uppercase",
+    color: accent ? C.acc : C.ts,
+    marginBottom: SP[3],
+    ...style,
+  }}>{children}</div>
+);
+
+// ═══════════════════════════════════════════════════════════════
+// HEADING — експресивні заголовки з letter-spacing
+// ═══════════════════════════════════════════════════════════════
+const H = ({children, level=1, style={}}) => {
+  const f = level === 0 ? F.hero : level === 1 ? F.h1 : level === 2 ? F.h2 : F.h3;
+  return (
+    <div style={{
+      fontSize: f.size,
+      fontWeight: f.weight,
+      lineHeight: f.height,
+      letterSpacing: `${f.ls}px`,
+      color: C.tm,
+      ...style,
+    }}>{children}</div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// STAT BOX — велика метрика з підписом
+// ═══════════════════════════════════════════════════════════════
+const Stat = ({value, label, unit, accent, decimals=0, animated=true, sub, style={}}) => (
+  <div style={{display:"flex", flexDirection:"column", gap:2, ...style}}>
+    <div style={{
+      fontSize: 28, fontWeight: 900, letterSpacing: -1,
+      color: accent ? C.acc : C.tm,
+      lineHeight: 1.1,
+      display: "flex", alignItems: "baseline", gap: 4,
+    }}>
+      {animated ? <AnimatedNum value={value} decimals={decimals}/> : <span className="num">{Number(value).toFixed(decimals)}</span>}
+      {unit && <span style={{fontSize:14, fontWeight:700, color:C.ts}}>{unit}</span>}
+    </div>
+    {label && <div style={{fontSize:11, fontWeight:700, color:C.ts, textTransform:"uppercase", letterSpacing:0.6}}>{label}</div>}
+    {sub && <div style={{fontSize:12, color:C.td, marginTop:2}}>{sub}</div>}
+  </div>
+);
+
+// ═══════════════════════════════════════════════════════════════
+// SKELETON — placeholder поки контент завантажується
+// ═══════════════════════════════════════════════════════════════
+const Skel = ({w="100%", h=16, r=R.sm, style={}}) => (
+  <div className="sk" style={{width:w, height:h, borderRadius:r, ...style}}/>
+);
+
+// ═══════════════════════════════════════════════════════════════
+// EMPTY STATE — порожній екран з характером
+// ═══════════════════════════════════════════════════════════════
+const Empty = ({icon, title, subtitle, action, style={}}) => (
+  <div style={{
+    display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+    padding:"40px 24px", textAlign:"center", gap: SP[3],
+    ...style
+  }}>
+    {icon && (
+      <div style={{
+        width:72, height:72, borderRadius:R.full,
+        background: C.gradAccSubtle,
+        display:"flex", alignItems:"center", justifyContent:"center",
+        fontSize:32,
+      }}>{icon}</div>
+    )}
+    {title && <div style={{fontSize:F.h3.size, fontWeight:800, color:C.tm, letterSpacing:-0.2}}>{title}</div>}
+    {subtitle && <div style={{fontSize:F.body.size, color:C.ts, lineHeight:1.55, maxWidth:300}}>{subtitle}</div>}
+    {action && <div style={{marginTop:SP[2], width:"100%", maxWidth:280}}>{action}</div>}
+  </div>
 );
 
 const Spin = () => (
@@ -90,14 +423,23 @@ const Scr = ({children,style={}}) => (
 );
 
 const TNav = ({title,onBack,rightEl}) => (
-  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 18px 12px",borderBottom:`1px solid ${C.bc}`,flexShrink:0}}>
+  <div style={{
+    display:"flex",alignItems:"center",justifyContent:"space-between",
+    padding:"16px 18px 14px",
+    borderBottom:`1px solid ${C.bc}`,flexShrink:0,
+    background:"rgba(10,10,10,0.85)",
+    backdropFilter:"blur(12px)",
+    WebkitBackdropFilter:"blur(12px)",
+    position:"relative",zIndex:5,
+  }}>
     <div style={{width:64}}>
-      {onBack&&<button onClick={onBack} style={{background:"none",display:"flex",alignItems:"center",gap:4,color:C.acc,fontSize:14,fontWeight:600}}>
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4L5 9l6 5" stroke={C.acc} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      {onBack&&<button onClick={()=>{haptic("light");onBack();}}
+        style={{background:"transparent",display:"flex",alignItems:"center",gap:4,color:C.acc,fontSize:14,fontWeight:700,padding:0,cursor:"pointer",letterSpacing:-0.1}}>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4L5 9l6 5" stroke={C.acc} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
         Назад
       </button>}
     </div>
-    <div style={{fontSize:18,fontWeight:800,color:C.tm,letterSpacing:"-.5px"}}>{title}</div>
+    <div style={{fontSize:F.h3.size,fontWeight:F.h3.weight,color:C.tm,letterSpacing:`${F.h3.ls}px`}}>{title}</div>
     <div style={{width:64,display:"flex",justifyContent:"flex-end"}}>{rightEl}</div>
   </div>
 );
@@ -122,15 +464,32 @@ const BNav = ({active,onChange,isAdmin}) => {
     menu: c=><><rect x="2" y="4" width="14" height="1.8" rx=".9" fill={c}/><rect x="2" y="8.1" width="10" height="1.8" rx=".9" fill={c}/><rect x="2" y="12.2" width="12" height="1.8" rx=".9" fill={c}/></>,
   };
   return (
-    <div style={{display:"flex",borderTop:`1px solid ${C.bc}`,flexShrink:0,background:C.bg,paddingBottom:"env(safe-area-inset-bottom,0px)"}}>
+    <div style={{
+      display:"flex",borderTop:`1px solid ${C.bc}`,flexShrink:0,
+      background:"rgba(10,10,10,0.92)",
+      backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",
+      paddingBottom:"env(safe-area-inset-bottom,0px)",
+      position:"relative",zIndex:5,
+    }}>
       {tabs.map(t=>{
         const isAct=active===t.id;
         const color=isAct?C.acc:C.ts;
         return (
-          <button key={t.id} onClick={()=>onChange(t.id)} style={{flex:1,background:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"10px 0 14px"}}>
-            <div style={{width:4,height:4,borderRadius:"50%",background:isAct?C.acc:"transparent",marginBottom:2}}/>
-            <svg width="22" height="22" viewBox="0 0 18 18" fill="none">{icons[t.id]?icons[t.id](color):null}</svg>
-            <span style={{fontSize:11,fontWeight:600,color}}>{t.l}</span>
+          <button key={t.id} onClick={()=>{haptic("light");onChange(t.id);}}
+            style={{
+              flex:1,background:"none",display:"flex",flexDirection:"column",
+              alignItems:"center",gap:3,padding:"10px 0 12px",
+              transition:`color ${T.fast} ${E.out}`,
+            }}>
+            <div style={{
+              width:isAct?22:4,height:3,borderRadius:R.full,
+              background:isAct?C.gradAcc:"transparent",
+              marginBottom:4,
+              transition:`all ${T.base} ${E.out}`,
+              boxShadow:isAct?"0 0 8px rgba(200,245,58,0.5)":"none",
+            }}/>
+            <svg width="22" height="22" viewBox="0 0 18 18" fill="none" style={{transition:`transform ${T.base} ${E.out}`,transform:isAct?"scale(1.1)":"scale(1)"}}>{icons[t.id]?icons[t.id](color):null}</svg>
+            <span style={{fontSize:10,fontWeight:isAct?800:600,color,letterSpacing:0.2,transition:`all ${T.fast} ${E.out}`}}>{t.l}</span>
           </button>
         );
       })}
@@ -192,31 +551,41 @@ const MenuScreen = ({plans,payLinks,onSelectPlan,clientPlan,onShowReviews}) => {
 
   return (
     <Scr>
-      <div style={{fontSize:26,fontWeight:900,color:C.tm,letterSpacing:-1}}>Тарифи</div>
-      <div style={{fontSize:14,color:C.ts}}>3 дні безкоштовно · оплата після пробного</div>
+      <div style={{display:"flex",flexDirection:"column",gap:6}}>
+        <SectionLabel accent>Підписка FitCore</SectionLabel>
+        <H level={1}>Тарифи</H>
+        <div style={{fontSize:F.body.size,color:C.ts}}>3 дні безкоштовно · оплата після пробного</div>
+      </div>
 
-      {/* Duration switcher */}
-      <div style={{background:C.s1,borderRadius:18,border:`1px solid ${C.bc}`,padding:"14px"}}>
-        <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Тривалість підписки</div>
+      {/* Duration switcher — преміум вигляд */}
+      <Card variant="elevated" padding={16}>
+        <SectionLabel>Тривалість підписки</SectionLabel>
         <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
           {[1,3,6,12].map(m=>{
             const on=months===m;
             const disc=DUR_DISC[m];
             return(
-              <div key={m} onClick={()=>setMonths(m)}
-                style={{borderRadius:14,border:`2px solid ${on?C.acc:C.bc}`,background:on?"rgba(200,245,58,.08)":C.s2,padding:"10px 4px",cursor:"pointer",textAlign:"center",position:"relative",transition:"all .15s"}}>
-                {disc>0&&<div style={{position:"absolute",top:-8,left:"50%",transform:"translateX(-50%)",background:m===12?C.acc:m===6?"#e8a832":"#4a9fdf",color:"#080808",fontSize:8,fontWeight:900,padding:"2px 5px",borderRadius:6,whiteSpace:"nowrap",lineHeight:1.4}}>-{disc}%</div>}
-                <div style={{fontSize:m===12?10:12,fontWeight:800,color:on?C.acc:C.ts,lineHeight:1.3}}>{m===12?"1 рік":m+"міс"}</div>
+              <div key={m} onClick={()=>{haptic("selection");setMonths(m);}}
+                style={{
+                  borderRadius:R.md,
+                  border:`1.5px solid ${on?C.acc:C.bc}`,
+                  background:on?C.gradAccSubtle:C.s2,
+                  padding:"12px 4px",cursor:"pointer",textAlign:"center",position:"relative",
+                  transition:`all ${T.base} ${E.out}`,
+                  boxShadow:on?SH.glow:"none",
+                }}>
+                {disc>0&&<div style={{position:"absolute",top:-8,left:"50%",transform:"translateX(-50%)",background:m===12?C.acc:m===6?C.amber:C.blue,color:"#080808",fontSize:9,fontWeight:900,padding:"2px 6px",borderRadius:R.sm,whiteSpace:"nowrap",lineHeight:1.4,letterSpacing:0.3}}>−{disc}%</div>}
+                <div style={{fontSize:m===12?10:12,fontWeight:800,color:on?C.acc:C.ts,lineHeight:1.3,letterSpacing:-0.1}}>{m===12?"1 рік":m+"міс"}</div>
               </div>
             );
           })}
         </div>
         {DUR_FUNNEL[months]&&(
-          <div style={{marginTop:10,padding:"10px 12px",background:"rgba(200,245,58,.06)",border:"1px solid rgba(200,245,58,.2)",borderRadius:12,fontSize:13,color:C.acc,fontWeight:600,lineHeight:1.5}}>
+          <div className="fi" key={months} style={{marginTop:12,padding:"12px 14px",background:C.gradAccSubtle,border:"1px solid rgba(200,245,58,0.25)",borderRadius:R.md,fontSize:13,color:C.acc,fontWeight:600,lineHeight:1.55}}>
             💡 {DUR_FUNNEL[months]}
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Plan cards */}
       {Object.entries(p).map(([k,plan])=>{
@@ -226,50 +595,65 @@ const MenuScreen = ({plans,payLinks,onSelectPlan,clientPlan,onShowReviews}) => {
         const perMo=months>1?Math.round(price/months):null;
         const isMine=clientPlan===k;
         return(
-          <div key={k} style={{background:C.s1,borderRadius:18,border:`1.5px solid ${plan.hot?C.acc:C.bc}`,padding:"18px",position:"relative",overflow:"hidden"}}>
-            {plan.hot&&<div style={{position:"absolute",top:16,right:16,fontSize:11,color:"#0a0a0a",background:C.acc,borderRadius:20,padding:"3px 12px",fontWeight:800}}>Популярний</div>}
-            {isMine&&<div style={{position:"absolute",top:16,right:plan.hot?120:16,fontSize:11,color:C.acc,background:"rgba(200,245,58,.1)",border:`1px solid ${C.acc}`,borderRadius:20,padding:"3px 12px",fontWeight:700}}>Твій тариф</div>}
-            {months>1&&saved>0&&<div style={{position:"absolute",top:isMine||plan.hot?40:16,right:16,fontSize:10,color:"#080808",background:"#e8a832",borderRadius:20,padding:"2px 8px",fontWeight:800}}>-{saved.toLocaleString()} ₴</div>}
-
-            <div style={{fontSize:22,fontWeight:900,color:C.tm,marginBottom:4}}>{plan.name}</div>
-
-            {/* Price */}
-            <div style={{display:"flex",alignItems:"baseline",gap:6,marginBottom:2}}>
-              <span style={{fontSize:34,fontWeight:900,color:C.acc,letterSpacing:-1}}>{price.toLocaleString()}</span>
-              <span style={{fontSize:14,color:C.ts}}>₴ / {DUR_LABEL[months]}</span>
+          <Card key={k} variant={plan.hot?"accent":"elevated"} glow={plan.hot} padding={20} style={{position:"relative",overflow:"hidden"}}>
+            {/* Top-right badges */}
+            <div style={{position:"absolute",top:14,right:14,display:"flex",flexDirection:"column",gap:6,alignItems:"flex-end"}}>
+              {plan.hot&&<div style={{fontSize:10,color:"#0a0a0a",background:C.gradAcc,borderRadius:R.full,padding:"4px 12px",fontWeight:900,letterSpacing:0.5,textTransform:"uppercase",boxShadow:SH.sm}}>Популярний</div>}
+              {isMine&&<div style={{fontSize:10,color:C.acc,background:"rgba(200,245,58,0.12)",border:`1px solid ${C.acc}`,borderRadius:R.full,padding:"3px 10px",fontWeight:800,letterSpacing:0.4,textTransform:"uppercase"}}>Твій</div>}
+              {months>1&&saved>0&&<div style={{fontSize:10,color:"#080808",background:C.amber,borderRadius:R.full,padding:"3px 10px",fontWeight:900,letterSpacing:0.3}}>−{saved.toLocaleString()} ₴</div>}
             </div>
-            {perMo&&<div style={{fontSize:13,color:C.ts,marginBottom:4}}>= {perMo} ₴/міс</div>}
-            <div style={{fontSize:12,color:"#f6c90e",marginBottom:12}}>⭐ або {stars.toLocaleString()} зірок Telegram</div>
 
-            <div style={{fontSize:14,color:C.ts,marginBottom:12,lineHeight:1.5}}>{plan.desc}</div>
-            <div style={{height:1,background:C.bc,marginBottom:12}}/>
+            <H level={2} style={{marginBottom:6}}>{plan.name}</H>
 
-            {/* Features */}
-            <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:8}}>Включено:</div>
-            {(plan.features||[]).map(f=>(
-              <div key={f} style={{display:"flex",alignItems:"center",gap:8,fontSize:14,color:C.tm,marginBottom:7}}>
-                <div style={{width:18,height:18,borderRadius:"50%",background:"rgba(200,245,58,.15)",border:`1px solid ${C.acc}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5 4-4" stroke={C.acc} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </div>
-                {f}
-              </div>
-            ))}
-            {(plan.no||[]).length>0&&<>
-              <div style={{fontSize:11,color:C.td,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:8,marginTop:4}}>Недоступно:</div>
-              {(plan.no||[]).map(f=>(
-                <div key={f} style={{display:"flex",alignItems:"center",gap:8,fontSize:13,color:C.td,marginBottom:6}}>
-                  <div style={{width:18,height:18,borderRadius:"50%",background:C.s2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke={C.td} strokeWidth="1.5" strokeLinecap="round"/></svg>
+            {/* Price — велика експресивна цифра */}
+            <div style={{display:"flex",alignItems:"baseline",gap:6,marginBottom:perMo?2:8}}>
+              <span className="num" style={{fontSize:38,fontWeight:900,color:C.acc,letterSpacing:-1.5,lineHeight:1}}>{price.toLocaleString()}</span>
+              <span style={{fontSize:14,color:C.ts,fontWeight:600}}>₴ / {DUR_LABEL[months]}</span>
+            </div>
+            {perMo&&<div style={{fontSize:13,color:C.ts,marginBottom:6,fontWeight:500}}>≈ <span className="num">{perMo}</span> ₴ на місяць</div>}
+            <div style={{fontSize:12,color:C.amber,marginBottom:14,fontWeight:600,display:"flex",alignItems:"center",gap:4}}>
+              <span>⭐</span>або <span className="num">{stars.toLocaleString()}</span> зірок Telegram
+            </div>
+
+            <div style={{fontSize:14,color:C.ts,marginBottom:14,lineHeight:1.55}}>{plan.desc}</div>
+
+            <Div style={{marginBottom:14}}/>
+
+            {/* Features list with stagger animation */}
+            <SectionLabel>Включено</SectionLabel>
+            <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:(plan.no||[]).length>0?14:0}}>
+              {(plan.features||[]).map(f=>(
+                <div key={f} style={{display:"flex",alignItems:"center",gap:10,fontSize:14,color:C.tm,fontWeight:500}}>
+                  <div style={{width:20,height:20,borderRadius:R.full,background:C.gradAccSubtle,border:`1px solid ${C.acc}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5 4-4" stroke={C.acc} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </div>
                   {f}
                 </div>
               ))}
+            </div>
+
+            {(plan.no||[]).length>0&&<>
+              <SectionLabel style={{color:C.td}}>Недоступно</SectionLabel>
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                {(plan.no||[]).map(f=>(
+                  <div key={f} style={{display:"flex",alignItems:"center",gap:10,fontSize:13,color:C.td}}>
+                    <div style={{width:20,height:20,borderRadius:R.full,background:C.s2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                      <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke={C.td} strokeWidth="1.6" strokeLinecap="round"/></svg>
+                    </div>
+                    {f}
+                  </div>
+                ))}
+              </div>
             </>}
 
-            {!isMine&&<PBtn onClick={()=>onSelectPlan(k,months)} style={{marginTop:14,background:plan.hot?C.acc:C.s2,color:plan.hot?"#0a0a0a":C.tm}}>
-              {clientPlan?"Перейти на "+plan.name:"Обрати "+plan.name}
-            </PBtn>}
-          </div>
+            {!isMine&&(
+              <div style={{marginTop:18}}>
+                <Btn variant={plan.hot?"primary":"secondary"} size="lg" onClick={()=>onSelectPlan(k,months)} hapticKind="medium">
+                  {clientPlan?"Перейти на "+plan.name:"Обрати "+plan.name}
+                </Btn>
+              </div>
+            )}
+          </Card>
         );
       })}
 
@@ -827,26 +1211,61 @@ const ExModal = ({ex, onClose}) => {
 // WELCOME (для нових клієнтів — після відео в боті)
 // ═══════════════════════════════════════════════════════════════
 const WelcomeScreen = ({onStart}) => (
-  <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 28px",textAlign:"center"}}>
-    <div style={{width:96,height:96,borderRadius:24,background:"linear-gradient(135deg,"+C.acc+",#a8d624)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:44,boxShadow:"0 12px 40px rgba(200,245,58,.3)"}}>💪</div>
-    <div style={{fontSize:30,fontWeight:900,color:C.tm,letterSpacing:-1,lineHeight:1.1}}>Привіт!</div>
-    <div style={{fontSize:16,color:C.ts,lineHeight:1.6,maxWidth:340}}>Заповни коротку анкету — і я побудую персональну програму під твої цілі. Це займе 2 хвилини.</div>
+  <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"space-between",padding:"40px 24px 24px",textAlign:"center",minHeight:"100%"}}>
+    {/* Hero icon з glow */}
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:24,marginTop:20}}>
+      <div className="si" style={{
+        width:108, height:108, borderRadius:R.xl,
+        background:C.gradAcc,
+        display:"flex", alignItems:"center", justifyContent:"center",
+        fontSize:50,
+        boxShadow:"0 16px 50px rgba(200,245,58,0.35), inset 0 1px 0 rgba(255,255,255,0.2)",
+        position:"relative",
+      }}>
+        💪
+        {/* Pulse ring */}
+        <div className="pu" style={{position:"absolute",inset:-4,borderRadius:R.xl}}/>
+      </div>
 
-    <div style={{width:"100%",maxWidth:340,marginTop:8,display:"flex",flexDirection:"column",gap:8}}>
-      {[
-        {ic:"🎯", t:"Персональний план тренувань"},
-        {ic:"🍽", t:"Харчування під твій КБЖУ"},
-        {ic:"🤖", t:"AI-тренер 24/7"},
-      ].map((it,i)=>(
-        <div key={i} style={{background:C.s1,border:`1px solid ${C.bc}`,borderRadius:14,padding:"12px 14px",display:"flex",alignItems:"center",gap:12,fontSize:14,color:C.tm,fontWeight:600,textAlign:"left"}}>
-          <span style={{fontSize:20}}>{it.ic}</span>
-          <span>{it.t}</span>
+      {/* Hero text */}
+      <div className="fu" style={{display:"flex",flexDirection:"column",gap:12,animationDelay:"100ms"}}>
+        <SectionLabel accent style={{textAlign:"center",marginBottom:0}}>FITCORE</SectionLabel>
+        <H level={0} style={{textAlign:"center"}}>Привіт.</H>
+        <div style={{fontSize:F.bodyLg.size,color:C.ts,lineHeight:1.6,maxWidth:320,margin:"0 auto"}}>
+          Заповни коротку анкету — і я побудую персональну програму під твої цілі. Це займе 2 хвилини.
         </div>
+      </div>
+    </div>
+
+    {/* Features list */}
+    <div className="stg" style={{display:"flex",flexDirection:"column",gap:SP[2],margin:"0 auto",width:"100%",maxWidth:340}}>
+      {[
+        {ic:"🎯", t:"Персональний план тренувань", d:"Кожна вправа — під твої цілі"},
+        {ic:"🍽", t:"Харчування під твій КБЖУ",   d:"Підрахунок калорій та макро"},
+        {ic:"🤖", t:"AI-тренер 24/7",              d:"Питай будь-коли — отримай відповідь"},
+      ].map((it,i)=>(
+        <Card key={i} variant="elevated" padding={`14px 16px`} style={{display:"flex",alignItems:"center",gap:14,textAlign:"left"}}>
+          <div style={{
+            width:44, height:44, borderRadius:R.md,
+            background:C.gradAccSubtle,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            fontSize:22, flexShrink:0,
+          }}>{it.ic}</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:14,fontWeight:700,color:C.tm,letterSpacing:-0.1}}>{it.t}</div>
+            <div style={{fontSize:12,color:C.ts,marginTop:2}}>{it.d}</div>
+          </div>
+        </Card>
       ))}
     </div>
 
-    <button onClick={onStart} style={{width:"100%",maxWidth:340,marginTop:12,background:C.acc,color:"#0a0a0a",border:"none",borderRadius:16,padding:"16px 0",fontSize:16,fontWeight:800,cursor:"pointer"}}>Заповнити анкету · 3 дні безкоштовно</button>
-    <div style={{fontSize:12,color:C.td}}>Без карти. Без зобовʼязань.</div>
+    {/* CTA */}
+    <div className="fu" style={{display:"flex",flexDirection:"column",gap:SP[3],animationDelay:"300ms",maxWidth:340,margin:"0 auto",width:"100%"}}>
+      <Btn variant="primary" size="lg" onClick={onStart} hapticKind="medium">
+        Заповнити анкету · 3 дні безкоштовно
+      </Btn>
+      <div style={{fontSize:12,color:C.td,textAlign:"center"}}>Без карти. Без зобовʼязань.</div>
+    </div>
   </div>
 );
 
@@ -888,11 +1307,21 @@ const OnboardingFlow = ({userId, onComplete}) => {
       sub: "Впливає на гормональний контекст програми",
       render: () => (
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-          {[{id:"male",l:"♂ Чоловік"},{id:"female",l:"♀ Жінка"}].map(o=>(
-            <button key={o.id} onClick={()=>update("gender",o.id)}
-              style={{background:data.gender===o.id?C.acc:C.s2,color:data.gender===o.id?"#0a0a0a":C.tm,
-                border:`1.5px solid ${data.gender===o.id?C.acc:C.bc}`,borderRadius:14,padding:"18px 0",fontSize:15,fontWeight:800,cursor:"pointer"}}>{o.l}</button>
-          ))}
+          {[{id:"male",l:"♂ Чоловік"},{id:"female",l:"♀ Жінка"}].map(o=>{
+            const active = data.gender===o.id;
+            return (
+            <button key={o.id} onClick={()=>{haptic("selection");update("gender",o.id);}}
+              style={{
+                background:active?C.gradAcc:C.s1,
+                color:active?"#0a0a0a":C.tm,
+                border:active?"none":`1px solid ${C.bc}`,
+                borderRadius:R.lg,padding:"22px 0",fontSize:15,fontWeight:800,
+                cursor:"pointer",
+                boxShadow:active?SH.glow:SH.inner,
+                transition:`all ${T.base} ${E.out}`,
+              }}>{o.l}</button>
+            );
+          })}
         </div>
       ),
       validate: () => data.gender ? null : "Обери стать",
@@ -1161,35 +1590,46 @@ const OnboardingFlow = ({userId, onComplete}) => {
 
   return (
     <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",background:C.bg}}>
-      {/* Header — progress bar */}
-      <div style={{padding:"16px 16px 0",flexShrink:0}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+      {/* Header — premium progress bar with glow */}
+      <div style={{padding:"18px 18px 0",flexShrink:0}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
           {step > 0 ? (
-            <button onClick={back} style={{background:"transparent",border:"none",color:C.acc,fontSize:14,fontWeight:600,padding:0,cursor:"pointer"}}>← Назад</button>
-          ) : <div/>}
-          <div style={{fontSize:12,color:C.ts,fontWeight:600}}>{step+1} / {steps.length}</div>
+            <button onClick={()=>{haptic("selection");back();}} style={{background:"transparent",border:"none",color:C.acc,fontSize:14,fontWeight:700,padding:"4px 0",cursor:"pointer",letterSpacing:-0.1}}>← Назад</button>
+          ) : <div style={{height:24}}/>}
+          <SectionLabel style={{marginBottom:0}}>Крок {step+1} / {steps.length}</SectionLabel>
         </div>
-        <div style={{height:4,background:C.s2,borderRadius:2,overflow:"hidden"}}>
-          <div style={{height:"100%",width:`${progress}%`,background:C.acc,transition:"width .25s ease"}}/>
+        <div style={{height:6,background:C.s2,borderRadius:R.full,overflow:"hidden",position:"relative"}}>
+          <div style={{
+            height:"100%",
+            width:`${progress}%`,
+            background:C.gradAcc,
+            borderRadius:R.full,
+            transition:`width ${T.slow} ${E.out}`,
+            boxShadow:"0 0 12px rgba(200,245,58,0.5)",
+          }}/>
         </div>
       </div>
 
       {/* Body — scrollable */}
-      <div style={{flex:1,overflowY:"auto",padding:"24px 20px"}}>
+      <div key={step} className="fu" style={{flex:1,overflowY:"auto",padding:"32px 20px 16px"}}>
         <div style={{maxWidth:420,margin:"0 auto"}}>
-          <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-.5,lineHeight:1.2,marginBottom:6}}>{cur.title}</div>
-          <div style={{fontSize:14,color:C.ts,marginBottom:24,lineHeight:1.5}}>{cur.sub}</div>
+          <H level={1} style={{marginBottom:8}}>{cur.title}</H>
+          <div style={{fontSize:F.bodyLg.size,color:C.ts,marginBottom:28,lineHeight:1.55}}>{cur.sub}</div>
           {cur.render()}
-          {err && <div style={{marginTop:12,padding:"10px 12px",background:"rgba(255,85,85,.08)",border:"1px solid rgba(255,85,85,.25)",borderRadius:10,fontSize:13,color:C.red}}>{err}</div>}
+          {err && (
+            <div style={{marginTop:16,padding:"12px 14px",background:"rgba(255,85,85,0.08)",border:"1px solid rgba(255,85,85,0.25)",borderRadius:R.md,fontSize:13,color:C.red,fontWeight:600,display:"flex",alignItems:"center",gap:8}}>
+              <span>⚠</span><span>{err}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Footer — next */}
-      <div style={{padding:"12px 16px 16px",borderTop:`1px solid ${C.bc}`,flexShrink:0}}>
+      {/* Footer — next button */}
+      <div style={{padding:"14px 18px 18px",borderTop:`1px solid ${C.bc}`,flexShrink:0,background:C.bg}}>
         <div style={{maxWidth:420,margin:"0 auto"}}>
-          <button onClick={next} disabled={submitting} style={{width:"100%",background:C.acc,color:"#0a0a0a",border:"none",borderRadius:14,padding:"15px 0",fontSize:15,fontWeight:800,cursor:submitting?"default":"pointer",opacity:submitting?.6:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-            {submitting ? (<><div className="sp" style={{width:16,height:16,borderRadius:"50%",border:"2px solid rgba(0,0,0,.25)",borderTopColor:"#0a0a0a"}}/>Створюю твій план...</>) : (isLast ? "✓ Завершити та активувати" : "Далі →")}
-          </button>
+          <Btn variant="primary" size="lg" loading={submitting} onClick={next} hapticKind={isLast?"success":"medium"}>
+            {submitting ? "Створюю твій план..." : (isLast ? "✓ Завершити та активувати" : "Далі →")}
+          </Btn>
         </div>
       </div>
     </div>
@@ -1207,13 +1647,38 @@ const OnboardingSuccess = ({onContinue}) => {
     return () => clearTimeout(t);
   }, [seconds, onContinue]);
 
+  // Haptic при появі
+  useEffect(()=>{haptic("success");},[]);
+
   return (
-    <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:24,padding:"0 28px",textAlign:"center"}}>
-      <div style={{width:96,height:96,borderRadius:"50%",background:"rgba(200,245,58,.1)",border:`3px solid ${C.acc}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:48}}>✓</div>
-      <div style={{fontSize:28,fontWeight:900,color:C.tm,letterSpacing:-1,lineHeight:1.1}}>Готово!</div>
-      <div style={{fontSize:16,color:C.ts,lineHeight:1.7,maxWidth:340}}>3 дні безкоштовного доступу активовано. Зараз я готую твій персональний план — це займе хвилину.</div>
-      <button onClick={onContinue} style={{width:"100%",maxWidth:340,background:C.acc,color:"#0a0a0a",border:"none",borderRadius:14,padding:"14px 0",fontSize:15,fontWeight:800,cursor:"pointer"}}>Перейти в додаток</button>
-      <div style={{fontSize:12,color:C.td}}>Автоматично через {seconds}с</div>
+    <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:SP[6],padding:"0 28px",textAlign:"center"}}>
+      <div className="si" style={{
+        width:108, height:108, borderRadius:R.full,
+        background:C.gradAccSubtle,
+        border:`2.5px solid ${C.acc}`,
+        display:"flex",alignItems:"center",justifyContent:"center",
+        position:"relative",
+      }}>
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none">
+          <path d="M5 12.5L9.5 17L19 7" stroke={C.acc} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+            style={{strokeDasharray:30, strokeDashoffset:30, animation:`drawPath 600ms ${E.out} 200ms forwards`}}/>
+        </svg>
+        <div className="pu" style={{position:"absolute",inset:-4,borderRadius:R.full,opacity:.6}}/>
+      </div>
+
+      <div className="fu" style={{display:"flex",flexDirection:"column",gap:12,animationDelay:"200ms"}}>
+        <H level={0}>Готово.</H>
+        <div style={{fontSize:F.bodyLg.size,color:C.ts,lineHeight:1.6,maxWidth:340}}>
+          3 дні безкоштовного доступу активовано. Зараз я готую твій персональний план — це займе хвилину.
+        </div>
+      </div>
+
+      <div className="fu" style={{display:"flex",flexDirection:"column",gap:SP[3],width:"100%",maxWidth:340,animationDelay:"400ms"}}>
+        <Btn variant="primary" size="lg" onClick={onContinue} hapticKind="medium">
+          Перейти в додаток
+        </Btn>
+        <div style={{fontSize:12,color:C.td}}>Автоматично через {seconds}с</div>
+      </div>
     </div>
   );
 };
@@ -1316,34 +1781,33 @@ const ProgressPhotos = ({userId}) => {
 
   return(
     <Scr>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
-        <div style={{fontSize:22,fontWeight:900,color:C.tm,letterSpacing:-.5}}>Прогрес у фото</div>
-        <button onClick={()=>setShowHelp(true)} style={{background:C.s1,border:`1px solid ${C.bc}`,borderRadius:10,width:34,height:34,color:C.acc,fontSize:16,fontWeight:900}}>?</button>
+      <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12}}>
+        <div style={{flex:1}}>
+          <SectionLabel accent>Тіло у часі</SectionLabel>
+          <H level={1}>Прогрес у фото</H>
+        </div>
+        <button onClick={()=>{haptic("selection");setShowHelp(true);}} style={{background:C.s1,border:`1px solid ${C.bc}`,borderRadius:R.md,width:38,height:38,color:C.acc,fontSize:15,fontWeight:900,boxShadow:SH.inner,flexShrink:0}}>?</button>
       </div>
 
       <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={onFile} style={{display:"none"}}/>
 
-      <button onClick={onPick} disabled={uploading} style={{background:C.acc,color:"#0a0a0a",border:"none",borderRadius:16,padding:"16px 0",fontSize:15,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-        {uploading?<><div className="sp" style={{width:16,height:16,borderRadius:"50%",border:"2px solid rgba(0,0,0,.2)",borderTopColor:"#0a0a0a"}}/>Завантаження...</> : "📸 Додати нове фото"}
-      </button>
+      <Btn variant="primary" size="lg" onClick={onPick} loading={uploading} hapticKind="medium">
+        📸 Додати нове фото
+      </Btn>
 
-      {err && <div style={{fontSize:13,color:C.red,padding:"6px 4px"}}>{err}</div>}
+      {err && <div style={{fontSize:13,color:C.red,padding:"6px 4px",fontWeight:600}}>⚠ {err}</div>}
 
       {photos.length === 0 ? (
-        <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"22px 18px",textAlign:"center"}}>
-          <div style={{fontSize:40,marginBottom:6}}>📷</div>
-          <div style={{fontSize:15,fontWeight:700,color:C.tm,marginBottom:4}}>Ще немає фото</div>
-          <div style={{fontSize:13,color:C.ts,lineHeight:1.6}}>Роби фото щотижня — через місяць побачиш реальну різницю</div>
-        </div>
+        <Empty icon="📷" title="Ще немає фото" subtitle="Роби фото щотижня — через місяць побачиш реальну різницю"/>
       ) : (
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        <div className="stg" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
           {photos.map(p=>(
-            <div key={p.id} style={{position:"relative",background:C.s1,borderRadius:14,overflow:"hidden",border:`1px solid ${C.bc}`}}>
+            <div key={p.id} style={{position:"relative",background:C.s1,borderRadius:R.md,overflow:"hidden",border:`1px solid ${C.bc}`,boxShadow:SH.sm}}>
               <img src={`data:image/jpeg;base64,${p.photo_path}`} alt="" style={{width:"100%",height:180,objectFit:"cover",display:"block"}}/>
-              <div style={{position:"absolute",top:8,right:8,background:"rgba(0,0,0,.7)",color:"#fff",fontSize:11,fontWeight:600,padding:"3px 8px",borderRadius:8}}>
+              <div style={{position:"absolute",top:8,right:8,background:"rgba(0,0,0,0.75)",backdropFilter:"blur(6px)",WebkitBackdropFilter:"blur(6px)",color:"#fff",fontSize:11,fontWeight:700,padding:"3px 9px",borderRadius:R.sm,letterSpacing:0.3}}>
                 {(p.taken_at||"").slice(0,10)}
               </div>
-              <button onClick={()=>removePhoto(p.id)} style={{position:"absolute",bottom:6,right:6,background:"rgba(0,0,0,.7)",border:"none",color:"#ff6b6b",width:28,height:28,borderRadius:8,fontSize:14,fontWeight:700}}>×</button>
+              <button onClick={()=>{haptic("warning");removePhoto(p.id);}} style={{position:"absolute",bottom:6,right:6,background:"rgba(0,0,0,0.75)",backdropFilter:"blur(6px)",WebkitBackdropFilter:"blur(6px)",border:"none",color:"#ff6b6b",width:30,height:30,borderRadius:R.sm,fontSize:15,fontWeight:700}}>×</button>
             </div>
           ))}
         </div>
@@ -1430,14 +1894,32 @@ const AIChat = ({userId,clientData}) => {
     <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
       {/* Header */}
       <div style={{padding:"12px 16px",borderBottom:`1px solid ${C.bc}`,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexShrink:0}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,"+C.acc+",#e8a832)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:900,color:"#0a0a0a"}}>М</div>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{
+            width:44, height:44, borderRadius:R.full,
+            background:"linear-gradient(135deg,"+C.acc+",#e8a832)",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            fontSize:18,fontWeight:900,color:"#0a0a0a",
+            boxShadow:"0 6px 20px rgba(200,245,58,0.3)",
+            position:"relative",
+          }}>
+            М
+            {/* Online pulse dot */}
+            <div style={{
+              position:"absolute",bottom:-1,right:-1,
+              width:14,height:14,borderRadius:R.full,
+              background:C.green,
+              border:`2.5px solid ${C.bg}`,
+              boxShadow:"0 0 0 0 rgba(74,222,128,0.6)",
+              animation:"pulseDot 2s ease-in-out infinite",
+            }}/>
+          </div>
           <div>
-            <div style={{fontSize:15,fontWeight:800,color:C.tm}}>Матіас</div>
-            <div style={{fontSize:11,color:C.acc,fontWeight:600}}>● Online · AI-тренер</div>
+            <div style={{fontSize:15,fontWeight:800,color:C.tm,letterSpacing:-0.2}}>Матіас</div>
+            <div style={{fontSize:11,color:C.green,fontWeight:700,letterSpacing:0.3,textTransform:"uppercase"}}>Online · AI-тренер</div>
           </div>
         </div>
-        <button onClick={()=>setShowHelp(true)} style={{background:C.s1,border:`1px solid ${C.bc}`,borderRadius:10,width:32,height:32,color:C.acc,fontSize:14,fontWeight:900,flexShrink:0}}>?</button>
+        <button onClick={()=>{haptic("selection");setShowHelp(true);}} style={{background:C.s1,border:`1px solid ${C.bc}`,borderRadius:R.md,width:36,height:36,color:C.acc,fontSize:15,fontWeight:900,flexShrink:0,boxShadow:SH.inner}}>?</button>
       </div>
 
       {/* Limit bar */}
@@ -1452,16 +1934,23 @@ const AIChat = ({userId,clientData}) => {
       <div ref={scrollRef} className="fi" style={{flex:1,overflowY:"auto",padding:"14px 14px 6px",display:"flex",flexDirection:"column",gap:8}}>
         {loading && <Spin/>}
         {isEmpty && (
-          <div style={{padding:"16px",background:C.s1,border:`1px solid ${C.bc}`,borderRadius:16,textAlign:"center"}}>
-            <div style={{fontSize:36,marginBottom:8}}>👋</div>
-            <div style={{fontSize:15,fontWeight:700,color:C.tm,marginBottom:6}}>Привіт! Я Матіас — твій AI-тренер</div>
-            <div style={{fontSize:13,color:C.ts,lineHeight:1.6}}>Питай будь-що про тренування, харчування чи відновлення. Відповім за декілька секунд.</div>
-            <div style={{marginTop:14,display:"flex",flexDirection:"column",gap:6}}>
+          <Card variant="elevated" padding={20} style={{textAlign:"center"}}>
+            <div style={{fontSize:44,marginBottom:12}}>👋</div>
+            <div style={{fontSize:F.h3.size,fontWeight:800,color:C.tm,marginBottom:8,letterSpacing:-0.2}}>Привіт! Я Матіас</div>
+            <div style={{fontSize:F.body.size,color:C.ts,lineHeight:1.6,marginBottom:20}}>Питай будь-що про тренування, харчування чи відновлення. Відповім за декілька секунд.</div>
+            <SectionLabel accent style={{textAlign:"left",marginBottom:8}}>Спробуй запитати</SectionLabel>
+            <div className="stg" style={{display:"flex",flexDirection:"column",gap:8}}>
               {["Що їсти перед тренуванням?","Як правильно робити присідання?","Чому боляче коліно після тренування?"].map(q=>(
-                <button key={q} onClick={()=>setInput(q)} style={{background:"rgba(200,245,58,.06)",border:"1px solid rgba(200,245,58,.2)",borderRadius:10,padding:"10px 12px",fontSize:13,color:C.acc,textAlign:"left"}}>{q}</button>
+                <button key={q} onClick={()=>{haptic("light");setInput(q);}} style={{
+                  background:C.gradAccSubtle,
+                  border:"1px solid rgba(200,245,58,0.25)",
+                  borderRadius:R.md,padding:"12px 14px",fontSize:13,
+                  color:C.acc,textAlign:"left",fontWeight:600,
+                  cursor:"pointer",transition:`all ${T.fast} ${E.out}`,
+                }}>{q} →</button>
               ))}
             </div>
-          </div>
+          </Card>
         )}
         {messages.map((m,i)=>(
           <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
@@ -1487,7 +1976,13 @@ const AIChat = ({userId,clientData}) => {
           disabled={sending||(limit!==null && used>=limit && limit<999)}
           style={{flex:1,background:C.s1,border:`1px solid ${C.bc}`,borderRadius:16,padding:"12px 14px",color:C.tm,fontSize:14,outline:"none"}}
         />
-        <button onClick={send} disabled={!input.trim()||sending||(limit!==null&&used>=limit&&limit<999)} style={{background:C.acc,color:"#0a0a0a",border:"none",borderRadius:14,padding:"0 18px",fontSize:14,fontWeight:800,opacity:(!input.trim()||sending)?.5:1}}>↑</button>
+        <button onClick={()=>{haptic("light");send();}} disabled={!input.trim()||sending||(limit!==null&&used>=limit&&limit<999)} style={{
+          background:C.gradAcc,color:"#0a0a0a",border:"none",borderRadius:R.md,
+          width:48,height:48,fontSize:18,fontWeight:900,flexShrink:0,
+          opacity:(!input.trim()||sending)?.4:1,
+          boxShadow:input.trim()?SH.glow:"none",
+          transition:`opacity ${T.base} ${E.out}, box-shadow ${T.base} ${E.out}`,
+        }}>↑</button>
       </div>
 
       {showHelp && createPortal(
@@ -1566,20 +2061,39 @@ const Recipes = ({userId,clientData}) => {
 
   return(
     <Scr>
-      <div style={{fontSize:22,fontWeight:900,color:C.tm,letterSpacing:-.5}}>Рецепти під твій КБЖУ</div>
+      <div>
+        <SectionLabel accent>VIP-рецепти</SectionLabel>
+        <H level={1}>Рецепти під твій КБЖУ</H>
+      </div>
+
       {isTrial && (
-        <div style={{background:"rgba(168,85,247,.1)",border:"1px solid rgba(168,85,247,.25)",borderRadius:12,padding:"10px 12px",fontSize:13,color:"#d8b4fe",lineHeight:1.5}}>
-          ⚡ <b>Пробний доступ:</b> 1 категорія рецептів на день. На VIP — без обмежень.
-        </div>
+        <Card padding={"12px 14px"} style={{background:"rgba(168,85,247,0.08)",border:"1px solid rgba(168,85,247,0.25)"}}>
+          <div style={{fontSize:13,color:"#d8b4fe",lineHeight:1.55}}>
+            ⚡ <b>Пробний доступ:</b> 1 категорія рецептів на день. На VIP — без обмежень.
+          </div>
+        </Card>
       )}
 
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
-        {cats.map(c=>(
-          <button key={c.id} onClick={()=>setCat(c.id)} style={{background:category===c.id?C.acc:C.s1,color:category===c.id?"#0a0a0a":C.ts,border:`1px solid ${category===c.id?C.acc:C.bc}`,borderRadius:12,padding:"10px 4px",fontSize:12,fontWeight:700}}>{c.label}</button>
-        ))}
+        {cats.map(c=>{
+          const active = category===c.id;
+          return (
+          <button key={c.id} onClick={()=>{haptic("selection");setCat(c.id);}}
+            style={{
+              background:active?C.gradAcc:C.s1,
+              color:active?"#0a0a0a":C.ts,
+              border:active?"none":`1px solid ${C.bc}`,
+              borderRadius:R.md,padding:"11px 4px",fontSize:12,fontWeight:800,
+              boxShadow:active?SH.glow:SH.inner,
+              transition:`all ${T.base} ${E.out}`,
+            }}>{c.label}</button>
+          );
+        })}
       </div>
 
-      <button onClick={()=>load(true)} disabled={loading} style={{background:"transparent",border:`1px solid ${C.bc}`,color:C.ts,borderRadius:12,padding:"10px 0",fontSize:13,fontWeight:600}}>🔄 Оновити список</button>
+      <Btn variant="ghost" size="sm" onClick={()=>load(true)} disabled={loading} hapticKind="light">
+        🔄 Оновити список
+      </Btn>
 
       {loading && <div style={{textAlign:"center",padding:"30px 0"}}><div className="sp" style={{display:"inline-block",width:32,height:32,borderRadius:"50%",border:`3px solid ${C.s2}`,borderTopColor:C.acc}}/><div style={{fontSize:12,color:C.ts,marginTop:10}}>Генеруємо рецепти...</div></div>}
 
@@ -1592,11 +2106,12 @@ const Recipes = ({userId,clientData}) => {
         </div>
       )}
 
-      {!loading && recipes.map((r,i)=>{
+      {!loading && recipes.length>0 && <div className="stg" style={{display:"flex",flexDirection:"column",gap:SP[2]}}>
+      {recipes.map((r,i)=>{
         const catEmoji = {breakfast:"🍳", lunch:"🍲", dinner:"🍽", snack:"🥗"}[category] || "🍴";
         const isOpen = expanded===i;
         return (
-        <div key={i} onClick={()=>setExpanded(isOpen?null:i)} style={{background:C.s1,borderRadius:14,border:`1px solid ${isOpen?"rgba(200,245,58,.3)":C.bc}`,padding:"14px 16px",cursor:"pointer",transition:"border-color .2s"}}>
+        <div key={i} onClick={()=>{haptic("light");setExpanded(isOpen?null:i);}} style={{background:C.s1,borderRadius:R.md,border:`1px solid ${isOpen?"rgba(200,245,58,0.3)":C.bc}`,padding:"14px 16px",cursor:"pointer",transition:`border-color ${T.base} ${E.out}, transform ${T.fast} ${E.out}`,boxShadow:isOpen?SH.sm:SH.inner}}>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
             {/* Емоджі-картинка зліва */}
             <div style={{width:56,height:56,borderRadius:12,background:"linear-gradient(135deg, rgba(200,245,58,.15), rgba(200,245,58,.05))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,flexShrink:0}}>{catEmoji}</div>
@@ -1630,7 +2145,7 @@ const Recipes = ({userId,clientData}) => {
             </div>
           )}
         </div>
-      );})}
+      );})}</div>}
     </Scr>
   );
 };
@@ -1677,30 +2192,54 @@ const TrainingSchedule = ({userId}) => {
 
   return(
     <Scr>
-      <div style={{fontSize:22,fontWeight:900,color:C.tm,letterSpacing:-.5}}>Календар тренувань</div>
-      <div style={{fontSize:13,color:C.ts,lineHeight:1.6,marginTop:-4,marginBottom:6}}>Обери дні тижня. За 5 годин до тренування — надійде нагадування в бот.</div>
+      <div>
+        <SectionLabel accent>Графік занять</SectionLabel>
+        <H level={1}>Календар тренувань</H>
+        <div style={{fontSize:F.body.size,color:C.ts,lineHeight:1.6,marginTop:6}}>Обери дні тижня. За 5 годин до тренування — надійде нагадування в бот.</div>
+      </div>
 
-      <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"16px"}}>
-        <div style={{fontSize:12,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Дні тренувань</div>
+      <Card variant="elevated" padding={18}>
+        <SectionLabel>Дні тренувань</SectionLabel>
         <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:6}}>
-          {weekdays.map(d=>(
-            <button key={d.id} onClick={()=>toggleDay(d.id)} style={{background:days.includes(d.id)?C.acc:C.s2,color:days.includes(d.id)?"#0a0a0a":C.ts,border:`1px solid ${days.includes(d.id)?C.acc:C.bc}`,borderRadius:12,padding:"12px 0",fontSize:13,fontWeight:800}}>{d.label}</button>
-          ))}
+          {weekdays.map(d=>{
+            const active = days.includes(d.id);
+            return (
+            <button key={d.id} onClick={()=>{haptic("selection");toggleDay(d.id);}}
+              style={{
+                background:active?C.gradAcc:C.s2,
+                color:active?"#0a0a0a":C.ts,
+                border:active?"none":`1px solid ${C.bc}`,
+                borderRadius:R.md,padding:"14px 0",fontSize:13,fontWeight:800,
+                boxShadow:active?SH.glow:SH.inner,
+                transition:`all ${T.base} ${E.out}`,
+                letterSpacing:-0.1,
+              }}>{d.label}</button>
+            );
+          })}
         </div>
-      </div>
+      </Card>
 
-      <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"16px"}}>
-        <div style={{fontSize:12,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Час тренування</div>
-        <input type="time" value={time} onChange={e=>{setTime(e.target.value);setSaved(false);}} style={{width:"100%",background:C.s2,border:`1px solid ${C.bc}`,borderRadius:12,padding:"12px 14px",color:C.tm,fontSize:18,textAlign:"center",fontWeight:700,colorScheme:"dark"}}/>
-        <div style={{fontSize:12,color:C.td,marginTop:8,textAlign:"center"}}>Нагадування прийде за 5 годин до цього часу</div>
-      </div>
+      <Card variant="elevated" padding={18}>
+        <SectionLabel>Час тренування</SectionLabel>
+        <input type="time" value={time} onChange={e=>{setTime(e.target.value);setSaved(false);}} style={{
+          width:"100%",background:C.s2,border:`1px solid ${C.bc}`,
+          borderRadius:R.md,padding:"14px",color:C.tm,fontSize:22,
+          textAlign:"center",fontWeight:800,colorScheme:"dark",
+          letterSpacing:-0.5, fontVariantNumeric:"tabular-nums",
+        }}/>
+        <div style={{fontSize:12,color:C.td,marginTop:10,textAlign:"center"}}>Нагадування прийде за 5 годин до цього часу</div>
+      </Card>
 
-      <button onClick={save} disabled={saving} style={{background:C.acc,color:"#0a0a0a",border:"none",borderRadius:14,padding:"14px 0",fontSize:15,fontWeight:800}}>{saving?"Збереження...":saved?"✓ Збережено":"Зберегти розклад"}</button>
+      <Btn variant="primary" size="lg" onClick={()=>{haptic("success");save();}} loading={saving} hapticKind="success">
+        {saved?"✓ Збережено":"Зберегти розклад"}
+      </Btn>
 
       {days.length>0 && (
-        <div style={{background:"rgba(200,245,58,.06)",border:"1px solid rgba(200,245,58,.2)",borderRadius:14,padding:"12px 14px",fontSize:13,color:C.acc,lineHeight:1.6}}>
-          📅 Тренуєшся <b>{days.length}</b> {days.length===1?"день":days.length<5?"дні":"днів"} на тиждень о <b>{time}</b>. Нагадування — о {(()=>{const[h,m]=time.split(":").map(Number);const nh=(h-5+24)%24;return `${String(nh).padStart(2,"0")}:${String(m).padStart(2,"0")}`;})()}.
-        </div>
+        <Card padding={"12px 14px"} style={{background:C.gradAccSubtle,border:"1px solid rgba(200,245,58,0.25)"}}>
+          <div style={{fontSize:13,color:C.acc,lineHeight:1.6,fontWeight:600}}>
+            📅 Тренуєшся <b style={{fontWeight:900}}>{days.length}</b> {days.length===1?"день":days.length<5?"дні":"днів"} на тиждень о <b style={{fontWeight:900}}>{time}</b>. Нагадування — о {(()=>{const[h,m]=time.split(":").map(Number);const nh=(h-5+24)%24;return `${String(nh).padStart(2,"0")}:${String(m).padStart(2,"0")}`;})()}.
+          </div>
+        </Card>
       )}
     </Scr>
   );
@@ -1728,21 +2267,37 @@ const MoreScreen = ({clientData, onNav}) => {
   ];
   return(
     <Scr>
-      <div style={{fontSize:22,fontWeight:900,color:C.tm,letterSpacing:-.5}}>Додатково</div>
+      <div>
+        <SectionLabel accent>Розширені можливості</SectionLabel>
+        <H level={1}>Додатково</H>
+      </div>
+      <div className="stg" style={{display:"flex",flexDirection:"column",gap:SP[2]}}>
       {items.map(it=>(
-        <div key={it.id} onClick={()=>!it.locked && onNav(it.id)} style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px",display:"flex",alignItems:"center",gap:14,cursor:it.locked?"default":"pointer",opacity:it.locked?.55:1}}>
-          <div style={{fontSize:28}}>{it.icon}</div>
-          <div style={{flex:1}}>
-            <div style={{fontSize:15,fontWeight:800,color:C.tm,display:"flex",alignItems:"center",gap:6}}>
+        <Card key={it.id} variant="elevated" padding={"14px 16px"}
+          onClick={()=>{if(!it.locked){haptic("light");onNav(it.id);}}}
+          style={{
+            display:"flex",alignItems:"center",gap:14,
+            opacity:it.locked?0.55:1,
+            cursor:it.locked?"default":"pointer",
+          }}>
+          <div style={{
+            width:48,height:48,borderRadius:R.md,
+            background:C.gradAccSubtle,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            fontSize:24,flexShrink:0,
+          }}>{it.icon}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:15,fontWeight:800,color:C.tm,display:"flex",alignItems:"center",gap:6,letterSpacing:-0.1}}>
               {it.title}
-              {it.locked && <span style={{fontSize:10,color:"#d8b4fe",background:"rgba(168,85,247,.15)",padding:"2px 6px",borderRadius:6,fontWeight:700}}>VIP</span>}
-            {it.vipBadge && !it.locked && <span style={{fontSize:10,color:C.acc,background:"rgba(200,245,58,.12)",padding:"2px 6px",borderRadius:6,fontWeight:700}}>TRIAL</span>}
+              {it.locked && <span style={{fontSize:9,color:"#d8b4fe",background:"rgba(168,85,247,0.15)",border:"1px solid rgba(168,85,247,0.3)",padding:"2px 7px",borderRadius:R.sm,fontWeight:800,letterSpacing:0.5}}>VIP</span>}
+              {it.vipBadge && !it.locked && <span style={{fontSize:9,color:C.acc,background:C.accDim,border:"1px solid rgba(200,245,58,0.3)",padding:"2px 7px",borderRadius:R.sm,fontWeight:800,letterSpacing:0.5}}>TRIAL</span>}
             </div>
-            <div style={{fontSize:12,color:C.ts,marginTop:3}}>{it.desc}</div>
+            <div style={{fontSize:12,color:C.ts,marginTop:3,lineHeight:1.4}}>{it.desc}</div>
           </div>
-          {!it.locked && <div style={{color:C.ts,fontSize:18}}>›</div>}
-        </div>
+          {!it.locked && <div style={{color:C.ts,fontSize:22,fontWeight:300,flexShrink:0}}>›</div>}
+        </Card>
       ))}
+      </div>
     </Scr>
   );
 };
@@ -2292,12 +2847,28 @@ const Progress = ({userId}) => {
   const earned=(data.badges||"").split(",").filter(Boolean);
   return(
     <Scr>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-        {[["Старт",data.start_weight?`${data.start_weight} кг`:"—",C.ts],["Зараз",data.last_weight?`${data.last_weight} кг`:"—",C.acc],["Прогрес",data.start_weight&&data.last_weight?`${Math.round((data.last_weight-data.start_weight)*10)/10} кг`:"—",C.acc],["Стрік",`${data.streak||0} днів`,C.amber]].map(([l,v,c])=>(
-          <div key={l} style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px"}}>
-            <div style={{fontSize:13,color:C.ts,fontWeight:600}}>{l}</div>
-            <div style={{fontSize:24,fontWeight:900,color:c,marginTop:4}}>{v}</div>
-          </div>
+      <div className="stg" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:SP[2]}}>
+        {[
+          ["Старт", data.start_weight, "кг", C.ts, false],
+          ["Зараз", data.last_weight, "кг", C.acc, true],
+          ["Прогрес", data.start_weight&&data.last_weight?Math.round((data.last_weight-data.start_weight)*10)/10:null, "кг", C.acc, true],
+          ["Стрік", data.streak||0, "днів", C.amber, true],
+        ].map(([l,v,u,c,anim])=>(
+          <Card key={l} variant="elevated" padding={14}>
+            <SectionLabel style={{marginBottom:6}}>{l}</SectionLabel>
+            <div style={{display:"flex",alignItems:"baseline",gap:4}}>
+              {v===null||v===undefined||v===""?(
+                <span style={{fontSize:24,fontWeight:900,color:C.td}}>—</span>
+              ):(
+                <>
+                  <span style={{fontSize:26,fontWeight:900,color:c,letterSpacing:-0.8,lineHeight:1.1}} className="num">
+                    {anim ? <AnimatedNum value={Number(v)} decimals={(""+v).includes(".")?1:0}/> : v}
+                  </span>
+                  <span style={{fontSize:12,fontWeight:700,color:C.ts}}>{u}</span>
+                </>
+              )}
+            </div>
+          </Card>
         ))}
       </div>
       {checkins.length>0&&<div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"16px"}}>
@@ -2346,22 +2917,37 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
   const [profileTab,setProfileTab]=useState(0);
   return(
     <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-      <div style={{position:"relative",height:200,flexShrink:0,overflow:"hidden"}}>
+      <div style={{position:"relative",height:220,flexShrink:0,overflow:"hidden"}}>
         <img src={PHOTOS.trainer_profile} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 30%"}}/>
-        <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(10,10,10,.3) 0%,rgba(10,10,10,.85) 100%)"}}/>
-        <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"16px 18px",display:"flex",alignItems:"flex-end",justifyContent:"space-between"}}>
-          <div>
-            <div style={{fontSize:22,fontWeight:900,color:C.tm,letterSpacing:-.8}}>{client?.full_name||"Клієнт"}</div>
-            <div style={{fontSize:13,color:"rgba(255,255,255,.55)",marginTop:2}}>{client?.username?`@${client.username}`:""}</div>
+        <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(10,10,10,0.2) 0%,rgba(10,10,10,0.5) 50%,rgba(10,10,10,0.95) 100%)"}}/>
+        <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"20px 18px",display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:12}}>
+          <div style={{flex:1,minWidth:0}}>
+            <SectionLabel accent style={{marginBottom:4,color:"rgba(200,245,58,0.85)"}}>МІЙ ПРОФІЛЬ</SectionLabel>
+            <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-1,lineHeight:1.1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{client?.full_name||"Клієнт"}</div>
+            {client?.username && <div style={{fontSize:13,color:"rgba(255,255,255,0.6)",marginTop:3,fontWeight:500}}>@{client.username}</div>}
           </div>
-          <Bdg v={planV[client?.plan]||"amber"}>{(client?.plan||"trial").toUpperCase()}</Bdg>
+          <div style={{
+            padding:"5px 12px",
+            borderRadius:R.full,
+            background:client?.plan==="vip"?"linear-gradient(135deg,#a855f7,#7e22ce)":client?.plan==="premium"?"linear-gradient(135deg,#4a9fdf,#2563eb)":client?.plan==="start"?"linear-gradient(135deg,#4ade80,#16a34a)":"linear-gradient(135deg,#e8a832,#ca8a04)",
+            color:"#fff",fontSize:11,fontWeight:900,letterSpacing:0.6,
+            boxShadow:SH.md,flexShrink:0,
+          }}>
+            {(client?.plan||"trial").toUpperCase()}
+          </div>
         </div>
       </div>
-      <div style={{flex:1,overflowY:"auto",padding:"14px 16px 20px",display:"flex",flexDirection:"column",gap:10}}>
-        <div style={{background:C.s1,borderRadius:14,border:`1px solid ${C.bc}`,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{fontSize:14,color:C.ts,fontWeight:600}}>Доступ</div>
-          <div style={{fontSize:14,color:C.amber,fontWeight:700}}>{(client?.status||"").toUpperCase()} · до {(client?.expires_at||"").slice(0,10)}</div>
-        </div>
+      <div style={{flex:1,overflowY:"auto",padding:"16px 16px 20px",display:"flex",flexDirection:"column",gap:SP[3]}}>
+        <Card variant="elevated" padding={"14px 16px"} style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div>
+            <SectionLabel style={{marginBottom:2}}>Доступ</SectionLabel>
+            <div style={{fontSize:14,color:C.tm,fontWeight:700}}>{(client?.status||"trial").toUpperCase()}</div>
+          </div>
+          <div style={{textAlign:"right"}}>
+            <SectionLabel style={{marginBottom:2}}>Діє до</SectionLabel>
+            <div style={{fontSize:14,color:C.amber,fontWeight:700}}>{(client?.expires_at||"").slice(0,10)}</div>
+          </div>
+        </Card>
         <div style={{display:"flex",gap:7}}>
           {["Дані","Відгуки","Сповіщення"].map((t,i)=>(
             <button key={t} onClick={()=>setProfileTab(i)}
@@ -2416,17 +3002,34 @@ const AdminDash = () => {
   if(!stats)return <Scr><div style={{padding:"50px 0",textAlign:"center",color:C.ts}}>Помилка завантаження</div></Scr>;
   return(
     <Scr>
-      <div style={{background:C.s1,borderRadius:18,border:`1px solid rgba(200,245,58,.2)`,padding:"18px",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",right:-30,top:-30,width:150,height:150,borderRadius:"50%",background:C.acc,opacity:.04}}/>
-        <div style={{fontSize:13,color:C.ts,textTransform:"uppercase",letterSpacing:.8,fontWeight:600}}>Виручка місяця</div>
-        <div style={{marginTop:6}}><span style={{fontSize:44,fontWeight:900,color:C.tm,letterSpacing:-2}}>{(stats.revenue_month||0).toLocaleString()}</span> <span style={{fontSize:18,color:C.ts}}>₴</span></div>
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-        {[["Активні",stats.active,C.acc],["Trial",stats.trial,C.amber],["Очікують",stats.pending,C.red],["Чекіни сьогодні",stats.checkins_today,C.tm]].map(([l,v,c])=>(
-          <div key={l} style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px"}}>
-            <div style={{fontSize:13,color:C.ts,fontWeight:600}}>{l}</div>
-            <div style={{fontSize:32,fontWeight:900,color:c,marginTop:4}}>{v||0}</div>
-          </div>
+      {/* Hero — viruchka misjacja */}
+      <Card variant="accent" padding={20} glow style={{position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",right:-40,top:-40,width:180,height:180,borderRadius:"50%",background:C.acc,opacity:0.06,filter:"blur(20px)"}}/>
+        <SectionLabel accent>Виручка місяця</SectionLabel>
+        <div style={{display:"flex",alignItems:"baseline",gap:8,marginTop:4}}>
+          <span style={{fontSize:48,fontWeight:900,color:C.tm,letterSpacing:-2,lineHeight:1}} className="num">
+            <AnimatedNum value={stats.revenue_month||0}/>
+          </span>
+          <span style={{fontSize:18,color:C.ts,fontWeight:700}}>₴</span>
+        </div>
+      </Card>
+
+      <div className="stg" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:SP[2]}}>
+        {[
+          ["Активні",     stats.active,           C.acc,   "💪"],
+          ["Trial",        stats.trial,            C.amber, "⏳"],
+          ["Очікують",     stats.pending,          C.red,   "🔔"],
+          ["Чекіни сьогодні", stats.checkins_today, C.tm,   "✓"],
+        ].map(([l,v,c,ic])=>(
+          <Card key={l} variant="elevated" padding={14}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+              <SectionLabel style={{marginBottom:0}}>{l}</SectionLabel>
+              <span style={{fontSize:14,opacity:0.6}}>{ic}</span>
+            </div>
+            <div style={{fontSize:30,fontWeight:900,color:c,letterSpacing:-1,lineHeight:1.1}} className="num">
+              <AnimatedNum value={v||0}/>
+            </div>
+          </Card>
         ))}
       </div>
       <div style={{fontSize:14,fontWeight:700,color:C.tm}}>Остання активність</div>
@@ -2457,22 +3060,49 @@ const AdminClients = ({onSelect}) => {
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="7.5" cy="7.5" r="4.5" stroke={C.td} strokeWidth="1.6"/><path d="M11 11l3.5 3.5" stroke={C.td} strokeWidth="1.6" strokeLinecap="round"/></svg>
         <input value={search} onChange={ev=>setSearch(ev.target.value)} placeholder="Пошук клієнта..." style={{background:"none",color:C.tm,fontSize:15,flex:1}}/>
       </div>
-      <div style={{display:"flex",gap:8,overflowX:"auto"}}>
-        {[["all","Всі"],["active","Активні"],["trial","Trial"],["pending_approval","Очікують"]].map(([v,l])=>(
-          <button key={v} onClick={()=>setFilter(v)} style={{padding:"8px 16px",borderRadius:20,border:`1px solid ${filter===v?C.acc:C.bc}`,background:filter===v?"rgba(200,245,58,.1)":C.s1,color:filter===v?C.acc:C.ts,fontSize:13,fontWeight:600,whiteSpace:"nowrap",flexShrink:0}}>{l}</button>
-        ))}
+      <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:2}}>
+        {[["all","Всі"],["active","Активні"],["trial","Trial"],["pending_approval","Очікують"]].map(([v,l])=>{
+          const active = filter===v;
+          return (
+          <button key={v} onClick={()=>{haptic("selection");setFilter(v);}}
+            style={{
+              padding:"8px 14px",borderRadius:R.full,
+              border:active?"none":`1px solid ${C.bc}`,
+              background:active?C.gradAcc:C.s1,
+              color:active?"#0a0a0a":C.ts,
+              fontSize:12,fontWeight:800,
+              whiteSpace:"nowrap",flexShrink:0,
+              boxShadow:active?SH.sm:"none",
+              transition:`all ${T.base} ${E.out}`,
+              letterSpacing:0.2,
+            }}>{l}</button>
+          );
+        })}
       </div>
-      <div style={{fontSize:14,color:C.ts}}>Знайдено: {filtered.length}</div>
-      {loading?<Spin/>:filtered.map(c=>(
-        <button key={c.user_id} onClick={()=>onSelect(c)} style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,width:"100%",textAlign:"left"}}>
-          <Ava name={c.full_name||"?"} size={44}/>
+      <div style={{fontSize:12,color:C.ts,fontWeight:700,letterSpacing:0.5,textTransform:"uppercase"}}>Знайдено: <span style={{color:C.tm}}>{filtered.length}</span></div>
+      {loading ? <Spin/> : filtered.length===0 ? (
+        <Empty icon="🔍" title="Нікого не знайдено" subtitle="Спробуй змінити фільтр або пошук"/>
+      ) : (
+      <div className="stg" style={{display:"flex",flexDirection:"column",gap:SP[2]}}>
+      {filtered.map(c=>(
+        <button key={c.user_id} onClick={()=>{haptic("light");onSelect(c);}}
+          style={{
+            background:C.s1,borderRadius:R.md,border:`1px solid ${C.bc}`,
+            padding:"14px 16px",display:"flex",alignItems:"center",gap:12,
+            width:"100%",textAlign:"left",
+            transition:`transform ${T.fast} ${E.out}`,
+            boxShadow:SH.inner,
+          }}>
+          <Ava name={c.full_name||"?"} size={46}/>
           <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:16,fontWeight:700,color:C.tm,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.full_name}</div>
-            <div style={{fontSize:13,color:C.ts,marginTop:3}}>{c.username?`@${c.username}`:""} · стрік {c.streak||0} днів</div>
+            <div style={{fontSize:15,fontWeight:800,color:C.tm,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",letterSpacing:-0.1}}>{c.full_name}</div>
+            <div style={{fontSize:12,color:C.ts,marginTop:3,fontWeight:500}}>{c.username?`@${c.username}`:`ID ${c.user_id}`} · 🔥 {c.streak||0} днів</div>
           </div>
           <Bdg v={planV[c.plan]||"green"}>{(c.plan||"").toUpperCase()}</Bdg>
         </button>
       ))}
+      </div>
+      )}
     </Scr>
   );
 };
@@ -3107,14 +3737,21 @@ const ExpiredScreen = ({client, plans, onSelectPlan}) => {
       <div style={{padding:"24px 18px 40px",display:"flex",flexDirection:"column",gap:18}}>
 
         {/* Header */}
-        <div style={{textAlign:"center",paddingTop:8}}>
-          <div style={{width:72,height:72,borderRadius:"50%",background:isTrialExpired?"rgba(232,168,50,.1)":"rgba(255,85,85,.1)",border:`2px solid ${isTrialExpired?C.amber:C.red}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:34,margin:"0 auto 14px"}}>
+        <div style={{textAlign:"center",paddingTop:12}}>
+          <div className="si" style={{
+            width:84,height:84,borderRadius:R.full,
+            background:isTrialExpired?"rgba(232,168,50,0.1)":"rgba(255,85,85,0.1)",
+            border:`2.5px solid ${isTrialExpired?C.amber:C.red}`,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            fontSize:38,margin:"0 auto 18px",
+            boxShadow:isTrialExpired?"0 0 30px rgba(232,168,50,0.25)":"0 0 30px rgba(255,85,85,0.25)",
+          }}>
             {isTrialExpired ? "⏳" : "🔒"}
           </div>
-          <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-1,marginBottom:8}}>
+          <H level={1} style={{textAlign:"center",marginBottom:10}}>
             {isTrialExpired ? "Пробний доступ завершено" : "Пакет закінчився"}
-          </div>
-          <div style={{fontSize:14,color:C.ts,lineHeight:1.6,maxWidth:340,margin:"0 auto"}}>
+          </H>
+          <div style={{fontSize:F.bodyLg.size,color:C.ts,lineHeight:1.6,maxWidth:340,margin:"0 auto"}}>
             {isTrialExpired
               ? "Щоб продовжити користуватись додатком — обери тариф нижче."
               : "Щоб відновити доступ до додатку — обери новий пакет."
