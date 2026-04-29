@@ -1592,18 +1592,33 @@ const Recipes = ({userId,clientData}) => {
         </div>
       )}
 
-      {!loading && recipes.map((r,i)=>(
-        <div key={i} onClick={()=>setExpanded(expanded===i?null:i)} style={{background:C.s1,borderRadius:14,border:`1px solid ${C.bc}`,padding:"14px 16px",cursor:"pointer"}}>
-          <div style={{fontSize:16,fontWeight:800,color:C.tm,marginBottom:6}}>{r.name}</div>
-          <div style={{display:"flex",gap:10,flexWrap:"wrap",fontSize:12,color:C.ts,marginBottom:expanded===i?10:0}}>
-            <span>🔥 {r.kcal} ккал</span>
-            <span>🥩 {r.protein_g}г</span>
-            <span>🍞 {r.carbs_g}г</span>
-            <span>🥑 {r.fat_g}г</span>
-            {r.time_min && <span>⏱ {r.time_min} хв</span>}
+      {!loading && recipes.map((r,i)=>{
+        const catEmoji = {breakfast:"🍳", lunch:"🍲", dinner:"🍽", snack:"🥗"}[category] || "🍴";
+        const isOpen = expanded===i;
+        return (
+        <div key={i} onClick={()=>setExpanded(isOpen?null:i)} style={{background:C.s1,borderRadius:14,border:`1px solid ${isOpen?"rgba(200,245,58,.3)":C.bc}`,padding:"14px 16px",cursor:"pointer",transition:"border-color .2s"}}>
+          <div style={{display:"flex",alignItems:"center",gap:12}}>
+            {/* Емоджі-картинка зліва */}
+            <div style={{width:56,height:56,borderRadius:12,background:"linear-gradient(135deg, rgba(200,245,58,.15), rgba(200,245,58,.05))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,flexShrink:0}}>{catEmoji}</div>
+
+            {/* Назва + макроси */}
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:15,fontWeight:800,color:C.tm,marginBottom:4,lineHeight:1.3}}>{r.name}</div>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap",fontSize:11,color:C.ts}}>
+                <span>🔥 {r.kcal} ккал</span>
+                <span>🥩 {r.protein_g}г</span>
+                <span>🍞 {r.carbs_g}г</span>
+                <span>🥑 {r.fat_g}г</span>
+                {r.time_min && <span>⏱ {r.time_min} хв</span>}
+              </div>
+            </div>
+
+            {/* Стрілка-індикатор */}
+            <div style={{flexShrink:0,color:isOpen?C.acc:C.ts,fontSize:18,fontWeight:700,transform:`rotate(${isOpen?90:0}deg)`,transition:"transform .25s ease, color .2s"}}>›</div>
           </div>
-          {expanded===i && (
-            <div style={{marginTop:8,paddingTop:10,borderTop:`1px solid ${C.bc}`}}>
+
+          {isOpen && (
+            <div style={{marginTop:12,paddingTop:12,borderTop:`1px solid ${C.bc}`}}>
               <div style={{fontSize:12,color:C.acc,fontWeight:700,marginBottom:6,textTransform:"uppercase",letterSpacing:.8}}>Інгредієнти</div>
               {(r.ingredients||[]).map((ing,j)=>(
                 <div key={j} style={{fontSize:13,color:C.ts,marginBottom:3,paddingLeft:8}}>• {ing}</div>
@@ -1615,7 +1630,7 @@ const Recipes = ({userId,clientData}) => {
             </div>
           )}
         </div>
-      ))}
+      );})}
     </Scr>
   );
 };
