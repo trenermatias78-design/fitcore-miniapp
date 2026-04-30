@@ -140,6 +140,25 @@ const G = () => (
       from{opacity:0;transform:translateX(-40px);filter:blur(8px);}
       to{opacity:1;transform:translateX(0);filter:blur(0);}
     }
+    @keyframes confettiFall{
+      0%{transform:translate3d(var(--tx,0),0,0) rotate(0deg);opacity:1;}
+      100%{transform:translate3d(calc(var(--tx,0) + var(--dx,40px)),100vh,0) rotate(var(--rot,720deg));opacity:0;}
+    }
+    @keyframes screenFlash{
+      0%{opacity:0;}
+      30%{opacity:1;}
+      100%{opacity:0;}
+    }
+    @keyframes heroPop{
+      0%{opacity:0;transform:scale(0.4) translateY(40px);}
+      40%{opacity:1;transform:scale(1.15) translateY(-10px);}
+      70%{transform:scale(0.95) translateY(0);}
+      100%{transform:scale(1);}
+    }
+    @keyframes ringPulse{
+      0%{transform:scale(0.8);opacity:1;}
+      100%{transform:scale(2.5);opacity:0;}
+    }
     @keyframes cinematicReveal{
       0%{opacity:0;transform:translateY(20px) scale(0.95);filter:blur(12px);}
       to{opacity:1;transform:translateY(0) scale(1);filter:blur(0);}
@@ -1249,6 +1268,92 @@ const ExModal = ({ex, onClose}) => {
 
 
 
+
+// ═══════════════════════════════════════════════════════════════
+// HERO MOMENT — повноекранне святкування з конфетті + flash
+// ═══════════════════════════════════════════════════════════════
+const HeroMoment = ({title, subtitle, icon, color=C.acc, onClose, duration=2400}) => {
+  // Generate confetti pieces
+  const confetti = useMemo(() => {
+    const colors = [C.acc, "#a8d420", "#e8a832", "#4a9fdf", "#ff5555", "#a855f7"];
+    return Array.from({length:50}).map((_,i) => ({
+      id:i,
+      left: Math.random() * 100,
+      tx: (Math.random() - 0.5) * 200,
+      dx: (Math.random() - 0.5) * 100,
+      rot: 360 + Math.random() * 720,
+      color: colors[i % colors.length],
+      size: 6 + Math.random() * 6,
+      delay: Math.random() * 200,
+      duration: 1500 + Math.random() * 1500,
+    }));
+  }, []);
+
+  useEffect(() => {
+    haptic("success");
+    const t = setTimeout(() => onClose && onClose(), duration);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <div style={{
+      position:"fixed", inset:0, zIndex:9999,
+      display:"flex", alignItems:"center", justifyContent:"center",
+      pointerEvents:"none",
+    }}>
+      {/* Screen flash */}
+      <div style={{
+        position:"absolute", inset:0,
+        background:`radial-gradient(circle at center, ${color}40 0%, transparent 60%)`,
+        animation:"screenFlash 700ms ease-out forwards",
+      }}/>
+
+      {/* Confetti pieces */}
+      {confetti.map(p => (
+        <div key={p.id} style={{
+          position:"absolute", top:"40%",
+          left:`${p.left}%`,
+          width:p.size, height:p.size*1.6,
+          background:p.color,
+          borderRadius:2,
+          "--tx": `${p.tx}px`,
+          "--dx": `${p.dx}px`,
+          "--rot": `${p.rot}deg`,
+          animation:`confettiFall ${p.duration}ms ease-out ${p.delay}ms forwards`,
+        }}/>
+      ))}
+
+      {/* Hero icon + text */}
+      <div style={{
+        position:"relative", zIndex:2, textAlign:"center",
+        animation:"heroPop 700ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
+      }}>
+        <div style={{
+          width:140, height:140, borderRadius:"50%",
+          background:`linear-gradient(135deg, ${color}, ${color}dd)`,
+          display:"inline-flex", alignItems:"center", justifyContent:"center",
+          fontSize:64,
+          boxShadow:`0 20px 60px ${color}80, 0 0 0 0 ${color}`,
+          marginBottom:20,
+          position:"relative",
+        }}>
+          {icon}
+          {/* Expanding rings */}
+          {[0,1,2].map(i => (
+            <div key={i} style={{
+              position:"absolute", inset:-2,
+              borderRadius:"50%",
+              border:`2px solid ${color}`,
+              animation:`ringPulse 1.6s ease-out ${i*200}ms infinite`,
+            }}/>
+          ))}
+        </div>
+        <div style={{fontSize:30,fontWeight:900,color:C.tm,letterSpacing:-1,marginBottom:6,textShadow:"0 4px 20px rgba(0,0,0,0.6)"}}>{title}</div>
+        {subtitle && <div style={{fontSize:15,color:"rgba(255,255,255,0.85)",fontWeight:600}}>{subtitle}</div>}
+      </div>
+    </div>
+  );
+};
 
 // ═══════════════════════════════════════════════════════════════
 // LIVING BACKGROUND — повільний mesh-gradient що рухається
@@ -2631,12 +2736,32 @@ const Nutrition = ({userId}) => {
 const Checkin = ({userId,onDone}) => {
   const [w,setW]=useState("");const [e,setE]=useState(null);const [s,setS]=useState("");const [c,setC]=useState("");
   const [loading,setLoad]=useState(false);const [result,setResult]=useState(null);
+  const [showHero,setShowHero] = useState(false);
   const submit=async()=>{
     if(!w||!e)return;setLoad(true);
-    try{const r=await apiPost(`/api/client/${userId}/checkin`,{weight_kg:parseFloat(w),energy_level:e,sleep_hours:s?parseFloat(s):null,comment:c||null});setResult(r);}
+    try{
+      const r=await apiPost(`/api/client/${userId}/checkin`,{weight_kg:parseFloat(w),energy_level:e,sleep_hours:s?parseFloat(s):null,comment:c||null});
+      setResult(r);
+      setShowHero(true);
+    }
     catch(err){alert("Помилка: "+err.message);}
     setLoad(false);
   };
+  if(showHero && result) return (
+    <>
+      <HeroMoment
+        title={`+1 ДЕНЬ СТРІКУ!`}
+        subtitle={`${result.streak} ${result.streak === 1 ? "день" : result.streak < 5 ? "дні" : "днів"} підряд 🔥`}
+        icon="✓"
+        color={C.acc}
+        duration={2400}
+        onClose={() => setShowHero(false)}
+      />
+      <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 24px",opacity:0.3}}>
+        {/* Background placeholder */}
+      </div>
+    </>
+  );
   if(result)return(
     <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 24px"}}>
       <div style={{width:72,height:72,borderRadius:"50%",background:"rgba(200,245,58,.1)",border:`2px solid ${C.acc}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -3027,29 +3152,59 @@ const Progress = ({userId}) => {
   const earned=(data.badges||"").split(",").filter(Boolean);
   return(
     <Scr>
-      <div className="stg" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:SP[2]}}>
-        {[
-          ["Старт", data.start_weight, "кг", C.ts, false],
-          ["Зараз", data.last_weight, "кг", C.acc, true],
-          ["Прогрес", data.start_weight&&data.last_weight?Math.round((data.last_weight-data.start_weight)*10)/10:null, "кг", C.acc, true],
-          ["Стрік", data.streak||0, "днів", C.amber, true],
-        ].map(([l,v,u,c,anim])=>(
-          <Card key={l} variant="elevated" padding={14}>
-            <SectionLabel style={{marginBottom:6}}>{l}</SectionLabel>
-            <div style={{display:"flex",alignItems:"baseline",gap:4}}>
-              {v===null||v===undefined||v===""?(
-                <span style={{fontSize:24,fontWeight:900,color:C.td}}>—</span>
-              ):(
-                <>
-                  <span style={{fontSize:26,fontWeight:900,color:c,letterSpacing:-0.8,lineHeight:1.1}} className="num">
-                    {anim ? <AnimatedNum value={Number(v)} decimals={(""+v).includes(".")?1:0}/> : v}
-                  </span>
-                  <span style={{fontSize:12,fontWeight:700,color:C.ts}}>{u}</span>
-                </>
-              )}
+      {/* BENTO: hero — стрік на повну ширину з вогником */}
+      <Card variant="accent" glow padding={18} style={{position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",right:-10,top:-20,fontSize:120,opacity:0.08,filter:"blur(2px)"}}>🔥</div>
+        <SectionLabel accent style={{marginBottom:8}}>Поточний стрік</SectionLabel>
+        <div style={{display:"flex",alignItems:"baseline",gap:8,position:"relative",zIndex:1}}>
+          <span style={{fontSize:56,fontWeight:900,color:C.acc,letterSpacing:-2.4,lineHeight:1}} className="num">
+            <AnimatedNum value={data.streak||0}/>
+          </span>
+          <span style={{fontSize:18,color:C.ts,fontWeight:800}}>{data.streak===1?"день":data.streak<5?"дні":"днів"}</span>
+        </div>
+        <div style={{fontSize:12,color:C.ts,marginTop:6,fontWeight:600}}>тренуєшся регулярно — продовжуй!</div>
+      </Card>
+
+      {/* Bento row: Старт | Зараз | Прогрес */}
+      <div className="stg" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gridAutoRows:"minmax(80px,auto)",gap:SP[2]}}>
+        {/* Старт */}
+        <Card variant="elevated" padding={14}>
+          <SectionLabel>Старт</SectionLabel>
+          <div style={{display:"flex",alignItems:"baseline",gap:3,marginTop:4}}>
+            {data.start_weight ? (
+              <><span style={{fontSize:24,fontWeight:900,color:C.ts,letterSpacing:-0.6,lineHeight:1.1}} className="num">{data.start_weight}</span>
+              <span style={{fontSize:11,color:C.ts,fontWeight:700}}>кг</span></>
+            ) : <span style={{fontSize:24,fontWeight:900,color:C.td}}>—</span>}
+          </div>
+        </Card>
+
+        {/* Зараз */}
+        <Card variant="elevated" padding={14}>
+          <SectionLabel>Зараз</SectionLabel>
+          <div style={{display:"flex",alignItems:"baseline",gap:3,marginTop:4}}>
+            {data.last_weight ? (
+              <><span style={{fontSize:24,fontWeight:900,color:C.acc,letterSpacing:-0.6,lineHeight:1.1}} className="num">
+                <AnimatedNum value={Number(data.last_weight)} decimals={(""+data.last_weight).includes(".")?1:0}/>
+              </span><span style={{fontSize:11,color:C.ts,fontWeight:700}}>кг</span></>
+            ) : <span style={{fontSize:24,fontWeight:900,color:C.td}}>—</span>}
+          </div>
+        </Card>
+
+        {/* Прогрес — на 2 колонки, з градієнтом */}
+        <Card variant={data.start_weight&&data.last_weight?"accent":"elevated"} padding={14} style={{gridColumn:"span 2"}}>
+          <SectionLabel accent={!!(data.start_weight&&data.last_weight)}>Прогрес</SectionLabel>
+          {data.start_weight && data.last_weight ? (
+            <div style={{display:"flex",alignItems:"baseline",gap:6,marginTop:4}}>
+              <span style={{fontSize:30,fontWeight:900,color:Math.round((data.last_weight-data.start_weight)*10)/10<0?C.acc:C.amber,letterSpacing:-1,lineHeight:1}} className="num">
+                {Math.round((data.last_weight-data.start_weight)*10)/10>0?"+":""}<AnimatedNum value={Math.round((data.last_weight-data.start_weight)*10)/10} decimals={1}/>
+              </span>
+              <span style={{fontSize:14,color:C.ts,fontWeight:700}}>кг</span>
+              <span style={{fontSize:13,color:C.ts,marginLeft:"auto"}}>{Math.round((data.last_weight-data.start_weight)*10)/10<0?"💪 рухаєшся вниз":"↗ рухаєшся вгору"}</span>
             </div>
-          </Card>
-        ))}
+          ) : (
+            <div style={{fontSize:24,fontWeight:900,color:C.td,marginTop:4}}>—</div>
+          )}
+        </Card>
       </div>
       {checkins.length>0&&<div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"16px"}}>
         <div style={{fontSize:14,fontWeight:700,color:C.tm,marginBottom:12}}>Динаміка ваги</div>
@@ -3136,14 +3291,72 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
             </button>
           ))}
         </div>
-        {profileTab===0&&questionnaire&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-          {[["Вік",`${questionnaire.age||"—"} р.`],["Стать",questionnaire.gender==="female"?"Жінка":"Чоловік"],["Вага",`${questionnaire.weight_kg||"—"} кг`],["Ціль",`${questionnaire.target_weight||"—"} кг`],["Обладнання",questionnaire.equipment==="gym"?"Зал":questionnaire.equipment||"—"],["Трен./тиж",`${questionnaire.workouts_pw||"—"}×`]].map(([l,v])=>(
-            <div key={l} style={{background:C.s1,borderRadius:14,border:`1px solid ${C.bc}`,padding:"12px 14px"}}>
-              <div style={{fontSize:12,color:C.ts,fontWeight:600}}>{l}</div>
-              <div style={{fontSize:18,fontWeight:800,color:C.tm,marginTop:3}}>{v}</div>
-            </div>
-          ))}
-        </div>}
+        {profileTab===0&&questionnaire&&(
+          <div className="stg" style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gridAutoRows:"minmax(80px,auto)",gap:SP[2]}}>
+            {/* BIG: Цільова вага — 6 cols × 2 rows — hero card */}
+            <Card variant="accent" glow padding={16} style={{gridColumn:"span 6",gridRow:"span 1",display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",right:-20,top:-20,fontSize:90,opacity:0.08}}>🎯</div>
+              <div style={{position:"relative",zIndex:1}}>
+                <SectionLabel accent>Ціль</SectionLabel>
+                <div style={{display:"flex",alignItems:"baseline",gap:8,marginTop:4}}>
+                  <span style={{fontSize:36,fontWeight:900,color:C.tm,letterSpacing:-1.4,lineHeight:1}} className="num">
+                    <AnimatedNum value={Number(questionnaire.target_weight)||0} decimals={(""+questionnaire.target_weight).includes(".")?1:0}/>
+                  </span>
+                  <span style={{fontSize:14,color:C.ts,fontWeight:700}}>кг</span>
+                </div>
+                {questionnaire.weight_kg && questionnaire.target_weight && (
+                  <div style={{fontSize:12,color:C.ts,marginTop:4,fontWeight:600}}>
+                    від {questionnaire.weight_kg} кг
+                    <span style={{color:Number(questionnaire.target_weight)<Number(questionnaire.weight_kg)?C.acc:C.amber,marginLeft:6}}>
+                      ({Number(questionnaire.target_weight)>Number(questionnaire.weight_kg)?"+":""}{Math.round((Number(questionnaire.target_weight)-Number(questionnaire.weight_kg))*10)/10})
+                    </span>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* MEDIUM: Вік — 2 cols */}
+            <Card variant="elevated" padding={14} style={{gridColumn:"span 2"}}>
+              <SectionLabel>Вік</SectionLabel>
+              <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-0.6,lineHeight:1.1,marginTop:4}} className="num">{questionnaire.age||"—"}</div>
+              <div style={{fontSize:11,color:C.ts,fontWeight:600,marginTop:1}}>років</div>
+            </Card>
+
+            {/* MEDIUM: Стать — 2 cols */}
+            <Card variant="elevated" padding={14} style={{gridColumn:"span 2"}}>
+              <SectionLabel>Стать</SectionLabel>
+              <div style={{fontSize:18,fontWeight:800,color:C.tm,marginTop:6,letterSpacing:-0.3}}>
+                {questionnaire.gender==="female"?"♀ Жінка":"♂ Чоловік"}
+              </div>
+            </Card>
+
+            {/* MEDIUM: Вага — 2 cols */}
+            <Card variant="elevated" padding={14} style={{gridColumn:"span 2"}}>
+              <SectionLabel>Вага</SectionLabel>
+              <div style={{display:"flex",alignItems:"baseline",gap:3,marginTop:4}}>
+                <span style={{fontSize:22,fontWeight:900,color:C.acc,letterSpacing:-0.6,lineHeight:1}} className="num">{questionnaire.weight_kg||"—"}</span>
+                <span style={{fontSize:11,color:C.ts,fontWeight:700}}>кг</span>
+              </div>
+            </Card>
+
+            {/* WIDE: Обладнання — 4 cols */}
+            <Card variant="elevated" padding={14} style={{gridColumn:"span 4"}}>
+              <SectionLabel>Обладнання</SectionLabel>
+              <div style={{fontSize:15,fontWeight:800,color:C.tm,marginTop:4,letterSpacing:-0.2}}>
+                {{"gym":"🏋 Тренажерний зал","home_dumbs":"🏠 Гантелі вдома","home_no_eq":"🛋 Без обладнання","outdoor":"🌳 Вулиця"}[questionnaire.equipment]||questionnaire.equipment||"—"}
+              </div>
+            </Card>
+
+            {/* SMALL: Тренувань на тиждень — 2 cols */}
+            <Card variant="elevated" padding={14} style={{gridColumn:"span 2",display:"flex",flexDirection:"column",alignItems:"flex-start"}}>
+              <SectionLabel>На тижд.</SectionLabel>
+              <div style={{display:"flex",alignItems:"baseline",gap:2,marginTop:4}}>
+                <span style={{fontSize:24,fontWeight:900,color:C.amber,letterSpacing:-0.6,lineHeight:1}} className="num">{questionnaire.workouts_pw||"—"}</span>
+                <span style={{fontSize:14,color:C.ts,fontWeight:700}}>×</span>
+              </div>
+            </Card>
+          </div>
+        )}
         {profileTab===1&&<ReviewsScreen userId={userId}/>}
         {profileTab===2&&<NotificationsScreen userId={userId}/>}
         {client?.status==="trial"&&<div className="pu" onClick={onBuyPlan} style={{background:C.acc,borderRadius:16,padding:"16px 20px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
@@ -4228,14 +4441,17 @@ export default function FitCoreApp() {
   return(
     <>
       <G/>
-      <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column"}}>
+      <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",position:"relative",overflow:"hidden"}}>
+        {/* Глобальний living background — за всім додатком */}
+        <LivingBackground intensity={0.7}/>
+        <FloatingParticles count={10}/>
         {showTopNav&&(
           <TNav title={topTitle}
             onBack={selClient?()=>setSelClient(null):checkinMode?()=>setCheckin(false):isAdminMode?()=>setScreen("client"):undefined}
             rightEl={isAdminMode&&adminTab==="payments"&&!selClient&&<div style={{fontSize:12,background:"rgba(232,168,50,.1)",color:C.amber,border:"1px solid rgba(232,168,50,.3)",borderRadius:20,padding:"4px 12px",fontWeight:700}}>оплати</div>}
           />
         )}
-        <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>{renderContent()}</div>
+        <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column",position:"relative",zIndex:2}}>{renderContent()}</div>
         {showNav&&<BNav active={isAdminMode?adminTab:clientTab} onChange={id=>{if(isAdminMode){setAdminTab(id);setSelClient(null);}else setClientTab(id);}} isAdmin={isAdminMode}/>}
       </div>
     </>
