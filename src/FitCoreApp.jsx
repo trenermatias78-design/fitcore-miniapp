@@ -508,7 +508,7 @@ const TNav = ({title,onBack,rightEl}) => (
 const BNav = ({active,onChange,isAdmin}) => {
   const tabs = isAdmin
     ? [{id:"dashboard",l:"Огляд"},{id:"clients",l:"Клієнти"},{id:"chat",l:"Чат"},{id:"payments",l:"Оплати"},{id:"settings",l:"Налашт."}]
-    : [{id:"plan",l:"План"},{id:"nutrition",l:"Харч."},{id:"aichat",l:"Матіас"},{id:"more",l:"Ще"},{id:"profile",l:"Профіль"}];
+    : [{id:"plan",l:"План"},{id:"nutrition",l:"Харч."},{id:"aichat",l:"Матіас"},{id:"ranking",l:"Топ"},{id:"more",l:"Ще"},{id:"profile",l:"Профіль"}];
   const icons = {
     aichat: c=><><circle cx="9" cy="9" r="6.5" stroke={c} strokeWidth="1.8" fill="none"/><circle cx="6.5" cy="8.5" r="1" fill={c}/><circle cx="11.5" cy="8.5" r="1" fill={c}/><path d="M6 11.5c.8 1 1.9 1.5 3 1.5s2.2-.5 3-1.5" stroke={c} strokeWidth="1.5" strokeLinecap="round" fill="none"/></>,
     more: c=><><circle cx="4" cy="9" r="1.5" fill={c}/><circle cx="9" cy="9" r="1.5" fill={c}/><circle cx="14" cy="9" r="1.5" fill={c}/></>,
@@ -523,6 +523,7 @@ const BNav = ({active,onChange,isAdmin}) => {
     broadcast: c=><path d="M2 9l13-6-5 6 5 6-13-6z" fill={c}/>,
     settings: c=><><circle cx="9" cy="9" r="3" stroke={c} strokeWidth="1.8" fill="none"/><path d="M9 2v2M9 14v2M2 9h2M14 9h2" stroke={c} strokeWidth="1.8" strokeLinecap="round"/></>,
     menu: c=><><rect x="2" y="4" width="14" height="1.8" rx=".9" fill={c}/><rect x="2" y="8.1" width="10" height="1.8" rx=".9" fill={c}/><rect x="2" y="12.2" width="12" height="1.8" rx=".9" fill={c}/></>,
+    ranking: c=><><path d="M3 16h2v-5H3v5zm5 0h2V8H8v8zm5 0h2v-3h-2v3zM2 4l3 2 4-4 4 4 3-2v3H2V4z" stroke={c} strokeWidth="1.4" strokeLinejoin="round" fill="none"/></>,
   };
   return (
     <div style={{
@@ -550,7 +551,7 @@ const BNav = ({active,onChange,isAdmin}) => {
               boxShadow:isAct?"0 0 8px rgba(200,245,58,0.5)":"none",
             }}/>
             <svg width="22" height="22" viewBox="0 0 18 18" fill="none" style={{transition:`transform ${T.base} ${E.out}`,transform:isAct?"scale(1.1)":"scale(1)"}}>{icons[t.id]?icons[t.id](color):null}</svg>
-            <span style={{fontSize:10,fontWeight:isAct?800:600,color,letterSpacing:0.2,transition:`all ${T.fast} ${E.out}`}}>{t.l}</span>
+            <span style={{fontSize:9,fontWeight:isAct?800:600,color,letterSpacing:0.1,transition:`all ${T.fast} ${E.out}`}}>{t.l}</span>
           </button>
         );
       })}
@@ -2588,11 +2589,589 @@ const MoreScreen = ({clientData, onNav}) => {
 };
 
 // ═══ TRAINING PLAN ═══
+// ═══════════════════════════════════════════════════════════════
+// LEADERBOARD — рейтинг клієнтів за кількістю босів
+// ═══════════════════════════════════════════════════════════════
+const Leaderboard = ({userId}) => {
+  const [period, setPeriod] = useState("all");
+  const [data, setData] = useState({leaderboard: [], my_position: null});
+  const [bossProgress, setBossProgress] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    Promise.all([
+      apiGet(`/api/leaderboard?period=${period}`),
+      apiGet(`/api/client/${userId}/boss-progress`),
+    ]).then(([lb, bp]) => {
+      if (cancelled) return;
+      setData(lb || {leaderboard: [], my_position: null});
+      setBossProgress(bp || null);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+    return () => { cancelled = true; };
+  }, [userId, period]);
+
+  if (loading) return <Spin/>;
+
+  const lb = data.leaderboard || [];
+  const myPos = data.my_position;
+  const me = lb.find(r => r.user_id === userId);
+  const bp = bossProgress?.current_week || {};
+
+  const medal = (rank) => {
+    if (rank === 1) return "🥇";
+    if (rank === 2) return "🥈";
+    if (rank === 3) return "🥉";
+    return `${rank}.`;
+  };
+
+  return (
+    <Scr>
+      <div>
+        <SectionLabel accent>FitCore community</SectionLabel>
+        <H level={1}>Рейтинг 🏆</H>
+        <div style={{fontSize:F.body.size,color:C.ts,lineHeight:1.55,marginTop:6}}>
+          Хто більше виконує "босів тижня" — той вище у списку
+        </div>
+      </div>
+
+      {/* Period switcher */}
+      <div style={{display:"flex",gap:6,background:C.s2,borderRadius:R.full,padding:4}}>
+        {[["all","Весь час"],["month","Місяць"],["week","Тиждень"]].map(([v,l])=>{
+          const active = period===v;
+          return (
+            <button key={v} onClick={()=>{haptic("selection");setPeriod(v);}} style={{
+              flex:1,
+              background:active?C.gradAcc:"transparent",
+              color:active?"#0a0a0a":C.ts,
+              border:"none",borderRadius:R.full,
+              padding:"8px 0",fontSize:12,fontWeight:800,
+              cursor:"pointer",
+              transition:`all ${T.fast} ${E.out}`,
+            }}>{l}</button>
+          );
+        })}
+      </div>
+
+      {/* Boss progress this week */}
+      {bp && (
+        <Card variant="accent" glow padding={16} style={{position:"relative",overflow:"hidden"}}>
+          <div style={{position:"absolute",right:-15,top:-15,fontSize:80,opacity:0.1}}>👹</div>
+          <div style={{position:"relative",zIndex:1}}>
+            <SectionLabel accent>Бос цього тижня</SectionLabel>
+            <div style={{display:"flex",alignItems:"baseline",gap:6,marginTop:4,marginBottom:14}}>
+              <span style={{fontSize:14,color:C.tm,fontWeight:700}}>
+                {bp.all_passed ? "✅ Пройдено!" : "Виконай 3 умови:"}
+              </span>
+            </div>
+
+            {/* 3 critereon bars */}
+            {[
+              {label:"Тренування", done:bp.workouts_done, req:bp.workouts_required, passed:bp.workouts_passed, ic:"💪"},
+              {label:"Чекіни",      done:bp.checkins_done, req:bp.checkins_required, passed:bp.checkins_passed, ic:"📝"},
+              {label:"Активність",  done:bp.days_active, req:bp.days_required, passed:bp.activity_passed, ic:"🔥"},
+            ].map((c,i) => (
+              <div key={i} style={{display:"flex",alignItems:"center",gap:10,marginBottom:i<2?10:0}}>
+                <div style={{fontSize:18,flexShrink:0,opacity:c.passed?1:0.5}}>{c.ic}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:11,fontWeight:700,marginBottom:4}}>
+                    <span style={{color:c.passed?C.acc:C.ts,letterSpacing:0.3}}>{c.label}</span>
+                    <span style={{color:c.passed?C.acc:C.tm}} className="num">{c.done}/{c.req}</span>
+                  </div>
+                  <div style={{height:5,background:"rgba(0,0,0,0.4)",borderRadius:R.full,overflow:"hidden"}}>
+                    <div style={{
+                      height:"100%",
+                      width:`${Math.min(100,(c.done/c.req)*100)}%`,
+                      background: c.passed ? C.gradAcc : "rgba(200,245,58,0.3)",
+                      borderRadius:R.full,
+                      transition:`width ${T.slow} ${E.out}`,
+                      boxShadow: c.passed ? "0 0 8px rgba(200,245,58,0.5)" : "none",
+                    }}/>
+                  </div>
+                </div>
+                <div style={{fontSize:14,fontWeight:900,color:c.passed?C.acc:C.td,flexShrink:0}}>{c.passed?"✓":""}</div>
+              </div>
+            ))}
+
+            {bossProgress?.total_bosses_passed > 0 && (
+              <div style={{marginTop:14,paddingTop:12,borderTop:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div style={{fontSize:12,color:"rgba(255,255,255,0.6)",fontWeight:600}}>Всього пройдено</div>
+                <div style={{fontSize:18,fontWeight:900,color:C.tm,letterSpacing:-0.4}} className="num">
+                  <AnimatedNum value={bossProgress.total_bosses_passed||0}/> 🏆
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {/* Leaderboard list */}
+      {lb.length === 0 ? (
+        <Empty icon="🏆" title="Поки порожньо" subtitle="Будь першим хто виконає 'боса тижня'!"/>
+      ) : (
+        <div className="stg" style={{display:"flex",flexDirection:"column",gap:SP[2]}}>
+          {lb.slice(0,50).map((r, idx) => {
+            const rank = idx + 1;
+            const isMe = r.user_id === userId;
+            return (
+              <Card key={r.user_id} variant={isMe?"accent":"elevated"} glow={isMe} padding={"10px 14px"} style={{
+                display:"flex",alignItems:"center",gap:12,
+                position:"relative",
+              }}>
+                <div style={{
+                  width:32,textAlign:"center",
+                  fontSize:rank<=3?20:14,fontWeight:900,
+                  color:rank===1?"#FFD700":rank===2?"#C0C0C0":rank===3?"#CD7F32":C.ts,
+                  flexShrink:0,
+                }}>{medal(rank)}</div>
+                <Ava name={r.full_name||"?"} size={36}/>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:14,fontWeight:isMe?900:700,color:C.tm,letterSpacing:-0.1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+                    {r.full_name || `User ${r.user_id}`}
+                    {isMe && <span style={{fontSize:10,marginLeft:6,color:C.acc,fontWeight:800,background:"rgba(0,0,0,0.3)",padding:"2px 6px",borderRadius:R.sm,letterSpacing:0.4}}>ТИ</span>}
+                  </div>
+                  <div style={{fontSize:11,color:C.ts,fontWeight:600,display:"flex",gap:8,marginTop:2}}>
+                    {r.streak > 0 && <span>🔥 {r.streak}</span>}
+                    <span style={{textTransform:"uppercase",letterSpacing:0.4}}>{r.plan}</span>
+                  </div>
+                </div>
+                <div style={{textAlign:"right",flexShrink:0}}>
+                  <div style={{fontSize:18,fontWeight:900,color:C.acc,letterSpacing:-0.4,lineHeight:1}} className="num">
+                    {r.bosses_count || 0}
+                  </div>
+                  <div style={{fontSize:9,color:C.ts,fontWeight:700,letterSpacing:0.4,textTransform:"uppercase"}}>🏆</div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* My position if not in top 50 */}
+      {myPos && myPos > 50 && me && (
+        <Card variant="accent" glow padding={"10px 14px"} style={{display:"flex",alignItems:"center",gap:12,marginTop:8}}>
+          <div style={{width:32,textAlign:"center",fontSize:14,fontWeight:900,color:C.ts}}>{myPos}.</div>
+          <Ava name={me.full_name||"?"} size={36}/>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14,fontWeight:900,color:C.tm,letterSpacing:-0.1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+              {me.full_name} <span style={{fontSize:10,marginLeft:6,color:C.acc,fontWeight:800,background:"rgba(0,0,0,0.3)",padding:"2px 6px",borderRadius:R.sm}}>ТИ</span>
+            </div>
+            <div style={{fontSize:11,color:C.ts,fontWeight:600,marginTop:2}}>
+              {me.bosses_count || 0} 🏆 · до топ-50: ще декілька босів
+            </div>
+          </div>
+        </Card>
+      )}
+    </Scr>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// PROGRESSION SUGGESTION — AI-рекомендація на новий тиждень
+// ═══════════════════════════════════════════════════════════════
+const ProgressionSuggestion = ({userId, onUpdate}) => {
+  const [sug, setSug] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [responding, setResponding] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiGet(`/api/client/${userId}/progression-suggestion`).then(r => {
+      if (cancelled) return;
+      setSug(r?.suggestion || null);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+    return () => { cancelled = true; };
+  }, [userId]);
+
+  const respond = async (action) => {
+    if (!sug) return;
+    setResponding(true);
+    try {
+      await apiPost(`/api/client/${userId}/progression-suggestion/${sug.id}/respond`, {action});
+      haptic(action === "accept" ? "success" : "light");
+      setSug(null);
+      onUpdate && onUpdate();
+    } catch (e) {
+      alert("Помилка: " + e.message);
+      setResponding(false);
+    }
+  };
+
+  if (loading || !sug) return null;
+
+  let recs = [];
+  try { recs = JSON.parse(sug.recommendations || "[]"); } catch {}
+
+  return (
+    <Card variant="accent" glow padding={16} style={{position:"relative",overflow:"hidden",marginBottom:SP[3]}}>
+      <div style={{position:"absolute",right:-15,top:-15,fontSize:90,opacity:0.08}}>🎯</div>
+      <div style={{position:"relative",zIndex:1}}>
+        <SectionLabel accent>AI-рекомендація · тиждень {sug.week_number}</SectionLabel>
+        <div style={{fontSize:14,color:C.tm,fontWeight:700,lineHeight:1.5,marginTop:6,marginBottom:12}}>
+          {sug.summary}
+        </div>
+        {recs.length > 0 && (
+          <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
+            {recs.slice(0,3).map((r,i) => (
+              <div key={i} style={{padding:"10px 12px",background:"rgba(0,0,0,0.25)",borderRadius:R.sm,fontSize:13,color:C.tm,lineHeight:1.5}}>
+                <div style={{fontWeight:800,color:C.acc,marginBottom:2,letterSpacing:-0.1}}>{r.exercise}</div>
+                <div style={{fontSize:12,color:"rgba(255,255,255,0.85)"}}>
+                  <b>{r.action}</b> — {r.reason}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div style={{display:"flex",gap:8}}>
+          <Btn variant="primary" size="sm" onClick={()=>respond("accept")} loading={responding} hapticKind="success">
+            ✓ Прийняти
+          </Btn>
+          <Btn variant="ghost" size="sm" onClick={()=>respond("decline")} disabled={responding} hapticKind="light">
+            Залишити як є
+          </Btn>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// WORKOUT SCREEN — тренувальний режим (записати ваги, таймер, прогрес)
+// ═══════════════════════════════════════════════════════════════
+
+const WorkoutScreen = ({userId, day, weekNumber, onClose}) => {
+  const [sessionId, setSessionId] = useState(null);
+  const [lastWeights, setLastWeights] = useState({});
+  const [logged, setLogged] = useState({});  // { exercise_name: {weight, sets_done} }
+  const [exercises, setExercises] = useState([]);   // local state per ex
+  const [loading, setLoading] = useState(true);
+  const [finishing, setFinishing] = useState(false);
+  const [showFinish, setShowFinish] = useState(false);
+
+  // Timer state
+  const [timerSeconds, setTimerSeconds] = useState(0);
+  const [timerActive, setTimerActive] = useState(false);
+  const [timerPreset, setTimerPreset] = useState(90);
+  const timerRef = useRef(null);
+
+  // Load lastWeights and start session
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [lw, tp, ss] = await Promise.all([
+          apiGet(`/api/client/${userId}/workout/last-weights`).catch(()=>({last_weights:{}})),
+          apiGet(`/api/client/${userId}/workout/today-progress`).catch(()=>({logged:[]})),
+          apiPost(`/api/client/${userId}/workout/start`, {
+            day_label: day?.day || "",
+            week_number: weekNumber || 1,
+            exercises_total: (day?.exercises||[]).length,
+          }).catch(()=>null),
+        ]);
+        if (cancelled) return;
+        setLastWeights(lw?.last_weights || {});
+        const lm = {};
+        (tp?.logged || []).forEach(l => {
+          lm[l.exercise_name] = {
+            weight_kg: l.weight_kg,
+            sets_done: l.sets_done,
+            sets_planned: l.sets_planned,
+          };
+        });
+        setLogged(lm);
+        setSessionId(ss?.session_id || null);
+        // Initialize exercises with last weight as default
+        const exs = (day?.exercises || []).map(ex => {
+          const prev = (lw?.last_weights || {})[ex.name];
+          const already = lm[ex.name];
+          return {
+            ...ex,
+            currentWeight: already?.weight_kg ?? prev?.weight_kg ?? 0,
+            setsDone: already?.sets_done || 0,
+            setsPlanned: parseInt(ex.sets) || 4,
+            skipped: false,
+            saved: !!already,
+          };
+        });
+        setExercises(exs);
+        setLoading(false);
+      } catch (e) {
+        console.error("Workout init:", e);
+        setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line
+  }, [userId, day?.day, weekNumber]);
+
+  // Timer countdown
+  useEffect(() => {
+    if (timerActive && timerSeconds > 0) {
+      timerRef.current = setTimeout(() => {
+        setTimerSeconds(s => {
+          if (s <= 1) {
+            setTimerActive(false);
+            haptic("warning");
+            try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred("warning"); } catch {}
+            return 0;
+          }
+          return s - 1;
+        });
+      }, 1000);
+    }
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [timerActive, timerSeconds]);
+
+  const startTimer = (sec) => {
+    setTimerSeconds(sec);
+    setTimerActive(true);
+    setTimerPreset(sec);
+    haptic("light");
+  };
+
+  const stopTimer = () => {
+    setTimerActive(false);
+    setTimerSeconds(0);
+    haptic("light");
+  };
+
+  // Update single exercise field
+  const updateEx = (idx, patch) => {
+    setExercises(arr => arr.map((e,i) => i===idx ? {...e, ...patch} : e));
+  };
+
+  // Save exercise log
+  const saveExercise = async (idx) => {
+    const ex = exercises[idx];
+    if (!ex) return;
+    haptic("medium");
+    try {
+      await apiPost(`/api/client/${userId}/workout/log-exercise`, {
+        exercise_name: ex.name,
+        weight_kg: ex.currentWeight,
+        sets_done: ex.setsDone,
+        sets_planned: ex.setsPlanned,
+        reps_planned: ex.reps || "",
+        day_label: day?.day || "",
+        week_number: weekNumber || 1,
+        workout_date: new Date().toISOString().slice(0,10),
+      });
+      updateEx(idx, {saved: true});
+      haptic("success");
+    } catch (e) {
+      alert("Помилка збереження: " + e.message);
+    }
+  };
+
+  const finishWorkout = async () => {
+    setFinishing(true);
+    const done = exercises.filter(e => e.saved && !e.skipped).length;
+    try {
+      await apiPost(`/api/client/${userId}/workout/finish`, {
+        session_id: sessionId,
+        exercises_done: done,
+      });
+      haptic("success");
+      onClose && onClose();
+    } catch (e) {
+      alert("Помилка: " + e.message);
+      setFinishing(false);
+    }
+  };
+
+  if (loading) return <Spin/>;
+
+  const totalEx = exercises.length;
+  const doneEx = exercises.filter(e => e.saved && !e.skipped).length;
+  const progress = totalEx > 0 ? (doneEx / totalEx) * 100 : 0;
+
+  const fmtTime = (s) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
+  };
+
+  return (
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}>
+      {/* Header — назва дня + прогрес */}
+      <div style={{padding:"12px 16px",borderBottom:`1px solid ${C.bc}`,background:"rgba(10,10,10,0.7)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",position:"relative",zIndex:5}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+          <button onClick={()=>{haptic("light");onClose&&onClose();}} style={{background:"transparent",border:"none",color:C.acc,fontSize:14,fontWeight:700,padding:0,cursor:"pointer"}}>← Назад до плану</button>
+        </div>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+          <H level={2} style={{margin:0}}>{day?.day || "Тренування"}</H>
+          <div style={{fontSize:12,color:C.acc,fontWeight:800,padding:"4px 10px",background:C.gradAccSubtle,borderRadius:R.full,border:"1px solid rgba(200,245,58,0.25)"}}>{doneEx}/{totalEx}</div>
+        </div>
+        {day?.muscle_group && <div style={{fontSize:13,color:C.ts,fontWeight:600}}>{day.muscle_group}</div>}
+        {/* Progress bar */}
+        <div style={{height:4,background:C.s2,borderRadius:R.full,overflow:"hidden",marginTop:10}}>
+          <div style={{height:"100%",width:`${progress}%`,background:C.gradAcc,borderRadius:R.full,transition:`width ${T.slow} ${E.out}`,boxShadow:"0 0 10px rgba(200,245,58,0.5)"}}/>
+        </div>
+      </div>
+
+      {/* Body — список вправ */}
+      <div style={{flex:1,overflowY:"auto",padding:"12px 16px 130px",display:"flex",flexDirection:"column",gap:SP[2]}}>
+        {exercises.map((ex, idx) => {
+          const prev = lastWeights[ex.name];
+          const isSaved = ex.saved && !ex.skipped;
+          const isSkipped = ex.skipped;
+          return (
+            <Card key={idx} variant={isSaved?"accent":isSkipped?"flat":"elevated"} padding={14} style={{opacity:isSkipped?0.5:1,transition:`opacity ${T.base}`}}>
+              {/* Header: name + sets + skip menu */}
+              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8,marginBottom:8}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:15,fontWeight:800,color:C.tm,letterSpacing:-0.2,lineHeight:1.3,marginBottom:3}}>{ex.name}</div>
+                  <div style={{fontSize:11,color:C.ts,fontWeight:600}}>
+                    {ex.setsPlanned}×{ex.reps}
+                    {prev?.weight_kg ? <span style={{color:C.amber,marginLeft:8}}>· минуло: <span className="num" style={{fontWeight:800}}>{prev.weight_kg}</span> кг</span> : null}
+                  </div>
+                </div>
+                <button onClick={()=>{haptic("warning");updateEx(idx, {skipped: !ex.skipped, saved: ex.skipped?ex.saved:false});}}
+                  style={{background:isSkipped?"rgba(255,85,85,0.1)":"transparent",border:`1px solid ${isSkipped?C.red:C.bc}`,color:isSkipped?C.red:C.ts,borderRadius:R.sm,padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0}}>
+                  {isSkipped?"↻ Повернути":"× Пропустити"}
+                </button>
+              </div>
+
+              {!isSkipped && <>
+                {/* Weight controls */}
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                  <button onClick={()=>{haptic("light");updateEx(idx, {currentWeight: Math.max(0, (Number(ex.currentWeight)||0) - 2.5), saved:false});}}
+                    style={{width:38,height:38,background:C.s2,border:`1px solid ${C.bc}`,color:C.acc,fontSize:18,fontWeight:900,borderRadius:R.md,cursor:"pointer",flexShrink:0}}>−</button>
+                  <div style={{flex:1,background:C.s2,border:`1px solid ${C.bc}`,borderRadius:R.md,padding:"8px 10px",textAlign:"center"}}>
+                    <input type="number" inputMode="decimal" step="0.5"
+                      value={ex.currentWeight || ""}
+                      onChange={e=>updateEx(idx, {currentWeight: parseFloat(e.target.value)||0, saved:false})}
+                      placeholder="0"
+                      style={{width:"100%",background:"none",color:C.tm,fontSize:22,fontWeight:900,textAlign:"center",border:"none",outline:"none",letterSpacing:-0.6}}
+                      className="num"/>
+                    <div style={{fontSize:10,color:C.ts,fontWeight:700,letterSpacing:0.5,textTransform:"uppercase",marginTop:-2}}>кг</div>
+                  </div>
+                  <button onClick={()=>{haptic("light");updateEx(idx, {currentWeight: (Number(ex.currentWeight)||0) + 2.5, saved:false});}}
+                    style={{width:38,height:38,background:C.s2,border:`1px solid ${C.bc}`,color:C.acc,fontSize:18,fontWeight:900,borderRadius:R.md,cursor:"pointer",flexShrink:0}}>+</button>
+                </div>
+
+                {/* Sets done checkboxes + edit count */}
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:6,marginBottom:10}}>
+                  <div style={{display:"flex",gap:6,flex:1}}>
+                    {Array.from({length: Math.max(1, ex.setsPlanned)}).map((_,k) => {
+                      const checked = k < ex.setsDone;
+                      return (
+                        <button key={k} onClick={()=>{
+                          haptic("selection");
+                          // Toggle: tap to fill up to that index, tap on filled — uncheck after
+                          const newCount = checked ? k : k+1;
+                          updateEx(idx, {setsDone: newCount, saved:false});
+                        }}
+                        style={{
+                          flex:1,
+                          height:34,
+                          background: checked ? C.gradAcc : C.s2,
+                          color: checked ? "#0a0a0a" : C.ts,
+                          border: checked ? "none" : `1px solid ${C.bc}`,
+                          borderRadius: R.sm,
+                          fontSize:12,fontWeight:800,
+                          cursor:"pointer",
+                          boxShadow: checked ? SH.sm : "none",
+                          transition: `all ${T.fast} ${E.out}`,
+                        }}>{checked ? "✓" : k+1}</button>
+                      );
+                    })}
+                  </div>
+                  {/* Sets count adjuster */}
+                  <div style={{display:"flex",alignItems:"center",gap:4,marginLeft:8,fontSize:11,color:C.ts,fontWeight:700}}>
+                    <button onClick={()=>{if(ex.setsPlanned>1){haptic("light");updateEx(idx, {setsPlanned: ex.setsPlanned-1, setsDone: Math.min(ex.setsDone, ex.setsPlanned-1), saved:false});}}}
+                      style={{width:24,height:24,background:C.s2,border:`1px solid ${C.bc}`,color:C.ts,borderRadius:R.sm,fontSize:12,fontWeight:900,cursor:"pointer"}}>−</button>
+                    <span style={{minWidth:14,textAlign:"center"}} className="num">{ex.setsPlanned}</span>
+                    <button onClick={()=>{if(ex.setsPlanned<8){haptic("light");updateEx(idx, {setsPlanned: ex.setsPlanned+1, saved:false});}}}
+                      style={{width:24,height:24,background:C.s2,border:`1px solid ${C.bc}`,color:C.ts,borderRadius:R.sm,fontSize:12,fontWeight:900,cursor:"pointer"}}>+</button>
+                  </div>
+                </div>
+
+                {/* Save button */}
+                <Btn variant={isSaved?"success":"secondary"} size="sm" onClick={()=>saveExercise(idx)} hapticKind={isSaved?"light":"success"}>
+                  {isSaved ? "✓ Збережено · оновити" : "Зберегти результат"}
+                </Btn>
+
+                {/* Note / technique */}
+                {ex.technique && <div style={{fontSize:11,color:"rgba(200,245,58,0.7)",marginTop:8,lineHeight:1.5,fontStyle:"italic"}}>💡 {ex.technique}</div>}
+              </>}
+            </Card>
+          );
+        })}
+
+        {/* Finish button */}
+        {totalEx > 0 && (
+          <Btn variant="primary" size="lg" onClick={()=>setShowFinish(true)} hapticKind="medium" style={{marginTop:16}}>
+            ✓ Завершити тренування
+          </Btn>
+        )}
+      </div>
+
+      {/* Bottom rest timer */}
+      <div style={{
+        position:"absolute",left:0,right:0,bottom:0,
+        padding:"10px 14px 14px",
+        background:"rgba(10,10,10,0.85)",
+        backdropFilter:"blur(20px) saturate(140%)",
+        WebkitBackdropFilter:"blur(20px) saturate(140%)",
+        borderTop:`1px solid ${C.bc}`,
+        zIndex:5,
+      }}>
+        {timerActive ? (
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+            <div style={{flex:1}}>
+              <div style={{fontSize:10,color:C.ts,fontWeight:700,letterSpacing:0.6,textTransform:"uppercase",marginBottom:2}}>Відпочинок</div>
+              <div style={{fontSize:28,fontWeight:900,color:timerSeconds<10?C.red:C.acc,letterSpacing:-1.2,lineHeight:1}} className="num">{fmtTime(timerSeconds)}</div>
+            </div>
+            <div style={{flex:1,height:6,background:C.s2,borderRadius:R.full,overflow:"hidden"}}>
+              <div style={{height:"100%",width:`${(timerSeconds/timerPreset)*100}%`,background:timerSeconds<10?C.red:C.gradAcc,borderRadius:R.full,transition:"width 0.95s linear"}}/>
+            </div>
+            <button onClick={stopTimer} style={{width:44,height:44,background:"rgba(255,85,85,0.1)",border:`1px solid rgba(255,85,85,0.25)`,color:C.red,borderRadius:R.md,fontSize:14,fontWeight:900,cursor:"pointer"}}>×</button>
+          </div>
+        ) : (
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <div style={{fontSize:11,color:C.ts,fontWeight:700,letterSpacing:0.6,textTransform:"uppercase",marginRight:4}}>⏱ Відпочинок</div>
+            {[60, 90, 120].map(s => (
+              <button key={s} onClick={()=>startTimer(s)} style={{flex:1,height:38,background:C.s2,border:`1px solid ${C.bc}`,color:C.tm,borderRadius:R.md,fontSize:13,fontWeight:800,cursor:"pointer"}} className="num">{s}с</button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Finish confirmation */}
+      {showFinish && (
+        <div onClick={()=>setShowFinish(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(20px) saturate(140%)",WebkitBackdropFilter:"blur(20px) saturate(140%)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:50,padding:20}}>
+          <Card onClick={e=>e.stopPropagation()} variant="elevated" padding={20} style={{maxWidth:340,width:"100%",textAlign:"center"}}>
+            <div style={{fontSize:44,marginBottom:8}}>{doneEx===totalEx?"🔥":doneEx>0?"💪":"🤔"}</div>
+            <H level={2} style={{textAlign:"center",marginBottom:8}}>Завершити тренування?</H>
+            <div style={{fontSize:14,color:C.ts,marginBottom:16,lineHeight:1.55}}>
+              Виконано <b style={{color:C.acc,fontWeight:800}}>{doneEx} з {totalEx}</b> вправ.
+              {doneEx<totalEx && <><br/>Незавершені вправи будуть пропущені.</>}
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              <Btn variant="primary" size="md" onClick={finishWorkout} loading={finishing} hapticKind="success">
+                ✓ Завершити
+              </Btn>
+              <Btn variant="ghost" size="md" onClick={()=>setShowFinish(false)} hapticKind="light">
+                Продовжити
+              </Btn>
+            </div>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const TrainPlan = ({userId}) => {
   const [data,setData]=useState(null);
   const [loading,setLoad]=useState(true);
   const [gen,setGen]=useState(false);
   const [selEx,setSelEx]=useState(null);
+  const [activeWorkout, setActiveWorkout] = useState(null); // { day, weekNumber }
   const load=useCallback(async()=>{
     try{setLoad(true);const r=await apiGet(`/api/client/${userId}/plan`);setData(r.plan);}
     catch(e){console.error(e);}finally{setLoad(false);}
@@ -2613,6 +3192,17 @@ const TrainPlan = ({userId}) => {
   );
   let days=[],weekNote="";
   try{const p=JSON.parse(data.plan_text||"{}");days=p.training?.days||[];weekNote=p.training?.week_note||"";}catch{}
+
+  // Якщо активне тренування — показуємо WorkoutScreen замість плану
+  if (activeWorkout) {
+    return <WorkoutScreen
+      userId={userId}
+      day={activeWorkout.day}
+      weekNumber={data.week_number || 1}
+      onClose={()=>setActiveWorkout(null)}
+    />;
+  }
+
   return(
     <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
       <div style={{position:"relative",height:140,flexShrink:0,overflow:"hidden"}}>
@@ -2628,13 +3218,16 @@ const TrainPlan = ({userId}) => {
         </button>
       </div>
       <div style={{flex:1,overflowY:"auto",padding:"12px 16px 20px",display:"flex",flexDirection:"column",gap:10}}>
-        {days.length>0?days.map((d,i)=>(
+        <ProgressionSuggestion userId={userId} onUpdate={load}/>
+        {days.length>0?days.map((d,i)=>{
+          const hasExercises = (d.exercises||[]).length>0;
+          return (
           <div key={i} style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,overflow:"hidden"}}>
             <div style={{background:C.s2,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${C.bc}`}}>
               <div style={{fontSize:17,fontWeight:800,color:C.tm}}>{d.day}</div>
               {d.muscle_group&&<div style={{fontSize:11,color:"#0a0a0a",background:C.acc,padding:"4px 12px",borderRadius:20,fontWeight:800}}>{d.muscle_group}</div>}
             </div>
-            {(d.exercises||[]).length>0&&(
+            {hasExercises&&(
               <div style={{padding:"10px 16px",display:"flex",flexDirection:"column",gap:8}}>
                 {(d.exercises||[]).map((ex,j)=>(
                   <div key={j}>
@@ -2656,9 +3249,18 @@ const TrainPlan = ({userId}) => {
                 {d.rest_note&&<div style={{fontSize:12,color:C.td,fontStyle:"italic",marginTop:4}}>{d.rest_note}</div>}
               </div>
             )}
-            {!(d.exercises||[]).length&&<div style={{padding:"12px 16px",fontSize:14,color:C.ts}}>День відпочинку · активне відновлення</div>}
+            {!hasExercises&&<div style={{padding:"12px 16px",fontSize:14,color:C.ts}}>День відпочинку · активне відновлення</div>}
+            {/* Кнопка Почати тренування */}
+            {hasExercises && (
+              <div style={{padding:"0 16px 12px"}}>
+                <Btn variant="primary" size="md" onClick={()=>{haptic("medium");setActiveWorkout({day: d, weekNumber: data.week_number || 1});}} hapticKind="medium">
+                  ▶ Почати тренування
+                </Btn>
+              </div>
+            )}
           </div>
-        )):(
+          );
+        }):(
           <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
             <div style={{fontSize:14,color:C.tm,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{data.plan_text}</div>
           </div>
@@ -3250,6 +3852,14 @@ const Progress = ({userId}) => {
 const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan,onSupplements,userId}) => {
   const planV={start:"green",premium:"blue",vip:"purple",trial:"amber"};
   const [profileTab,setProfileTab]=useState(0);
+  const [wallet, setWallet] = useState(null);
+  const [bossInfo, setBossInfo] = useState(null);
+  useEffect(() => {
+    apiGet(`/api/client/${userId}/wallet`).then(r=>setWallet(r)).catch(()=>{});
+    apiGet(`/api/client/${userId}/boss-progress`).then(r=>setBossInfo(r)).catch(()=>{});
+  }, [userId]);
+  const totalBosses = bossInfo?.total_bosses_passed || 0;
+  const monthBosses = bossInfo?.month_bosses_passed || 0;
   return(
     <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
       <div style={{position:"relative",height:220,flexShrink:0,overflow:"hidden"}}>
@@ -3258,7 +3868,10 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
         <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"20px 18px",display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:12}}>
           <div style={{flex:1,minWidth:0}}>
             <SectionLabel accent style={{marginBottom:4,color:"rgba(200,245,58,0.85)"}}>МІЙ ПРОФІЛЬ</SectionLabel>
-            <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-1,lineHeight:1.1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{client?.full_name||"Клієнт"}</div>
+            <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-1,lineHeight:1.1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",display:"flex",alignItems:"center",gap:8}}>
+              {client?.full_name||"Клієнт"}
+              {totalBosses > 0 && <span title={`${totalBosses} босів пройдено`} style={{fontSize:18,filter:"drop-shadow(0 0 8px rgba(200,245,58,0.5))"}}>🏆</span>}
+            </div>
             {client?.username && <div style={{fontSize:13,color:"rgba(255,255,255,0.6)",marginTop:3,fontWeight:500}}>@{client.username}</div>}
           </div>
           <div style={{
@@ -3283,6 +3896,32 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
             <div style={{fontSize:14,color:C.amber,fontWeight:700}}>{(client?.expires_at||"").slice(0,10)}</div>
           </div>
         </Card>
+
+        {/* Bosses + Wallet — gamification */}
+        {(totalBosses > 0 || (wallet?.balance_eur || 0) > 0) && (
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:SP[2]}}>
+            <Card variant={totalBosses > 0 ? "accent" : "elevated"} glow={totalBosses > 0} padding={14}>
+              <SectionLabel accent={totalBosses > 0}>Бос. за місяць</SectionLabel>
+              <div style={{display:"flex",alignItems:"baseline",gap:6,marginTop:4}}>
+                <span style={{fontSize:30,fontWeight:900,color:totalBosses > 0 ? C.acc : C.td,letterSpacing:-1,lineHeight:1.1}} className="num">
+                  <AnimatedNum value={monthBosses}/>
+                </span>
+                <span style={{fontSize:18}}>🏆</span>
+              </div>
+              <div style={{fontSize:11,color:C.ts,marginTop:2,fontWeight:600}}>всього: <span className="num">{totalBosses}</span></div>
+            </Card>
+            <Card variant={(wallet?.balance_eur||0) > 0 ? "accent" : "elevated"} glow={(wallet?.balance_eur||0) > 0} padding={14}>
+              <SectionLabel accent={(wallet?.balance_eur||0) > 0}>Баланс</SectionLabel>
+              <div style={{display:"flex",alignItems:"baseline",gap:3,marginTop:4}}>
+                <span style={{fontSize:30,fontWeight:900,color:(wallet?.balance_eur||0) > 0 ? C.acc : C.td,letterSpacing:-1,lineHeight:1.1}} className="num">
+                  <AnimatedNum value={wallet?.balance_eur||0} decimals={(wallet?.balance_eur||0)%1!==0?1:0}/>
+                </span>
+                <span style={{fontSize:14,color:C.ts,fontWeight:700}}>€</span>
+              </div>
+              <div style={{fontSize:11,color:C.ts,marginTop:2,fontWeight:600}}>знижка</div>
+            </Card>
+          </div>
+        )}
         <div style={{display:"flex",gap:7}}>
           {["Дані","Відгуки","Сповіщення"].map((t,i)=>(
             <button key={t} onClick={()=>setProfileTab(i)}
@@ -4436,7 +5075,7 @@ export default function FitCoreApp() {
 
   const isAdminMode=screen==="admin";
   const showNav=["client","admin"].includes(screen)&&!checkinMode&&!["expired","trial_expired"].includes(clientData?.status||"")&&!["welcome","onboarding","onboarding_success","pending_approval","pending_payment"].includes(screen);
-  const titles={plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",menu:"Тарифи і меню",supplements:"БАДи",profile:"Профіль",aichat:"Чат з Матіасом",more:"Додатково",photos:"Прогрес у фото",recipes:"Рецепти",schedule:"Календар",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування",chat:"Чат з клієнтами"};
+  const titles={ranking: "Рейтинг", plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",menu:"Тарифи і меню",supplements:"БАДи",profile:"Профіль",aichat:"Чат з Матіасом",more:"Додатково",photos:"Прогрес у фото",recipes:"Рецепти",schedule:"Календар",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування",chat:"Чат з клієнтами"};
   const topTitle=checkinMode?"Чекін":isAdminMode?(selClient?"Профіль клієнта":titles[adminTab]):titles[clientTab];
   const showTopNav=["client","admin"].includes(screen)&&clientTab!=="profile"&&!(isAdminMode&&adminTab==="dashboard")&&!["expired","trial_expired"].includes(clientData?.status||"")&&!["welcome","onboarding","onboarding_success","pending_approval","pending_payment"].includes(screen);
 
@@ -4514,6 +5153,7 @@ export default function FitCoreApp() {
       if(clientTab==="plan")return <TrainPlan userId={userId}/>;
       if(clientTab==="nutrition")return <Nutrition userId={userId}/>;
       if(clientTab==="aichat")return <AIChat userId={userId} clientData={clientData}/>;
+      if(clientTab==="ranking")return <Leaderboard userId={userId}/>;
       if(clientTab==="photos")return <ProgressPhotos userId={userId}/>;
       if(clientTab==="recipes")return <Recipes userId={userId} clientData={clientData}/>;
       if(clientTab==="schedule")return <TrainingSchedule userId={userId}/>;
