@@ -3785,8 +3785,12 @@ const AdminClientDetail = ({client,onBack}) => {
   const [msg,setMsg]=useState("");
   const [gen,setGen]=useState(false);
   const [showMsgModal,setShowMsgModal]=useState(false);
+  const [period, setPeriod] = useState("all"); // 7d / 30d / all
 
-  useEffect(()=>{apiGet(`/api/admin/client/${client.user_id}`).then(r=>{setDetail(r);setLoad(false);}).catch(()=>setLoad(false));},[client.user_id]);
+  useEffect(()=>{
+    setLoad(true);
+    apiGet(`/api/admin/client/${client.user_id}?period=${period}`).then(r=>{setDetail(r);setLoad(false);}).catch(()=>setLoad(false));
+  },[client.user_id, period]);
 
   const activate=async plan=>{await apiPost(`/api/admin/client/${client.user_id}/activate`,{plan});setMsg(`✓ Активовано: ${plan.toUpperCase()}`);};
   const block=async()=>{
@@ -3896,29 +3900,114 @@ const AdminClientDetail = ({client,onBack}) => {
         </div>
       )}
 
-      {/* Activity */}
-      <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
-        <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Активність в додатку</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-          <div>
-            <div style={{fontSize:12,color:C.ts}}>Відкриттів</div>
-            <div style={{fontSize:22,fontWeight:900,color:C.acc,marginTop:2}}>{act.total_opens||0}</div>
-          </div>
-          <div>
-            <div style={{fontSize:12,color:C.ts}}>Чекінів</div>
-            <div style={{fontSize:22,fontWeight:900,color:C.tm,marginTop:2}}>{act.total_checkins||0}</div>
-          </div>
-          <div>
-            <div style={{fontSize:12,color:C.ts}}>Стрік</div>
-            <div style={{fontSize:22,fontWeight:900,color:C.amber,marginTop:2}}>{act.streak||0} 🔥</div>
-          </div>
-          <div>
-            <div style={{fontSize:12,color:C.ts}}>Останній візит</div>
-            <div style={{fontSize:14,fontWeight:700,color:C.tm,marginTop:2}}>{fmtRel(act.last_active)}</div>
+      {/* Activity — period switcher + bento metrics */}
+      <Card variant="elevated" padding={"14px 16px"}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:0.8}}>Активність в додатку</div>
+          {/* Period switcher */}
+          <div style={{display:"flex",gap:4,background:C.s2,borderRadius:R.full,padding:3}}>
+            {[["all","Весь час"],["30d","30д"],["7d","7д"]].map(([v,l])=>{
+              const active = period===v;
+              return (
+                <button key={v} onClick={()=>setPeriod(v)} style={{
+                  background:active?C.gradAcc:"transparent",
+                  color:active?"#0a0a0a":C.ts,
+                  border:"none",borderRadius:R.full,
+                  padding:"4px 10px",fontSize:11,fontWeight:800,
+                  letterSpacing:0.3,cursor:"pointer",
+                  transition:`all ${T.fast} ${E.out}`,
+                }}>{l}</button>
+              );
+            })}
           </div>
         </div>
-        <div style={{fontSize:12,color:C.td,marginTop:10,paddingTop:8,borderTop:`1px solid ${C.bc}`}}>Реєстрація: {fmtDate(act.registered_at)}{act.activated_at?` · Активація: ${fmtDate(act.activated_at)}`:""}</div>
-      </div>
+
+        {/* BENTO metrics */}
+        <div className="stg" style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gridAutoRows:"minmax(72px,auto)",gap:SP[2]}}>
+          {/* HERO: Стрік + Останній візит — wide */}
+          <Card variant="accent" glow padding={14} style={{gridColumn:"span 6",position:"relative",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"space-between",gap:14}}>
+            <div style={{position:"absolute",right:-10,top:-15,fontSize:78,opacity:0.1}}>🔥</div>
+            <div style={{position:"relative",zIndex:1}}>
+              <SectionLabel accent style={{marginBottom:4}}>Стрік</SectionLabel>
+              <div style={{display:"flex",alignItems:"baseline",gap:6}}>
+                <span style={{fontSize:36,fontWeight:900,color:C.acc,letterSpacing:-1.4,lineHeight:1}} className="num">
+                  <AnimatedNum value={act.streak||0}/>
+                </span>
+                <span style={{fontSize:13,color:C.ts,fontWeight:700}}>{act.streak===1?"день":(act.streak||0)<5?"дні":"днів"}</span>
+              </div>
+            </div>
+            <div style={{position:"relative",zIndex:1,textAlign:"right"}}>
+              <SectionLabel style={{marginBottom:4}}>Останній візит</SectionLabel>
+              <div style={{fontSize:15,fontWeight:800,color:C.tm,letterSpacing:-0.2}}>{fmtRel(act.last_active)}</div>
+              {act.days_since_last_visit > 2 && (
+                <div style={{fontSize:11,color:C.amber,fontWeight:700,marginTop:2}}>⚠ {act.days_since_last_visit} д відсутній</div>
+              )}
+            </div>
+          </Card>
+
+          {/* Period block — Відкриттів */}
+          <Card variant="elevated" padding={12} style={{gridColumn:"span 2"}}>
+            <SectionLabel>Сесій{period!=="all"?` · ${period==="7d"?"7д":"30д"}`:""}</SectionLabel>
+            <div style={{display:"flex",alignItems:"baseline",gap:3,marginTop:4}}>
+              <span style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-0.6,lineHeight:1.1}} className="num">
+                <AnimatedNum value={period==="all"?(act.total_opens||0):"—"}/>
+              </span>
+            </div>
+            {period==="all" && <div style={{fontSize:10,color:C.td,marginTop:1}}>всього</div>}
+          </Card>
+
+          {/* Period block — Чекінів */}
+          <Card variant="elevated" padding={12} style={{gridColumn:"span 2"}}>
+            <SectionLabel>Чекінів{period!=="all"?` · ${period==="7d"?"7д":"30д"}`:""}</SectionLabel>
+            <div style={{display:"flex",alignItems:"baseline",gap:3,marginTop:4}}>
+              <span style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-0.6,lineHeight:1.1}} className="num">
+                <AnimatedNum value={period==="all"?(act.total_checkins||0):(act.period_checkins||0)}/>
+              </span>
+            </div>
+            {period==="all" && <div style={{fontSize:10,color:C.td,marginTop:1}}>всього</div>}
+          </Card>
+
+          {/* Period block — AI чат */}
+          <Card variant="elevated" padding={12} style={{gridColumn:"span 2"}}>
+            <SectionLabel>AI-чат{period!=="all"?` · ${period==="7d"?"7д":"30д"}`:""}</SectionLabel>
+            <div style={{display:"flex",alignItems:"baseline",gap:3,marginTop:4}}>
+              <span style={{fontSize:24,fontWeight:900,color:"#a855f7",letterSpacing:-0.6,lineHeight:1.1}} className="num">
+                <AnimatedNum value={act.period_ai_messages||0}/>
+              </span>
+            </div>
+            <div style={{fontSize:10,color:C.td,marginTop:1}}>повідомлень</div>
+          </Card>
+
+          {/* Bottom row: Тривалість сесії + Останнє фото */}
+          <Card variant="elevated" padding={12} style={{gridColumn:"span 3"}}>
+            <SectionLabel>Тривалість сесії</SectionLabel>
+            <div style={{display:"flex",alignItems:"baseline",gap:3,marginTop:4}}>
+              {act.last_session_minutes!=null ? (
+                <>
+                  <span style={{fontSize:22,fontWeight:900,color:C.blue,letterSpacing:-0.5,lineHeight:1.1}} className="num">
+                    <AnimatedNum value={act.last_session_minutes} decimals={act.last_session_minutes<10?1:0}/>
+                  </span>
+                  <span style={{fontSize:11,color:C.ts,fontWeight:700}}>хв</span>
+                </>
+              ) : <span style={{fontSize:18,fontWeight:800,color:C.td}}>—</span>}
+            </div>
+            <div style={{fontSize:10,color:C.td,marginTop:1}}>остання</div>
+          </Card>
+
+          <Card variant="elevated" padding={12} style={{gridColumn:"span 3"}}>
+            <SectionLabel>Останнє фото</SectionLabel>
+            <div style={{fontSize:14,fontWeight:800,color:act.last_photo_at?C.tm:C.td,marginTop:4,letterSpacing:-0.2}}>
+              {act.last_photo_at ? fmtRel(act.last_photo_at) : "—"}
+            </div>
+          </Card>
+        </div>
+
+        {/* Footer — registration info */}
+        <div style={{fontSize:11,color:C.td,marginTop:14,paddingTop:10,borderTop:`1px solid ${C.bc}`,fontWeight:600}}>
+          Реєстрація: {fmtDate(act.registered_at)}
+          {act.activated_at && <span> · Активація: {fmtDate(act.activated_at)}</span>}
+        </div>
+      </Card>
 
       {/* Questionnaire */}
       {qst && (
