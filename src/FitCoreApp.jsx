@@ -1019,10 +1019,13 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
           </div>
         </div>
         <PBtn onClick={()=>{
-          if(link&&link!=="#"){
-            if(window.Telegram?.WebApp?.openLink){window.Telegram.WebApp.openLink(link);}
-            else{window.open(link,"_blank");}
+          haptic("medium");
+          if(!link || link==="#"){
+            alert("Оплата через Monobank тимчасово недоступна. Напиши тренеру @fitcore_matias_bot — підкажемо як оплатити.");
+            return;
           }
+          if(window.Telegram?.WebApp?.openLink){window.Telegram.WebApp.openLink(link);}
+          else{window.open(link,"_blank");}
         }}>Оплатити {totalPrice.toLocaleString()} ₴</PBtn>
         <div style={{fontSize:12,color:C.td,marginTop:10,lineHeight:1.5}}>
           Після оплати — натисни кнопку нижче «Я оплатив», тренер активує доступ протягом 1 години.
@@ -1039,15 +1042,18 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
           </div>
         </div>
         <button onClick={()=>{
+          haptic("medium");
           const tg=window.Telegram?.WebApp;
           // Bot deep-link: pay_<plan>_<months> → бот шле інвойс, після оплати клієнт повертається в Mini App
           const link = `https://t.me/fitcore_matias_bot?start=pay_${planKey}_${months}`;
           if(tg && tg.openTelegramLink){
             tg.openTelegramLink(link);
+            // Закриваємо Mini App щоб клієнт побачив інвойс у боті
+            setTimeout(()=>{ try{ tg.close(); }catch{} }, 600);
           } else {
             window.location.href = link;
           }
-        }} style={{width:"100%",background:"linear-gradient(135deg,#f6c90e,#e4a200)",color:"#0a0a0a",border:"none",borderRadius:14,padding:"14px 0",fontSize:15,fontWeight:800}}>Оплатити {totalStars.toLocaleString()} ⭐</button>
+        }} style={{width:"100%",background:"linear-gradient(135deg,#f6c90e,#e4a200)",color:"#0a0a0a",border:"none",borderRadius:14,padding:"14px 0",fontSize:15,fontWeight:800}}>Оплатити {totalStars.toLocaleString()} ⭐ → у боті</button>
         <div style={{fontSize:12,color:C.td,marginTop:10,lineHeight:1.5}}>
           Доступ активується миттєво після підтвердження Telegram.
         </div>
@@ -5026,17 +5032,22 @@ export default function FitCoreApp() {
           else if(st==="pending_approval")setScreen("pending_approval");
           else if(st==="pending_payment")setScreen("pending_payment");
           else if(["expired","trial_expired"].includes(st))setScreen("expired");
+          else if(st==="blocked")setScreen("blocked");
           else if(st==="pending_questionnaire")setScreen("welcome");
           else setScreen("welcome");
         }else{
-          // Новий клієнт — нема в БД — показуємо WelcomeScreen + анкета
+          // auth.client === null означає — новий клієнт, його ще нема в БД
           setScreen("welcome");
         }
-      }catch(e){console.error("Init:",e);setScreen("welcome");}
+      }catch(e){
+        console.error("Init:",e);
+        // Не кидаємо новачку анкету — показуємо помилку звʼязку з retry
+        setScreen("connection_error");
+      }
     };
     init();
 
-    // Перевіряти статус кожні 5 хв — якщо trial/active експерувався, перенаправити
+    // Перевіряти статус кожну 1 хв — швидке перенаправлення при зміні статусу
     const statusCheckInterval = setInterval(async () => {
       try {
         const r = await apiPost("/api/auth", {});
@@ -5045,10 +5056,12 @@ export default function FitCoreApp() {
           const st = r.client.status;
           if (["expired","trial_expired"].includes(st) && screen !== "expired") {
             setScreen("expired");
+          } else if (st === "blocked" && screen !== "blocked") {
+            setScreen("blocked");
           }
         }
       } catch {}
-    }, 300000);
+    }, 60000);
     return () => clearInterval(statusCheckInterval);
   },[]);
 
@@ -5080,9 +5093,33 @@ export default function FitCoreApp() {
   const showTopNav=["client","admin"].includes(screen)&&clientTab!=="profile"&&!(isAdminMode&&adminTab==="dashboard")&&!["expired","trial_expired"].includes(clientData?.status||"")&&!["welcome","onboarding","onboarding_success","pending_approval","pending_payment"].includes(screen);
 
   const renderContent=()=>{
-    // Захист: якщо статус expired/trial_expired — завжди показуємо блок-екран
-    if(clientData && ["expired","trial_expired"].includes(clientData.status) && !["expired","plans","payment","pending"].includes(screen)){
-      setTimeout(()=>setScreen("expired"),0);
+    // Експерійовані клієнти — рендеримо ExpiredScreen напряму, не змінюючи screen state
+    if(clientData && ["expired","trial_expired"].includes(clientData.status) && !["plans","payment"].includes(screen)){
+      return <ExpiredScreen client={clientData} plans={plans} onSelectPlan={(p,m)=>{setSelPlan(p);setSelMonths(m||1);setScreen("payment");}}/>;
+    }
+    // Заблоковані клієнти — окремий екран без можливості обходу
+    if(clientData && clientData.status === "blocked"){
+      return (
+        <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 28px",textAlign:"center"}}>
+          <div style={{width:84,height:84,borderRadius:"50%",background:"rgba(255,85,85,0.1)",border:`2.5px solid ${C.red}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:38,boxShadow:"0 0 30px rgba(255,85,85,0.25)"}}>⛔</div>
+          <H level={1} style={{textAlign:"center"}}>Доступ заблоковано</H>
+          <div style={{fontSize:F.bodyLg.size,color:C.ts,lineHeight:1.6,maxWidth:340}}>Звернись до тренера для відновлення доступу.</div>
+          <a href="https://t.me/fitcore_matias_bot" style={{textDecoration:"none",width:"100%",maxWidth:280}}>
+            <Btn variant="ghost" size="md" hapticKind="light">📩 Написати тренеру</Btn>
+          </a>
+        </div>
+      );
+    }
+    // Помилка зʼєднання — retry, не кидаємо на анкету
+    if(screen==="connection_error"){
+      return (
+        <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 28px",textAlign:"center"}}>
+          <div style={{width:84,height:84,borderRadius:"50%",background:"rgba(232,168,50,0.1)",border:`2.5px solid ${C.amber}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:38}}>📡</div>
+          <H level={1} style={{textAlign:"center"}}>Помилка зʼєднання</H>
+          <div style={{fontSize:F.bodyLg.size,color:C.ts,lineHeight:1.6,maxWidth:340}}>Не вдалося звʼязатися з сервером. Перевір інтернет і спробуй ще раз.</div>
+          <Btn variant="primary" size="md" onClick={()=>{setScreen("loading"); window.location.reload();}} style={{maxWidth:280}}>🔄 Спробувати ще раз</Btn>
+        </div>
+      );
     }
     if(screen==="welcome")return <WelcomeScreen onStart={()=>setScreen("onboarding")}/>;
     if(screen==="onboarding")return <OnboardingFlow userId={userId} onComplete={(newClient)=>{
