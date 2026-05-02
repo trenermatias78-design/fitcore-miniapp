@@ -5030,7 +5030,7 @@ export default function FitCoreApp() {
           else if(["expired","trial_expired"].includes(st))setScreen("expired");
           else if(st==="blocked")setScreen("blocked");
           else if(st==="pending_questionnaire")setScreen("welcome");
-          else setScreen("welcome");
+          else setScreen("connection_error");
         }else{
           // auth.client === null означає — новий клієнт, його ще нема в БД
           setScreen("welcome");
