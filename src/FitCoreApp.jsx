@@ -11,7 +11,11 @@ async function api(path, options = {}) {
   const headers = { "Content-Type": "application/json", "X-Telegram-Init-Data": getInitData() };
   if (!getInitData() && uid) headers["X-Dev-User-Id"] = String(uid);
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers: { ...headers, ...(options.headers||{}) }, body: options.body ? JSON.stringify(options.body) : undefined });
-  if (!res.ok) throw new Error(`API ${res.status}`);
+  if (!res.ok) {
+    let msg = `API ${res.status}`;
+    try { const b = await res.json(); if (b?.error) msg = b.error; } catch {}
+    throw new Error(msg);
+  }
   return res.json();
 }
 const apiGet  = p => api(p);
@@ -3172,6 +3176,7 @@ const TrainPlan = ({userId}) => {
   const [data,setData]=useState(null);
   const [loading,setLoad]=useState(true);
   const [gen,setGen]=useState(false);
+  const [genErr,setGenErr]=useState("");
   const [selEx,setSelEx]=useState(null);
   const [activeWorkout, setActiveWorkout] = useState(null); // { day, weekNumber }
   const load=useCallback(async()=>{
@@ -3180,15 +3185,16 @@ const TrainPlan = ({userId}) => {
   },[userId]);
   useEffect(()=>{load();},[load]);
   const generate=async()=>{
-    setGen(true);
+    setGen(true);setGenErr("");
     try{await apiPost(`/api/client/${userId}/generate-plan`,{});await load();}
-    catch(e){alert("Помилка: "+e.message);}
+    catch(e){setGenErr(e.message);}
     setGen(false);
   };
   if(loading)return <Spin/>;
   if(!data)return(
     <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,padding:"0 24px"}}>
       <div style={{fontSize:18,fontWeight:700,color:C.ts,textAlign:"center"}}>План ще не готовий</div>
+      {genErr&&<div style={{fontSize:14,color:"#ff6b6b",textAlign:"center",padding:"8px 16px",background:"rgba(255,107,107,0.1)",borderRadius:10}}>{genErr}</div>}
       <PBtn onClick={generate} loading={gen} style={{maxWidth:260}}>{gen?"Генерую...":"Згенерувати план"}</PBtn>
     </div>
   );
