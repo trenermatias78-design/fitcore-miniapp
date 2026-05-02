@@ -2857,10 +2857,11 @@ const WorkoutScreen = ({userId, day, weekNumber, onClose}) => {
   const [finishing, setFinishing] = useState(false);
   const [showFinish, setShowFinish] = useState(false);
 
-  // Timer state
+  // Timer state — таймер прив'язаний до конкретної картки idx
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
   const [timerPreset, setTimerPreset] = useState(90);
+  const [activeTimerForIdx, setActiveTimerForIdx] = useState(null);
   const timerRef = useRef(null);
 
   // Load lastWeights and start session
@@ -2920,6 +2921,7 @@ const WorkoutScreen = ({userId, day, weekNumber, onClose}) => {
         setTimerSeconds(s => {
           if (s <= 1) {
             setTimerActive(false);
+            setActiveTimerForIdx(null);
             haptic("warning");
             try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred("warning"); } catch {}
             return 0;
@@ -2931,16 +2933,18 @@ const WorkoutScreen = ({userId, day, weekNumber, onClose}) => {
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [timerActive, timerSeconds]);
 
-  const startTimer = (sec) => {
+  const startTimer = (sec, idx) => {
     setTimerSeconds(sec);
     setTimerActive(true);
     setTimerPreset(sec);
+    setActiveTimerForIdx(idx);
     haptic("light");
   };
 
   const stopTimer = () => {
     setTimerActive(false);
     setTimerSeconds(0);
+    setActiveTimerForIdx(null);
     haptic("light");
   };
 
@@ -3019,7 +3023,7 @@ const WorkoutScreen = ({userId, day, weekNumber, onClose}) => {
       </div>
 
       {/* Body — список вправ */}
-      <div style={{flex:1,overflowY:"auto",padding:"12px 16px 130px",display:"flex",flexDirection:"column",gap:SP[2]}}>
+      <div style={{flex:1,overflowY:"auto",padding:"12px 16px 24px",display:"flex",flexDirection:"column",gap:SP[2]}}>
         {exercises.map((ex, idx) => {
           const prev = lastWeights[ex.name];
           const isSaved = ex.saved && !ex.skipped;
@@ -3101,6 +3105,27 @@ const WorkoutScreen = ({userId, day, weekNumber, onClose}) => {
                   {isSaved ? "✓ Збережено · оновити" : "Зберегти результат"}
                 </Btn>
 
+                {/* Rest timer — у самій картці вправи */}
+                <div style={{marginTop:10,padding:"10px 12px",background:C.s2,borderRadius:R.md,border:`1px solid ${activeTimerForIdx===idx?C.acc:C.bc}`,transition:`border-color ${T.fast} ${E.out}`}}>
+                  {activeTimerForIdx===idx && timerActive ? (
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <div style={{fontSize:11,color:C.ts,fontWeight:700,letterSpacing:0.5,textTransform:"uppercase"}}>⏱</div>
+                      <div style={{fontSize:22,fontWeight:900,color:timerSeconds<10?C.red:C.acc,letterSpacing:-0.8,lineHeight:1,minWidth:62}} className="num">{fmtTime(timerSeconds)}</div>
+                      <div style={{flex:1,height:5,background:C.s3,borderRadius:R.full,overflow:"hidden"}}>
+                        <div style={{height:"100%",width:`${(timerSeconds/timerPreset)*100}%`,background:timerSeconds<10?C.red:C.gradAcc,borderRadius:R.full,transition:"width 0.95s linear"}}/>
+                      </div>
+                      <button onClick={()=>stopTimer()} style={{width:32,height:32,background:"rgba(255,85,85,0.1)",border:`1px solid rgba(255,85,85,0.25)`,color:C.red,borderRadius:R.sm,fontSize:12,fontWeight:900,cursor:"pointer",flexShrink:0}}>×</button>
+                    </div>
+                  ) : (
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      <div style={{fontSize:10,color:C.ts,fontWeight:700,letterSpacing:0.5,textTransform:"uppercase",marginRight:2}}>⏱ Відпочинок</div>
+                      {[60, 90, 120].map(s => (
+                        <button key={s} onClick={()=>startTimer(s, idx)} style={{flex:1,height:30,background:C.s3,border:`1px solid ${C.bc}`,color:C.tm,borderRadius:R.sm,fontSize:12,fontWeight:800,cursor:"pointer"}} className="num">{s}с</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 {/* Note / technique */}
                 {ex.technique && <div style={{fontSize:11,color:"rgba(200,245,58,0.7)",marginTop:8,lineHeight:1.5,fontStyle:"italic"}}>💡 {ex.technique}</div>}
               </>}
@@ -3116,36 +3141,7 @@ const WorkoutScreen = ({userId, day, weekNumber, onClose}) => {
         )}
       </div>
 
-      {/* Bottom rest timer */}
-      <div style={{
-        position:"absolute",left:0,right:0,bottom:0,
-        padding:"10px 14px 14px",
-        background:"rgba(10,10,10,0.85)",
-        backdropFilter:"blur(20px) saturate(140%)",
-        WebkitBackdropFilter:"blur(20px) saturate(140%)",
-        borderTop:`1px solid ${C.bc}`,
-        zIndex:5,
-      }}>
-        {timerActive ? (
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
-            <div style={{flex:1}}>
-              <div style={{fontSize:10,color:C.ts,fontWeight:700,letterSpacing:0.6,textTransform:"uppercase",marginBottom:2}}>Відпочинок</div>
-              <div style={{fontSize:28,fontWeight:900,color:timerSeconds<10?C.red:C.acc,letterSpacing:-1.2,lineHeight:1}} className="num">{fmtTime(timerSeconds)}</div>
-            </div>
-            <div style={{flex:1,height:6,background:C.s2,borderRadius:R.full,overflow:"hidden"}}>
-              <div style={{height:"100%",width:`${(timerSeconds/timerPreset)*100}%`,background:timerSeconds<10?C.red:C.gradAcc,borderRadius:R.full,transition:"width 0.95s linear"}}/>
-            </div>
-            <button onClick={stopTimer} style={{width:44,height:44,background:"rgba(255,85,85,0.1)",border:`1px solid rgba(255,85,85,0.25)`,color:C.red,borderRadius:R.md,fontSize:14,fontWeight:900,cursor:"pointer"}}>×</button>
-          </div>
-        ) : (
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <div style={{fontSize:11,color:C.ts,fontWeight:700,letterSpacing:0.6,textTransform:"uppercase",marginRight:4}}>⏱ Відпочинок</div>
-            {[60, 90, 120].map(s => (
-              <button key={s} onClick={()=>startTimer(s)} style={{flex:1,height:38,background:C.s2,border:`1px solid ${C.bc}`,color:C.tm,borderRadius:R.md,fontSize:13,fontWeight:800,cursor:"pointer"}} className="num">{s}с</button>
-            ))}
-          </div>
-        )}
-      </div>
+
 
       {/* Finish confirmation */}
       {showFinish && (
