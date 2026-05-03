@@ -2607,6 +2607,7 @@ const Leaderboard = ({userId}) => {
   const [data, setData] = useState({leaderboard: [], my_position: null});
   const [bossProgress, setBossProgress] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [bossOpen, setBossOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -2665,57 +2666,73 @@ const Leaderboard = ({userId}) => {
         })}
       </div>
 
-      {/* Boss progress this week */}
-      {bp && (
-        <Card variant="accent" glow padding={16} style={{position:"relative",overflow:"hidden"}}>
-          <div style={{position:"absolute",right:-15,top:-15,fontSize:80,opacity:0.1}}>👹</div>
-          <div style={{position:"relative",zIndex:1}}>
-            <SectionLabel accent>Бос цього тижня</SectionLabel>
-            <div style={{display:"flex",alignItems:"baseline",gap:6,marginTop:4,marginBottom:14}}>
-              <span style={{fontSize:14,color:C.tm,fontWeight:700}}>
-                {bp.all_passed ? "✅ Пройдено!" : "Виконай 3 умови:"}
-              </span>
-            </div>
+      {/* Boss of the week — collapsible info + progress */}
+      <div style={{background:C.s1,border:`1px solid ${bossOpen?"rgba(200,245,58,0.55)":"rgba(200,245,58,0.22)"}`,borderRadius:R.lg,overflow:"hidden",transition:`border-color ${T.fast} ${E.out}`}}>
 
-            {/* 3 critereon bars */}
+        {/* Header — tap to toggle */}
+        <div onClick={()=>{haptic("light");setBossOpen(o=>!o);}} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"11px 14px",cursor:"pointer"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:15}}>🏆</span>
+            <span style={{fontSize:14,fontWeight:800,color:C.tm}}>Бос тижня</span>
+            {bp?.all_passed && <span style={{fontSize:10,color:C.acc,fontWeight:800,background:"rgba(200,245,58,0.15)",padding:"2px 8px",borderRadius:R.full,letterSpacing:.4}}>✅ ВИКОНАНО</span>}
+          </div>
+          <span style={{fontSize:12,color:C.ts,display:"inline-block",transition:`transform ${T.fast} ${E.out}`,transform:bossOpen?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
+        </div>
+
+        {/* Compact progress bars — always visible when data exists */}
+        {bossProgress && (
+          <div style={{display:"flex",gap:6,padding:"0 12px 11px"}}>
             {[
-              {label:"Тренування", done:bp.workouts_done, req:bp.workouts_required, passed:bp.workouts_passed, ic:"💪"},
-              {label:"Чекіни",      done:bp.checkins_done, req:bp.checkins_required, passed:bp.checkins_passed, ic:"📝"},
-              {label:"Активність",  done:bp.days_active, req:bp.days_required, passed:bp.activity_passed, ic:"🔥"},
-            ].map((c,i) => (
-              <div key={i} style={{display:"flex",alignItems:"center",gap:10,marginBottom:i<2?10:0}}>
-                <div style={{fontSize:18,flexShrink:0,opacity:c.passed?1:0.5}}>{c.ic}</div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:"flex",justifyContent:"space-between",fontSize:11,fontWeight:700,marginBottom:4}}>
-                    <span style={{color:c.passed?C.acc:C.ts,letterSpacing:0.3}}>{c.label}</span>
-                    <span style={{color:c.passed?C.acc:C.tm}} className="num">{c.done}/{c.req}</span>
-                  </div>
-                  <div style={{height:5,background:"rgba(0,0,0,0.4)",borderRadius:R.full,overflow:"hidden"}}>
-                    <div style={{
-                      height:"100%",
-                      width:`${Math.min(100,(c.done/c.req)*100)}%`,
-                      background: c.passed ? C.gradAcc : "rgba(200,245,58,0.3)",
-                      borderRadius:R.full,
-                      transition:`width ${T.slow} ${E.out}`,
-                      boxShadow: c.passed ? "0 0 8px rgba(200,245,58,0.5)" : "none",
-                    }}/>
-                  </div>
+              {ic:"💪",label:"Тренування",done:bp.workouts_done||0,req:bp.workouts_required||7,passed:bp.workouts_passed},
+              {ic:"✓", label:"Чекіни",    done:bp.checkins_done||0, req:7,                    passed:bp.checkins_passed},
+              {ic:"📱",label:"Активність",done:bp.days_active||0,   req:7,                    passed:bp.activity_passed},
+            ].map((c,i)=>(
+              <div key={i} style={{flex:1,background:C.s2,borderRadius:R.md,padding:"6px 8px",textAlign:"center"}}>
+                <div style={{fontSize:12,fontWeight:800,color:c.passed?C.acc:C.tm}} className="num">{c.ic} {c.done}/{c.req}</div>
+                <div style={{height:3,background:"rgba(0,0,0,0.4)",borderRadius:R.full,marginTop:5,overflow:"hidden"}}>
+                  <div style={{height:"100%",borderRadius:R.full,width:`${Math.min(100,Math.round((c.done/c.req)*100))}%`,background:c.passed?C.gradAcc:"rgba(200,245,58,0.3)",transition:`width ${T.slow} ${E.out}`}}/>
                 </div>
-                <div style={{fontSize:14,fontWeight:900,color:c.passed?C.acc:C.td,flexShrink:0}}>{c.passed?"✓":""}</div>
+                <div style={{fontSize:9,color:c.passed?C.acc:C.ts,fontWeight:700,marginTop:3,letterSpacing:.3,textTransform:"uppercase"}}>{c.label}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Expanded — conditions + rewards */}
+        {bossOpen && (
+          <div style={{padding:"12px 14px",borderTop:`1px solid ${C.bc}`}}>
+            <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:.7,textTransform:"uppercase",marginBottom:8}}>Умови</div>
+            {[
+              ["💪","Виконай усі тренування за тиждень (за планом)"],
+              ["✓", "Зроби чекін кожен день (7/7)"],
+              ["📱","Відкривай додаток щодня (7/7)"],
+            ].map(([ic,txt],i)=>(
+              <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:i<2?7:0}}>
+                <span style={{fontSize:14,flexShrink:0,lineHeight:1.45}}>{ic}</span>
+                <span style={{fontSize:13,color:C.ts,lineHeight:1.45}}>{txt}</span>
               </div>
             ))}
 
-            {bossProgress?.total_bosses_passed > 0 && (
-              <div style={{marginTop:14,paddingTop:12,borderTop:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                <div style={{fontSize:12,color:"rgba(255,255,255,0.6)",fontWeight:600}}>Всього пройдено</div>
-                <div style={{fontSize:18,fontWeight:900,color:C.tm,letterSpacing:-0.4}} className="num">
-                  <AnimatedNum value={bossProgress.total_bosses_passed||0}/> 🏆
-                </div>
+            <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:.7,textTransform:"uppercase",marginTop:14,marginBottom:8}}>Нагороди</div>
+            {[
+              [C.ts,      "Start · Premium","+5€ на наступну оплату · 1 безкоштовний рецепт"],
+              ["#a78bfa","VIP",             "Персональна сесія з тренером"],
+            ].map(([clr,plan,reward],i)=>(
+              <div key={i} style={{background:C.s2,borderRadius:R.md,padding:"8px 10px",marginBottom:i===0?6:0}}>
+                <div style={{fontSize:10,fontWeight:700,color:clr,letterSpacing:.5,textTransform:"uppercase",marginBottom:2}}>{plan}</div>
+                <div style={{fontSize:12,fontWeight:700,color:C.tm}}>{reward}</div>
+              </div>
+            ))}
+
+            {(bossProgress?.total_bosses_passed||0)>0 && (
+              <div style={{marginTop:12,paddingTop:10,borderTop:`1px solid ${C.bc}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div style={{fontSize:12,color:C.ts,fontWeight:600}}>Всього пройдено</div>
+                <div style={{fontSize:16,fontWeight:900,color:C.tm}} className="num"><AnimatedNum value={bossProgress.total_bosses_passed}/> 🏆</div>
               </div>
             )}
           </div>
-        </Card>
-      )}
+        )}
+      </div>
 
       {/* Leaderboard list */}
       {lb.length === 0 ? (
