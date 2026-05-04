@@ -113,6 +113,9 @@ const G = () => (
     @keyframes drawPath{from{stroke-dashoffset:1000;}to{stroke-dashoffset:0;}}
     @keyframes pulseDot{0%,100%{opacity:.3;transform:scale(.8);}50%{opacity:1;transform:scale(1.2);}}
     @keyframes slideInRight{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+    @keyframes letterReveal{from{opacity:0;filter:blur(8px);transform:translateY(6px);}to{opacity:1;filter:blur(0);transform:translateY(0);}}
+    @keyframes titlePulse{0%{transform:scale(1);}50%{transform:scale(1.04);}100%{transform:scale(1);}}
+    @keyframes lineGrow{from{transform:scaleX(0);}to{transform:scaleX(1);}}
 
     /* — LIVING APP animations — */
     @keyframes meshShift{
@@ -5301,7 +5304,22 @@ export default function FitCoreApp() {
         <img src="/photo3.jpg" alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 20%"}}/>
         <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(8,8,8,.4) 0%,rgba(8,8,8,.75) 50%,rgba(8,8,8,.97) 100%)"}}/>
         <div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",alignItems:"center",gap:24}}>
-          <div style={{fontSize:42,fontWeight:900,color:C.tm,letterSpacing:-2,textAlign:"center",lineHeight:1}}>FITCORE</div>
+          <div style={{animation:"titlePulse 400ms ease-out 950ms both",display:"inline-block"}}>
+            <div style={{display:"flex",justifyContent:"center"}}>
+              {"FITCORE".split("").map((ch,i)=>(
+                <span key={i} style={{
+                  display:"inline-block",
+                  fontSize:42,fontWeight:900,color:C.tm,letterSpacing:-2,lineHeight:1,
+                  animation:`letterReveal 380ms cubic-bezier(0.16,1,0.3,1) ${i*80}ms both`,
+                }}>{ch}</span>
+              ))}
+            </div>
+            <div style={{
+              height:2,background:C.acc,borderRadius:1,marginTop:8,
+              transformOrigin:"left center",
+              animation:"lineGrow 600ms cubic-bezier(0.16,1,0.3,1) 840ms both",
+            }}/>
+          </div>
           <div style={{fontSize:14,color:"rgba(255,255,255,.4)",letterSpacing:2,textTransform:"uppercase"}}>AI Trainer by Matias</div>
           <DumbbellLoader/>
         </div>
