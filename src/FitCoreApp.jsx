@@ -5449,7 +5449,7 @@ export default function FitCoreApp() {
   return(
     <>
       <G/>
-      <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",position:"relative",overflow:"hidden"}}>
+      <div style={{maxWidth:430,margin:"0 auto",height:"100vh",background:C.bg,display:"flex",flexDirection:"column",position:"relative",overflow:"hidden"}}>
         {/* Глобальний living background — за всім додатком */}
         <LivingBackground intensity={0.7}/>
         <FloatingParticles count={10}/>
