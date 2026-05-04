@@ -487,7 +487,7 @@ const GBtn = ({children,onClick,style={}}) => (
 );
 
 const Scr = ({children,style={}}) => (
-  <div className="fi" style={{flex:1,overflowY:"auto",padding:"12px 16px 20px",display:"flex",flexDirection:"column",gap:10,...style}}>{children}</div>
+  <div className="fi" style={{flex:1,overflowY:"auto",padding:"12px 16px 70px",display:"flex",flexDirection:"column",gap:10,...style}}>{children}</div>
 );
 
 const TNav = ({title,onBack,rightEl}) => (
@@ -534,11 +534,11 @@ const BNav = ({active,onChange,isAdmin}) => {
   };
   return (
     <div style={{
-      display:"flex",borderTop:`1px solid ${C.bc}`,flexShrink:0,
+      display:"flex",borderTop:`1px solid ${C.bc}`,
       background:"rgba(10,10,10,0.6)",
       backdropFilter:"blur(22px) saturate(140%)",WebkitBackdropFilter:"blur(22px) saturate(140%)",
       paddingBottom:"env(safe-area-inset-bottom,0px)",
-      position:"relative",zIndex:5,
+      position:"fixed",bottom:0,left:0,right:0,zIndex:100,
     }}>
       {tabs.map(t=>{
         const isAct=active===t.id;
@@ -5449,7 +5449,7 @@ export default function FitCoreApp() {
   return(
     <>
       <G/>
-      <div style={{maxWidth:430,margin:"0 auto",height:"100vh",background:C.bg,display:"flex",flexDirection:"column",position:"relative",overflow:"hidden"}}>
+      <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",position:"relative",overflow:"hidden"}}>
         {/* Глобальний living background — за всім додатком */}
         <LivingBackground intensity={0.7}/>
         <FloatingParticles count={10}/>
