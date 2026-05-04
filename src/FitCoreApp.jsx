@@ -487,7 +487,7 @@ const GBtn = ({children,onClick,style={}}) => (
 );
 
 const Scr = ({children,style={}}) => (
-  <div className="fi" style={{flex:1,overflowY:"auto",padding:"12px 16px 80px",display:"flex",flexDirection:"column",gap:10,...style}}>{children}</div>
+  <div className="fi" style={{flex:1,overflowY:"auto",padding:"12px 16px 110px",display:"flex",flexDirection:"column",gap:10,...style}}>{children}</div>
 );
 
 const TNav = ({title,onBack,rightEl}) => (
@@ -2266,7 +2266,7 @@ const AIChat = ({userId,clientData}) => {
       </div>
 
       {/* Input */}
-      <div style={{padding:"10px 14px 14px",borderTop:`1px solid ${C.bc}`,display:"flex",gap:8,background:C.bg,position:"fixed",bottom:"calc(60px + env(safe-area-inset-bottom, 0px))",left:0,right:0,zIndex:99}}>
+      <div style={{padding:"10px 14px 14px",borderTop:`1px solid ${C.bc}`,display:"flex",gap:8,background:C.bg,position:"fixed",bottom:"calc(65px + env(safe-area-inset-bottom, 0px))",left:0,right:0,zIndex:99}}>
         <input
           value={input}
           onChange={e=>setInput(e.target.value)}
@@ -3449,7 +3449,7 @@ const TrainPlan = ({userId}) => {
           {gen?"...":"Оновити"}
         </button>
       </div>
-      <div style={{flex:1,overflowY:"auto",padding:"12px 16px 20px",display:"flex",flexDirection:"column",gap:10}}>
+      <div style={{flex:1,overflowY:"auto",padding:"12px 16px 110px",display:"flex",flexDirection:"column",gap:10}}>
         <ProgressionSuggestion userId={userId} onUpdate={load}/>
         {days.length>0?days.map((d,i)=>{
           const hasExercises = (d.exercises||[]).length>0;
@@ -4117,7 +4117,7 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
           </div>
         </div>
       </div>
-      <div style={{flex:1,overflowY:"auto",padding:"16px 16px 20px",display:"flex",flexDirection:"column",gap:SP[3]}}>
+      <div style={{flex:1,overflowY:"auto",padding:"16px 16px 120px",display:"flex",flexDirection:"column",gap:SP[3]}}>
         <Card variant="elevated" padding={"14px 16px"} style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div>
             <SectionLabel style={{marginBottom:2}}>Доступ</SectionLabel>
