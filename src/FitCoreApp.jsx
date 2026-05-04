@@ -487,7 +487,7 @@ const GBtn = ({children,onClick,style={}}) => (
 );
 
 const Scr = ({children,style={}}) => (
-  <div className="fi" style={{flex:1,overflowY:"auto",padding:"12px 16px 70px",display:"flex",flexDirection:"column",gap:10,...style}}>{children}</div>
+  <div className="fi" style={{flex:1,overflowY:"auto",padding:"12px 16px 80px",display:"flex",flexDirection:"column",gap:10,...style}}>{children}</div>
 );
 
 const TNav = ({title,onBack,rightEl}) => (
@@ -2230,7 +2230,7 @@ const AIChat = ({userId,clientData}) => {
       )}
 
       {/* Messages */}
-      <div ref={scrollRef} className="fi" style={{flex:1,overflowY:"auto",padding:"14px 14px 6px",display:"flex",flexDirection:"column",gap:8}}>
+      <div ref={scrollRef} className="fi" style={{flex:1,overflowY:"auto",padding:"14px 14px 140px",display:"flex",flexDirection:"column",gap:8}}>
         {loading && <Spin/>}
         {isEmpty && (
           <Card variant="elevated" padding={20} style={{textAlign:"center"}}>
@@ -2266,7 +2266,7 @@ const AIChat = ({userId,clientData}) => {
       </div>
 
       {/* Input */}
-      <div style={{padding:"10px 14px 14px",borderTop:`1px solid ${C.bc}`,display:"flex",gap:8,background:C.bg,flexShrink:0}}>
+      <div style={{padding:"10px 14px 14px",borderTop:`1px solid ${C.bc}`,display:"flex",gap:8,background:C.bg,position:"fixed",bottom:"calc(60px + env(safe-area-inset-bottom, 0px))",left:0,right:0,zIndex:99}}>
         <input
           value={input}
           onChange={e=>setInput(e.target.value)}
@@ -3251,7 +3251,7 @@ const WorkoutScreen = ({userId, day, weekNumber, onClose}) => {
       </div>
 
       {/* Body — список вправ */}
-      <div style={{flex:1,overflowY:"auto",padding:"12px 16px 24px",display:"flex",flexDirection:"column",gap:SP[2]}}>
+      <div style={{flex:1,overflowY:"auto",padding:"12px 16px 80px",display:"flex",flexDirection:"column",gap:SP[2]}}>
         {exercises.map((ex, idx) => {
           const prev = lastWeights[ex.name];
           const isSaved = ex.saved && !ex.skipped;
