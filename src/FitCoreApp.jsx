@@ -2447,6 +2447,209 @@ const Recipes = ({userId,clientData}) => {
 };
 
 // ═══════════════════════════════════════════════════════════════
+// КБЖУ КАЛЬКУЛЯТОР
+// ═══════════════════════════════════════════════════════════════
+const MACRO_LEVELS = [
+  {id:"sedentary",   label:"Сидячий",        desc:"Без тренувань, офісна робота",   mult:1.2},
+  {id:"light",       label:"Легкий",          desc:"1–2 тренування на тиждень",      mult:1.375},
+  {id:"moderate",    label:"Помірний",        desc:"3–4 тренування на тиждень",      mult:1.55},
+  {id:"active",      label:"Активний",        desc:"5–6 тренувань на тиждень",       mult:1.725},
+  {id:"very_active", label:"Дуже активний",   desc:"Щодня або двічі на день",        mult:1.9},
+];
+const MACRO_GOALS = [
+  {id:"lose_weight", label:"📉 Схуднення",  delta:-400},
+  {id:"maintain",    label:"⚖️ Підтримка",   delta:0},
+  {id:"gain_muscle", label:"💪 Набір маси",  delta:+250},
+];
+
+const MacrosCalculator = ({userId, questionnaire, onBack}) => {
+  const initActivity = () => {
+    if (questionnaire?.activity_level) return questionnaire.activity_level;
+    const wpw = Number(questionnaire?.workouts_pw || 0);
+    if (wpw === 0) return "sedentary";
+    if (wpw <= 2) return "light";
+    if (wpw <= 4) return "moderate";
+    return "active";
+  };
+  const initGoal = () => {
+    const g = questionnaire?.goal;
+    return (g === "lose_weight" || g === "gain_muscle") ? g : "maintain";
+  };
+
+  const [weight,   setWeight]   = useState(String(questionnaire?.weight_kg  || ""));
+  const [height,   setHeight]   = useState(String(questionnaire?.height_cm  || ""));
+  const [age,      setAge]      = useState(String(questionnaire?.age        || ""));
+  const [gender,   setGender]   = useState(questionnaire?.gender || "male");
+  const [activity, setActivity] = useState(initActivity);
+  const [goal,     setGoal]     = useState(initGoal);
+  const [saving,   setSaving]   = useState(false);
+  const [saved,    setSaved]    = useState(false);
+
+  const calc = useMemo(() => {
+    const w = parseFloat(weight), h = parseFloat(height), a = parseInt(age);
+    if (!w || !h || !a || w < 30 || h < 100 || a < 10) return null;
+    const bmr = gender === "female"
+      ? 10*w + 6.25*h - 5*a - 161
+      : 10*w + 6.25*h - 5*a + 5;
+    const mult = MACRO_LEVELS.find(l => l.id === activity)?.mult || 1.55;
+    const tdee = Math.round(bmr * mult);
+    const delta = MACRO_GOALS.find(g => g.id === goal)?.delta || 0;
+    const calories = Math.max(1200, tdee + delta);
+    const protein = goal === "lose_weight" ? Math.round(w*2.3) : goal === "gain_muscle" ? Math.round(w*2.0) : Math.round(w*1.8);
+    const fat = Math.round(w * 0.9);
+    const carbs = Math.max(50, Math.round((calories - protein*4 - fat*9) / 4));
+    return {calories, protein, fat, carbs, tdee, bmr: Math.round(bmr)};
+  }, [weight, height, age, gender, activity, goal]);
+
+  const handleSave = async () => {
+    if (!calc) return;
+    setSaving(true);
+    try {
+      await apiPost(`/api/client/${userId}/macros`, {
+        activity_level: activity,
+        calories_tdee:  calc.calories,
+        protein_g:      calc.protein,
+        fat_g:          calc.fat,
+        carbs_g:        calc.carbs,
+      });
+      haptic("success");
+      setSaved(true);
+    } catch { haptic("error"); }
+    setSaving(false);
+  };
+
+  const touch = () => setSaved(false);
+  const inp = {width:"100%",background:C.s2,border:`1px solid ${C.bc}`,borderRadius:R.md,padding:"13px 8px",color:C.tm,fontSize:17,fontWeight:800,textAlign:"center",outline:"none",boxSizing:"border-box"};
+
+  return (
+    <Scr>
+      <button onClick={()=>{haptic("selection");onBack();}} style={{background:"transparent",border:"none",color:C.acc,fontSize:14,fontWeight:700,padding:"4px 0",cursor:"pointer",letterSpacing:-0.1,alignSelf:"flex-start"}}>← Назад</button>
+
+      <div>
+        <SectionLabel accent>Персональний розрахунок</SectionLabel>
+        <H level={1}>КБЖУ калькулятор</H>
+        <div style={{fontSize:13,color:C.ts,marginTop:6,lineHeight:1.55}}>Формула Mifflin-St Jeor. Дані з анкети підставлені автоматично.</div>
+      </div>
+
+      {/* Стать */}
+      <Card variant="elevated">
+        <SectionLabel style={{marginBottom:SP[2]}}>Стать</SectionLabel>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          {[{id:"male",l:"♂ Чоловік"},{id:"female",l:"♀ Жінка"}].map(o => {
+            const on = gender === o.id;
+            return (
+              <button key={o.id} onClick={()=>{haptic("selection");setGender(o.id);touch();}}
+                style={{background:on?C.gradAcc:C.s2,color:on?"#0a0a0a":C.tm,border:on?"none":`1px solid ${C.bc}`,borderRadius:R.md,padding:"13px 0",fontSize:14,fontWeight:800,cursor:"pointer",transition:`all ${T.base} ${E.out}`,boxShadow:on?SH.glow:"none"}}>{o.l}</button>
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* Параметри тіла */}
+      <Card variant="elevated">
+        <SectionLabel style={{marginBottom:SP[2]}}>Параметри тіла</SectionLabel>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+          {[
+            {label:"Вага (кг)",  val:weight, set:setWeight, ph:"82",  mode:"decimal"},
+            {label:"Зріст (см)", val:height, set:setHeight, ph:"178", mode:"numeric"},
+            {label:"Вік",        val:age,    set:setAge,    ph:"27",  mode:"numeric"},
+          ].map(f => (
+            <div key={f.label}>
+              <div style={{fontSize:10,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:0.4,marginBottom:5,textAlign:"center"}}>{f.label}</div>
+              <input type="number" inputMode={f.mode} value={f.val} placeholder={f.ph}
+                onChange={e=>{f.set(e.target.value);touch();}} style={inp}/>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Рівень активності */}
+      <Card variant="elevated">
+        <SectionLabel style={{marginBottom:SP[2]}}>Рівень активності</SectionLabel>
+        <div style={{display:"flex",flexDirection:"column",gap:7}}>
+          {MACRO_LEVELS.map(l => {
+            const on = activity === l.id;
+            return (
+              <button key={l.id} onClick={()=>{haptic("selection");setActivity(l.id);touch();}}
+                style={{background:on?C.gradAccSubtle:C.s2,border:`1.5px solid ${on?"rgba(200,245,58,0.4)":C.bc}`,borderRadius:R.md,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",transition:`all ${T.base} ${E.out}`}}>
+                <div style={{textAlign:"left"}}>
+                  <div style={{fontSize:13,fontWeight:800,color:on?C.acc:C.tm,letterSpacing:-0.1}}>{l.label}</div>
+                  <div style={{fontSize:11,color:C.ts,marginTop:1}}>{l.desc}</div>
+                </div>
+                <div style={{fontSize:12,color:on?C.acc:C.td,fontWeight:800,background:on?C.accDim:C.s3,padding:"3px 8px",borderRadius:R.sm}}>×{l.mult}</div>
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* Ціль */}
+      <Card variant="elevated">
+        <SectionLabel style={{marginBottom:SP[2]}}>Ціль</SectionLabel>
+        <div style={{display:"flex",flexDirection:"column",gap:7}}>
+          {MACRO_GOALS.map(g => {
+            const on = goal === g.id;
+            return (
+              <button key={g.id} onClick={()=>{haptic("selection");setGoal(g.id);touch();}}
+                style={{background:on?C.gradAcc:C.s2,color:on?"#0a0a0a":C.tm,border:on?"none":`1px solid ${C.bc}`,borderRadius:R.md,padding:"14px 16px",fontSize:14,fontWeight:800,textAlign:"left",cursor:"pointer",transition:`all ${T.base} ${E.out}`,boxShadow:on?SH.glow:"none"}}>{g.label}</button>
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* Результат */}
+      {calc ? (
+        <Card variant="accent" glow style={{overflow:"hidden",position:"relative"}}>
+          <div style={{position:"absolute",right:-20,top:-20,width:110,height:110,borderRadius:"50%",background:C.acc,opacity:0.05,pointerEvents:"none"}}/>
+          <SectionLabel accent style={{marginBottom:SP[3]}}>Твій результат</SectionLabel>
+          <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:SP[4]}}>
+            <span style={{fontSize:52,fontWeight:900,color:C.tm,letterSpacing:-2,lineHeight:1}}><AnimatedNum value={calc.calories}/></span>
+            <span style={{fontSize:16,color:C.ts}}>ккал / день</span>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:SP[3]}}>
+            {[
+              {l:"Білок",      v:calc.protein, c:C.acc},
+              {l:"Жири",       v:calc.fat,     c:C.amber},
+              {l:"Вуглеводи",  v:calc.carbs,   c:C.blue},
+            ].map(m => (
+              <div key={m.l} style={{background:"rgba(0,0,0,0.25)",borderRadius:R.md,padding:"12px 8px",textAlign:"center"}}>
+                <div style={{fontSize:10,color:C.ts,textTransform:"uppercase",letterSpacing:0.5,fontWeight:700,marginBottom:4}}>{m.l}</div>
+                <div style={{fontSize:24,fontWeight:900,color:m.c,lineHeight:1}}><AnimatedNum value={m.v}/></div>
+                <div style={{fontSize:11,color:C.td,marginTop:2}}>г</div>
+              </div>
+            ))}
+          </div>
+          <div style={{padding:"10px 12px",background:"rgba(0,0,0,0.2)",borderRadius:R.md,fontSize:12,color:C.ts,lineHeight:1.5}}>
+            {`BMR: ${calc.bmr} ккал · TDEE: ${calc.tdee} ккал`}
+            {goal==="lose_weight" && " · −400 ккал дефіцит"}
+            {goal==="gain_muscle" && " · +250 ккал профіцит"}
+          </div>
+        </Card>
+      ) : (
+        <Card variant="outline" style={{textAlign:"center",padding:"24px 16px"}}>
+          <div style={{fontSize:32,marginBottom:8}}>🧮</div>
+          <div style={{fontSize:13,color:C.ts}}>Заповни параметри вище щоб побачити результат</div>
+        </Card>
+      )}
+
+      {calc && (
+        saved ? (
+          <Card variant="elevated" style={{textAlign:"center",padding:"18px 16px",border:`1px solid rgba(200,245,58,0.3)`}}>
+            <div style={{fontSize:28,marginBottom:6}}>✅</div>
+            <div style={{fontSize:15,fontWeight:800,color:C.acc}}>КБЖУ збережено!</div>
+            <div style={{fontSize:12,color:C.ts,marginTop:4,lineHeight:1.5}}>Рецепти тепер генеруватимуться під твої показники</div>
+          </Card>
+        ) : (
+          <Btn variant="primary" size="lg" loading={saving} onClick={handleSave} hapticKind="success">
+            💾 Зберегти КБЖУ
+          </Btn>
+        )
+      )}
+    </Scr>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
 // КАЛЕНДАР ТРЕНУВАНЬ
 // ═══════════════════════════════════════════════════════════════
 const TrainingSchedule = ({userId}) => {
@@ -2552,6 +2755,7 @@ const MoreScreen = ({clientData, onNav}) => {
     {id:"photos", icon:"📸", title:"Прогрес у фото", desc:"Роби фото щотижня і бачь реальну різницю", locked:false},
     {id:"schedule", icon:"📅", title:"Календар тренувань", desc:"Обери дні + нагадування за 5 годин", locked:false},
     {id:"progress", icon:"📊", title:"Чекіни і прогрес", desc:"Повна історія твоїх показників", locked:false},
+    {id:"macros", icon:"🧮", title:"КБЖУ калькулятор", desc:"Розрахуй персональну норму калорій і макросів", locked:false},
     {
       id:"recipes",
       icon:"🍽",
@@ -5107,7 +5311,7 @@ export default function FitCoreApp() {
 
   const isAdminMode=screen==="admin";
   const showNav=["client","admin"].includes(screen)&&!checkinMode&&!["expired","trial_expired"].includes(clientData?.status||"")&&!["welcome","onboarding","onboarding_success","pending_approval","pending_payment"].includes(screen);
-  const titles={ranking: "Рейтинг", plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",menu:"Тарифи і меню",supplements:"БАДи",profile:"Профіль",aichat:"Чат з Матіасом",more:"Додатково",photos:"Прогрес у фото",recipes:"Рецепти",schedule:"Календар",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування",chat:"Чат з клієнтами"};
+  const titles={ranking: "Рейтинг", plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",menu:"Тарифи і меню",supplements:"БАДи",profile:"Профіль",aichat:"Чат з Матіасом",more:"Додатково",photos:"Прогрес у фото",recipes:"Рецепти",schedule:"Календар",macros:"КБЖУ калькулятор",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування",chat:"Чат з клієнтами"};
   const topTitle=checkinMode?"Чекін":isAdminMode?(selClient?"Профіль клієнта":titles[adminTab]):titles[clientTab];
   const showTopNav=["client","admin"].includes(screen)&&clientTab!=="profile"&&!(isAdminMode&&adminTab==="dashboard")&&!["expired","trial_expired"].includes(clientData?.status||"")&&!["welcome","onboarding","onboarding_success","pending_approval","pending_payment"].includes(screen);
 
@@ -5213,6 +5417,7 @@ export default function FitCoreApp() {
       if(clientTab==="photos")return <ProgressPhotos userId={userId}/>;
       if(clientTab==="recipes")return <Recipes userId={userId} clientData={clientData}/>;
       if(clientTab==="schedule")return <TrainingSchedule userId={userId}/>;
+      if(clientTab==="macros")return <MacrosCalculator userId={userId} questionnaire={questionnaire} onBack={()=>setClientTab("more")}/>;
       if(clientTab==="more")return <MoreScreen clientData={clientData} onNav={setClientTab}/>;
       if(clientTab==="progress")return <Progress userId={userId}/>;
       if(clientTab==="menu")return <MenuScreen plans={plans} payLinks={payLinks} onSelectPlan={(p,m)=>{setSelPlan(p);setSelMonths(m||1);setScreen("payment");}} clientPlan={clientData?.plan} onShowReviews={()=>setClientTab("reviews")}/>;
