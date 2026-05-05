@@ -740,13 +740,11 @@ const MenuScreen = ({plans,payLinks,onSelectPlan,clientPlan,onShowReviews}) => {
               </div>
             </>}
 
-            {!isMine&&(
-              <div style={{marginTop:18}}>
-                <Btn variant={plan.hot?"primary":"secondary"} size="lg" onClick={()=>onSelectPlan(k,months)} hapticKind="medium">
-                  {clientPlan?"Перейти на "+plan.name:"Обрати "+plan.name}
-                </Btn>
-              </div>
-            )}
+            <div style={{marginTop:18}}>
+              <Btn variant={plan.hot?"primary":"secondary"} size="lg" onClick={()=>onSelectPlan(k,months)} hapticKind="medium">
+                {isMine ? "✓ Поточний план" : "Обрати "+plan.name}
+              </Btn>
+            </div>
           </Card>
         );
       })}
@@ -2828,7 +2826,9 @@ const TrainingSchedule = ({userId}) => {
 const MoreScreen = ({clientData, onNav}) => {
   const isVIP = clientData?.plan === "vip";
   const isTrial = clientData?.status === "trial";
+  const isActive = clientData?.status === "active";
   const items = [
+    ...(isActive ? [{id:"menu", icon:"📦", title:"Змінити або продовжити пакет", desc:"Обери новий тариф або продовж поточний", locked:false}] : []),
     {id:"photos", icon:"📸", title:"Прогрес у фото", desc:"Роби фото щотижня і бачь реальну різницю", locked:false},
     {id:"schedule", icon:"📅", title:"Календар тренувань", desc:"Обери дні + нагадування за 5 годин", locked:false},
     {id:"progress", icon:"📊", title:"Чекіни і прогрес", desc:"Повна історія твоїх показників", locked:false},
