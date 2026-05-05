@@ -689,7 +689,7 @@ const MenuScreen = ({plans,payLinks,onSelectPlan,clientPlan,onShowReviews}) => {
         const perMo=months>1?Math.round(price/months):null;
         const isMine=clientPlan===k;
         return(
-          <Card key={k} variant={plan.hot?"accent":"elevated"} glow={plan.hot} padding={20} style={{position:"relative",overflow:"hidden"}}>
+          <Card key={k} variant={plan.hot?"accent":"elevated"} glow={plan.hot} padding={20} className={plan.hot?"pu":undefined} style={{position:"relative",overflow:"hidden",border:plan.hot?`2px solid ${C.acc}`:undefined}}>
             {/* Top-right badges */}
             <div style={{position:"absolute",top:14,right:14,display:"flex",flexDirection:"column",gap:6,alignItems:"flex-end"}}>
               {plan.hot&&<div style={{fontSize:10,color:"#0a0a0a",background:C.gradAcc,borderRadius:R.full,padding:"4px 12px",fontWeight:900,letterSpacing:0.5,textTransform:"uppercase",boxShadow:SH.sm}}>Популярний</div>}
@@ -4770,13 +4770,20 @@ const AdminClientDetail = ({client,onBack}) => {
   const [gen,setGen]=useState(false);
   const [showMsgModal,setShowMsgModal]=useState(false);
   const [period, setPeriod] = useState("all"); // 7d / 30d / all
+  const [activateMonths, setActivateMonths] = useState(1);
 
   useEffect(()=>{
     setLoad(true);
     apiGet(`/api/admin/client/${client.user_id}?period=${period}`).then(r=>{setDetail(r);setLoad(false);}).catch(()=>setLoad(false));
   },[client.user_id, period]);
 
-  const activate=async plan=>{await apiPost(`/api/admin/client/${client.user_id}/activate`,{plan});setMsg(`✓ Активовано: ${plan.toUpperCase()}`);};
+  const activate=async plan=>{
+    await apiPost(`/api/admin/client/${client.user_id}/activate`,{plan, months: activateMonths});
+    const exp=new Date(); exp.setDate(exp.getDate()+activateMonths*30);
+    const expStr=exp.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const mLabel=activateMonths===1?"місяць":activateMonths<5?"місяці":"місяців";
+    setMsg(`✓ Активовано ${plan.toUpperCase()} на ${activateMonths} ${mLabel} до ${expStr}`);
+  };
   const block=async()=>{
     if(!confirm("Заблокувати клієнта? Він втратить доступ до додатку."))return;
     await apiPost(`/api/admin/client/${client.user_id}/block`,{});
@@ -5045,6 +5052,19 @@ const AdminClientDetail = ({client,onBack}) => {
           {gen&&<div className="sp" style={{width:14,height:14,borderRadius:"50%",border:"2px solid rgba(0,0,0,.2)",borderTopColor:"#0a0a0a"}}/>}
           Згенерувати план
         </button>
+        {/* Duration switcher for activation */}
+        <div style={{gridColumn:"1/-1",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
+          {[1,3,6,12].map(m=>{
+            const on=activateMonths===m;
+            const disc={3:"-15%",6:"-25%",12:"-35%"}[m];
+            return(
+              <button key={m} onClick={()=>setActivateMonths(m)} style={{background:on?C.gradAccSubtle:C.s2,border:`1.5px solid ${on?C.acc:C.bc}`,color:on?C.acc:C.ts,borderRadius:R.md,padding:"10px 4px",fontSize:12,fontWeight:800,cursor:"pointer",position:"relative",textAlign:"center"}}>
+                {m===12?"1 рік":`${m}міс`}
+                {disc&&<span style={{display:"block",fontSize:9,color:on?C.acc:C.td,marginTop:2}}>{disc}</span>}
+              </button>
+            );
+          })}
+        </div>
         {["start","premium","vip"].map(p=>(
           <button key={p} onClick={()=>activate(p)} style={{background:C.s1,color:C.ts,border:`1px solid ${C.bc}`,borderRadius:14,padding:"12px 0",fontSize:13,fontWeight:700}}>Активувати {p.toUpperCase()}</button>
         ))}
@@ -5170,7 +5190,7 @@ const AdminSettings = ({settings,onExitAdmin}) => {
         </div>
       ))}
       <div style={{fontSize:16,fontWeight:700,color:C.tm}}>Тарифи</div>
-      {Object.entries(settings?.plans||{start:{name:"START",price:799},premium:{name:"PREMIUM",price:1699},vip:{name:"VIP",price:3499}}).map(([k,plan])=>(
+      {Object.entries(settings?.plans||{start:{name:"START",price:123},premium:{name:"PREMIUM",price:164},vip:{name:"VIP",price:287}}).map(([k,plan])=>(
         <div key={k} style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div><div style={{fontSize:16,fontWeight:700,color:C.tm}}>{plan.name}</div><div style={{fontSize:13,color:C.ts,marginTop:2}}>Monobank jar</div></div>
           <div style={{fontSize:22,fontWeight:900,color:C.acc}}>{plan.price} <span style={{fontSize:13,color:C.ts,fontWeight:500}}>₴</span></div>
