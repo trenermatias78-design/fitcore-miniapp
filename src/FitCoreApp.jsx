@@ -171,6 +171,31 @@ const G = () => (
       to{opacity:1;transform:translateY(0) scale(1);filter:blur(0);}
     }
 
+    /* — WELCOME SCREEN entrance — */
+    @keyframes ecgDraw{from{stroke-dashoffset:500;}to{stroke-dashoffset:0;}}
+    @keyframes ecgFade{to{opacity:0;}}
+    @keyframes wlFlash{0%{opacity:0;}40%{opacity:0.2;}100%{opacity:0;}}
+    @keyframes wlLogoReveal{
+      0%{opacity:0;transform:scale(0.3);filter:blur(20px);}
+      55%{opacity:1;transform:scale(1.05);filter:blur(0);}
+      75%{transform:scale(0.97);}
+      100%{opacity:1;transform:scale(1);}
+    }
+    @keyframes wlLogoShake{
+      0%{transform:translateX(-3px);}
+      25%{transform:translateX(3px);}
+      50%{transform:translateX(-2px);}
+      75%{transform:translateX(2px);}
+      100%{transform:translateX(0);}
+    }
+    @keyframes wlFeatureIn{
+      0%{opacity:0;transform:translateY(30px);}
+      60%{opacity:1;transform:translateY(-5px);}
+      80%{transform:translateY(2px);}
+      100%{opacity:1;transform:translateY(0);}
+    }
+    @keyframes wlGlowIn{from{opacity:0;}to{opacity:1;}}
+
     /* — utility classes — */
     .glow{animation:glowBreathe 4s ease-in-out infinite;}
     .parallax{animation:parallaxZoom 15s ease-in-out infinite;}
@@ -1470,47 +1495,92 @@ const CinematicLoader = ({onComplete}) => {
 // WELCOME (для нових клієнтів — після відео в боті)
 // ═══════════════════════════════════════════════════════════════
 const WelcomeScreen = ({onStart}) => (
-  <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"space-between",padding:"40px 24px 24px",textAlign:"center",minHeight:"100%",position:"relative",overflow:"hidden"}}>
+  <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"space-between",padding:"40px 24px 24px",textAlign:"center",minHeight:"100%",position:"relative",overflow:"hidden"}}>
     <LivingBackground intensity={1.2}/>
     <FloatingParticles count={20}/>
-    {/* Hero icon з glow + breathing */}
-    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:24,marginTop:20,position:"relative",zIndex:2}}>
-      <div className="si glow" style={{
-        width:120, height:120, borderRadius:R.xl,
-        background:C.gradAcc,
-        display:"flex", alignItems:"center", justifyContent:"center",
-        fontSize:54,
-        position:"relative",
+
+    {/* ── 1. ECG PULSE LINE (0-600ms, fades out at 650ms) ── */}
+    <div style={{position:"absolute",top:"50%",left:0,right:0,transform:"translateY(-50%)",zIndex:3,pointerEvents:"none",animation:"ecgFade 250ms ease-out 650ms forwards"}}>
+      <svg viewBox="0 0 360 60" width="100%" height="60" style={{display:"block",overflow:"visible"}}>
+        <path d="M 0,30 L 100,30 L 108,25 L 113,30 L 118,5 L 122,55 L 126,30 L 134,20 L 145,30 L 360,30"
+          fill="none" stroke={C.acc} strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"
+          style={{strokeDasharray:500,strokeDashoffset:500,opacity:0.25,filter:"blur(6px)",animation:"ecgDraw 600ms cubic-bezier(0.4,0,0.2,1) forwards"}}/>
+        <path d="M 0,30 L 100,30 L 108,25 L 113,30 L 118,5 L 122,55 L 126,30 L 134,20 L 145,30 L 360,30"
+          fill="none" stroke={C.acc} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          style={{strokeDasharray:500,strokeDashoffset:500,animation:"ecgDraw 600ms cubic-bezier(0.4,0,0.2,1) forwards"}}/>
+      </svg>
+    </div>
+
+    {/* ── FLASH OVERLAY (900-1050ms) ── */}
+    <div style={{position:"absolute",inset:0,zIndex:10,pointerEvents:"none",background:C.acc,opacity:0,animation:"wlFlash 150ms ease-out 900ms forwards"}}/>
+
+    {/* ── HERO SECTION ── */}
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:20,marginTop:20,position:"relative",zIndex:2}}>
+      {/* Icon — pops in at 350ms, glow breathes after 2200ms */}
+      <div style={{
+        width:120,height:120,borderRadius:R.xl,background:C.gradAcc,
+        display:"flex",alignItems:"center",justifyContent:"center",fontSize:54,position:"relative",
+        opacity:0,
+        animation:`scaleIn 400ms cubic-bezier(0.34,1.56,0.64,1) 350ms forwards, glowBreathe 4s ease-in-out 2200ms infinite`,
       }}>
         💪
-        {/* Pulse ring */}
         <div className="pu" style={{position:"absolute",inset:-4,borderRadius:R.xl}}/>
       </div>
 
-      {/* Hero text */}
-      <div className="fu" style={{display:"flex",flexDirection:"column",gap:12,animationDelay:"100ms"}}>
-        <SectionLabel accent style={{textAlign:"center",marginBottom:0}}>FITCORE</SectionLabel>
-        <H level={0} style={{textAlign:"center"}}>Привіт.</H>
-        <div style={{fontSize:F.bodyLg.size,color:C.ts,lineHeight:1.6,maxWidth:320,margin:"0 auto"}}>
+      {/* Logo block */}
+      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,position:"relative"}}>
+        {/* Radial glow behind logo — fades in at 1800ms, breathes after 2300ms */}
+        <div style={{
+          position:"absolute",top:"50%",left:"50%",width:240,height:120,borderRadius:"50%",
+          background:`radial-gradient(ellipse, rgba(200,245,58,0.18) 0%, transparent 70%)`,
+          transform:"translate(-50%,-50%)",pointerEvents:"none",zIndex:-1,
+          opacity:0,
+          animation:`wlGlowIn 500ms ease-out 1800ms forwards, glowBreathe 4s ease-in-out 2300ms infinite`,
+        }}/>
+
+        {/* Shake wrapper (900-1100ms) */}
+        <div style={{animation:"wlLogoShake 200ms ease-out 900ms"}}>
+          {/* FitCore logo reveal (400-900ms) */}
+          <div style={{
+            fontSize:44,fontWeight:900,letterSpacing:-2,color:C.tm,lineHeight:1,
+            textShadow:`0 0 30px ${C.acc}, 0 0 60px rgba(200,245,58,0.3)`,
+            opacity:0,
+            animation:"wlLogoReveal 500ms cubic-bezier(0.34,1.56,0.64,1) 400ms forwards",
+          }}>
+            FitCore
+          </div>
+        </div>
+
+        {/* Lime underline draws left→right (900-1200ms) */}
+        <div style={{
+          height:3,borderRadius:R.full,background:C.gradAcc,width:140,
+          transformOrigin:"left center",transform:"scaleX(0)",
+          animation:"lineGrow 300ms cubic-bezier(0.4,0,0.2,1) 900ms forwards",
+          boxShadow:`0 0 12px ${C.acc}, 0 0 24px rgba(200,245,58,0.4)`,
+        }}/>
+
+        {/* Description (1100ms) */}
+        <div style={{fontSize:F.bodyLg.size,color:C.ts,lineHeight:1.6,maxWidth:300,margin:"8px auto 0",
+          opacity:0,animation:"fadeUp 400ms ease-out 1100ms forwards"}}>
           Заповни коротку анкету — і я побудую персональну програму під твої цілі. Це займе 2 хвилини.
         </div>
       </div>
     </div>
 
-    {/* Features list */}
-    <div className="stg" style={{display:"flex",flexDirection:"column",gap:SP[2],margin:"0 auto",width:"100%",maxWidth:340,position:"relative",zIndex:2}}>
+    {/* ── FEATURE CARDS (1100-1340ms, stagger 80ms each) ── */}
+    <div style={{display:"flex",flexDirection:"column",gap:SP[2],margin:"0 auto",width:"100%",maxWidth:340,position:"relative",zIndex:2}}>
       {[
-        {ic:"🎯", t:"Персональний план тренувань", d:"Кожна вправа — під твої цілі"},
-        {ic:"🍽", t:"Харчування під твій КБЖУ",   d:"Підрахунок калорій та макро"},
-        {ic:"🤖", t:"AI-тренер 24/7",              d:"Питай будь-коли — отримай відповідь"},
+        {ic:"🎯",t:"Персональний план тренувань",d:"Кожна вправа — під твої цілі",   dl:1100},
+        {ic:"🍽",t:"Харчування під твій КБЖУ",  d:"Підрахунок калорій та макро",    dl:1180},
+        {ic:"🤖",t:"AI-тренер 24/7",             d:"Питай будь-коли — отримай відповідь",dl:1260},
       ].map((it,i)=>(
-        <Card key={i} variant="elevated" padding={`14px 16px`} style={{display:"flex",alignItems:"center",gap:14,textAlign:"left"}}>
-          <div style={{
-            width:44, height:44, borderRadius:R.md,
-            background:C.gradAccSubtle,
-            display:"flex",alignItems:"center",justifyContent:"center",
-            fontSize:22, flexShrink:0,
-          }}>{it.ic}</div>
+        <Card key={i} variant="elevated" padding="14px 16px"
+          style={{display:"flex",alignItems:"center",gap:14,textAlign:"left",
+            opacity:0,animation:`wlFeatureIn 450ms cubic-bezier(0.34,1.56,0.64,1) ${it.dl}ms forwards`}}>
+          <div style={{width:44,height:44,borderRadius:R.md,background:C.gradAccSubtle,
+            display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>
+            {it.ic}
+          </div>
           <div style={{flex:1}}>
             <div style={{fontSize:14,fontWeight:700,color:C.tm,letterSpacing:-0.1}}>{it.t}</div>
             <div style={{fontSize:12,color:C.ts,marginTop:2}}>{it.d}</div>
@@ -1519,8 +1589,10 @@ const WelcomeScreen = ({onStart}) => (
       ))}
     </div>
 
-    {/* CTA */}
-    <div className="fu" style={{display:"flex",flexDirection:"column",gap:SP[3],animationDelay:"300ms",maxWidth:340,margin:"0 auto",width:"100%",position:"relative",zIndex:2}}>
+    {/* ── CTA BUTTON (1600ms) with pulse glow ── */}
+    <div style={{display:"flex",flexDirection:"column",gap:SP[3],maxWidth:340,margin:"0 auto",
+      width:"100%",position:"relative",zIndex:2,
+      opacity:0,animation:"wlFeatureIn 500ms cubic-bezier(0.34,1.56,0.64,1) 1600ms forwards"}}>
       <Btn variant="primary" size="lg" onClick={onStart} hapticKind="medium">
         Заповнити анкету · 3 дні безкоштовно
       </Btn>
