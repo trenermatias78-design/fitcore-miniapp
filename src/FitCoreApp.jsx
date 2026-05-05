@@ -614,19 +614,19 @@ const Welcome = ({onStart,onLogin}) => (
 // ═══ PLAN SELECT ═══
 const PLANS_STATIC = {
   start:{
-    name:"START", price:799, stars:1450,
+    name:"START", price:123, stars:230,
     desc:"Базовий старт для новачків",
     features:["Шаблонний тренувальний план","Базовий план харчування (КБЖУ)","Трекінг ваги і прогресу","Чекіни без фідбеку"],
     no:["AI персоналізація","Фідбек тренера","БАДи"]
   },
   premium:{
-    name:"PREMIUM", price:1699, stars:3100, hot:true,
+    name:"PREMIUM", price:164, stars:310, hot:true,
     desc:"Персональний підхід від ШІ-тренера",
     features:["Персональний план від Claude AI","Щотижневе оновлення плану","Чекіни 2× на тиждень з AI фідбеком","Індивідуальне харчування з грамами","Відповіді тренера на питання"],
     no:["Прямий зв'язок з тренером","Пропись БАДів"]
   },
   vip:{
-    name:"VIP", price:3499, stars:6350,
+    name:"VIP", price:287, stars:540,
     desc:"Максимальний результат з особистим супроводом",
     features:["Все що в PREMIUM","Прямий зв'язок з тренером особисто","Пропись БАДів під твої цілі","Корекція плану в будь-який момент","Пріоритетна відповідь 24/7"],
     no:[]
@@ -808,8 +808,10 @@ const DUR_FUNNEL = {
   6: "⭐ Найпопулярніший вибір — стабільна трансформація за 6 місяців",
   12: "🔥 Максимальний результат · Безперервний прогрес весь рік · Найбільша знижка",
 };
-function dCalc(base,months){return Math.round(base*months*(1-DUR_DISC[months]/100));}
-function dStars(base,months){return Math.round(base*months*(1-DUR_DISC[months]/100));}
+const PRICES_UAH_TABLE={123:{1:123,3:314,6:554,12:959},164:{1:164,3:418,6:738,12:1279},287:{1:287,3:731,6:1292,12:2238}};
+const PRICES_STARS_TABLE={230:{1:230,3:590,6:1040,12:1800},310:{1:310,3:790,6:1390,12:2400},540:{1:540,3:1370,6:2420,12:4200}};
+function dCalc(base,months){return PRICES_UAH_TABLE[base]?.[months]??Math.round(base*months*(1-DUR_DISC[months]/100));}
+function dStars(base,months){return PRICES_STARS_TABLE[base]?.[months]??Math.round(base*months*(1-DUR_DISC[months]/100));}
 function dSaved(base,months){return Math.round(base*months)-dCalc(base,months);}
 
 const PlanSelect = ({plans,payLinks,onSelect}) => {
