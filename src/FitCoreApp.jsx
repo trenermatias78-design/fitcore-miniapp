@@ -3580,7 +3580,7 @@ const TrainPlan = ({userId}) => {
 };
 
 // ═══ NUTRITION ═══
-const Nutrition = ({userId}) => {
+const Nutrition = ({userId, questionnaire}) => {
   const [data,setData]=useState(null);
   const [loading,setLoad]=useState(true);
   useEffect(()=>{apiGet(`/api/client/${userId}/plan`).then(r=>{setData(r.plan);setLoad(false);}).catch(()=>setLoad(false));},[userId]);
@@ -3589,7 +3589,15 @@ const Nutrition = ({userId}) => {
   let nut=null;
   try{const p=JSON.parse(data.plan_text||"{}");nut=p.nutrition||null;}catch{}
   if(!nut)return <Scr><div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}><div style={{fontSize:14,color:C.tm,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{data.nutrition_text||"Не знайдено"}</div></div></Scr>;
-  const macros=[{l:"Білок",v:`${nut.protein}г`,pct:72,c:C.acc},{l:"Жири",v:`${nut.fat}г`,pct:55,c:C.amber},{l:"Вуглеводи",v:`${nut.carbs}г`,pct:65,c:C.blue}];
+  // Реальні % від КБЖУ-норми: якщо є questionnaire — відносно цілей, інакше — відносно калорій плану
+  const tProt = questionnaire?.protein_g || 0;
+  const tFat  = questionnaire?.fat_g    || 0;
+  const tCarb = questionnaire?.carbs_g  || 0;
+  const totalCal = (nut.protein||0)*4 + (nut.fat||0)*9 + (nut.carbs||0)*4 || 1;
+  const pProt = tProt ? Math.min(100,Math.round((nut.protein||0)/tProt*100)) : Math.round((nut.protein||0)*4/totalCal*100);
+  const pFat  = tFat  ? Math.min(100,Math.round((nut.fat||0)/tFat*100))    : Math.round((nut.fat||0)*9/totalCal*100);
+  const pCarb = tCarb ? Math.min(100,Math.round((nut.carbs||0)/tCarb*100)) : Math.round((nut.carbs||0)*4/totalCal*100);
+  const macros=[{l:"Білок",v:`${nut.protein}г`,pct:pProt,c:C.acc},{l:"Жири",v:`${nut.fat}г`,pct:pFat,c:C.amber},{l:"Вуглеводи",v:`${nut.carbs}г`,pct:pCarb,c:C.blue}];
   return(
     <Scr>
       <div style={{background:C.s1,borderRadius:18,border:`1px solid ${C.bc}`,padding:"16px",position:"relative",overflow:"hidden"}}>
@@ -4153,7 +4161,7 @@ const Progress = ({userId}) => {
 };
 
 // ═══ PROFILE ═══
-const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan,onSupplements,userId}) => {
+const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan,onSupplements,userId,onMacros}) => {
   const planV={start:"green",premium:"blue",vip:"purple",trial:"amber"};
   const [profileTab,setProfileTab]=useState(0);
   const [wallet, setWallet] = useState(null);
@@ -4298,6 +4306,37 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
                 <span style={{fontSize:14,color:C.ts,fontWeight:700}}>×</span>
               </div>
             </Card>
+
+            {/* КБЖУ — full width */}
+            {questionnaire?.calories_tdee > 0 ? (
+              <Card variant="elevated" padding={14} style={{gridColumn:"span 6",display:"flex",alignItems:"center",gap:14}}>
+                <div style={{flex:1}}>
+                  <SectionLabel accent>Мій КБЖУ</SectionLabel>
+                  <div style={{display:"flex",alignItems:"baseline",gap:6,marginTop:4}}>
+                    <span style={{fontSize:22,fontWeight:900,color:C.tm,letterSpacing:-0.6}} className="num">{questionnaire.calories_tdee}</span>
+                    <span style={{fontSize:12,color:C.ts,fontWeight:600}}>ккал / день</span>
+                  </div>
+                  <div style={{display:"flex",gap:8,marginTop:8}}>
+                    {[{l:"Б",v:questionnaire.protein_g,c:C.acc},{l:"Ж",v:questionnaire.fat_g,c:C.amber},{l:"В",v:questionnaire.carbs_g,c:C.blue}].map(m=>(
+                      <div key={m.l} style={{background:C.s2,borderRadius:R.sm,padding:"4px 8px",display:"flex",gap:4,alignItems:"baseline"}}>
+                        <span style={{fontSize:11,color:m.c,fontWeight:800}}>{m.l}</span>
+                        <span style={{fontSize:13,fontWeight:900,color:C.tm}} className="num">{m.v}</span>
+                        <span style={{fontSize:10,color:C.ts}}>г</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {onMacros&&<button onClick={()=>{haptic("selection");onMacros();}} style={{background:C.s2,border:`1px solid ${C.bc}`,borderRadius:R.md,padding:"8px 14px",color:C.ts,fontSize:12,fontWeight:700,flexShrink:0,cursor:"pointer"}}>Змінити</button>}
+              </Card>
+            ) : (
+              <Card variant="elevated" padding={14} style={{gridColumn:"span 6",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+                <div>
+                  <SectionLabel>КБЖУ не розраховано</SectionLabel>
+                  <div style={{fontSize:12,color:C.ts,marginTop:3}}>Розрахуй персональну норму калорій</div>
+                </div>
+                {onMacros&&<button onClick={()=>{haptic("selection");onMacros();}} style={{background:C.gradAcc,border:"none",borderRadius:R.md,padding:"8px 14px",color:"#0a0a0a",fontSize:12,fontWeight:800,flexShrink:0,cursor:"pointer"}}>Розрахувати</button>}
+              </Card>
+            )}
           </div>
         )}
         {profileTab===1&&<ReviewsScreen userId={userId}/>}
@@ -5501,7 +5540,7 @@ export default function FitCoreApp() {
     if(screen==="client"){
       if(checkinMode)return <Checkin userId={userId} onDone={()=>setCheckin(false)}/>;
       if(clientTab==="plan")return <TrainPlan userId={userId}/>;
-      if(clientTab==="nutrition")return <Nutrition userId={userId}/>;
+      if(clientTab==="nutrition")return <Nutrition userId={userId} questionnaire={questionnaire}/>;
       if(clientTab==="aichat")return <AIChat userId={userId} clientData={clientData}/>;
       if(clientTab==="ranking")return <Leaderboard userId={userId}/>;
       if(clientTab==="photos")return <ProgressPhotos userId={userId}/>;
@@ -5514,7 +5553,7 @@ export default function FitCoreApp() {
       if(clientTab==="supplements")return <SupplementsScreen userId={userId} clientPlan={clientData?.plan} isAdmin={isAdmin}/>;
       if(clientTab==="reviews")return <ReviewsScreen userId={userId}/>;
       if(clientTab==="notifications")return <NotificationsScreen userId={userId}/>;
-      if(clientTab==="profile")return <Profile client={clientData} questionnaire={questionnaire} isAdmin={isAdmin} onAdminAccess={()=>setScreen("admin")} onCheckin={()=>setCheckin(true)} onBuyPlan={()=>{setClientTab("menu");}} onSupplements={clientData?.plan==="vip"?()=>setClientTab("supplements"):null} userId={userId}/>;
+      if(clientTab==="profile")return <Profile client={clientData} questionnaire={questionnaire} isAdmin={isAdmin} onAdminAccess={()=>setScreen("admin")} onCheckin={()=>setCheckin(true)} onBuyPlan={()=>{setClientTab("menu");}} onSupplements={clientData?.plan==="vip"?()=>setClientTab("supplements"):null} userId={userId} onMacros={()=>setClientTab("macros")}/>;
     }
   };
 
