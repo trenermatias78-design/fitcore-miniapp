@@ -5467,7 +5467,7 @@ export default function FitCoreApp() {
   const topTitle=checkinMode?"Чекін":isAdminMode?(selClient?"Профіль клієнта":titles[adminTab]):titles[clientTab];
   const showTopNav=["client","admin"].includes(screen)&&clientTab!=="profile"&&!(isAdminMode&&adminTab==="dashboard")&&!["expired","trial_expired"].includes(clientData?.status||"")&&!["welcome","onboarding","onboarding_success","pending_approval","pending_payment"].includes(screen);
 
-  const C_TABS=["plan","nutrition","progress","aichat","ranking","profile","more"];
+  const C_TABS=["plan","nutrition","aichat","ranking","more","profile"];
   const A_TABS=["dashboard","clients","payments"];
   const onTouchStart=e=>{touchX.current=e.touches[0].clientX;touchY.current=e.touches[0].clientY;};
   const onTouchEnd=e=>{
