@@ -5367,6 +5367,7 @@ export default function FitCoreApp() {
   const [clientTab,setClientTab]=useState("plan");const [adminTab,setAdminTab]=useState("dashboard");
   const [selClient,setSelClient]=useState(null);const [selPlan,setSelPlan]=useState(null);const [selMonths,setSelMonths]=useState(1);
   const [checkinMode,setCheckin]=useState(false);
+  const contentRef=useRef(null);const touchX=useRef(0);const touchY=useRef(0);const swiping=useRef(false);
 
   useEffect(()=>{
     // Telegram Mini App — розтягнути на весь екран і вимкнути свайпи які згортають додаток
@@ -5465,6 +5466,44 @@ export default function FitCoreApp() {
   const titles={ranking: "Рейтинг", plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",menu:"Тарифи і меню",supplements:"БАДи",profile:"Профіль",aichat:"Чат з Матіасом",more:"Додатково",photos:"Прогрес у фото",recipes:"Рецепти",schedule:"Календар",macros:"КБЖУ калькулятор",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування",chat:"Чат з клієнтами"};
   const topTitle=checkinMode?"Чекін":isAdminMode?(selClient?"Профіль клієнта":titles[adminTab]):titles[clientTab];
   const showTopNav=["client","admin"].includes(screen)&&clientTab!=="profile"&&!(isAdminMode&&adminTab==="dashboard")&&!["expired","trial_expired"].includes(clientData?.status||"")&&!["welcome","onboarding","onboarding_success","pending_approval","pending_payment"].includes(screen);
+
+  const C_TABS=["plan","nutrition","progress","aichat","ranking","profile","more"];
+  const A_TABS=["dashboard","clients","payments"];
+  const onTouchStart=e=>{touchX.current=e.touches[0].clientX;touchY.current=e.touches[0].clientY;};
+  const onTouchEnd=e=>{
+    if(swiping.current)return;
+    if(screen!=="client"&&screen!=="admin")return;
+    if(checkinMode||selClient)return;
+    const tg=e.target.tagName;
+    if(tg==="INPUT"||tg==="TEXTAREA"||e.target.isContentEditable)return;
+    const dx=e.changedTouches[0].clientX-touchX.current;
+    const dy=e.changedTouches[0].clientY-touchY.current;
+    if(Math.abs(dx)<=50||Math.abs(dx)<=Math.abs(dy)*1.5)return;
+    const dir=dx<0?"left":"right";
+    const tabs=isAdminMode?A_TABS:C_TABS;
+    const cur=isAdminMode?adminTab:clientTab;
+    const i=tabs.indexOf(cur);
+    if(i===-1)return;
+    const ni=dir==="left"?Math.min(i+1,tabs.length-1):Math.max(i-1,0);
+    if(ni===i)return;
+    const nt=tabs[ni];
+    haptic("selection");
+    swiping.current=true;
+    const el=contentRef.current;
+    if(el){el.style.transition="transform 120ms ease-in";el.style.transform=dir==="left"?"translateX(-100%)":"translateX(100%)";}
+    setTimeout(()=>{
+      if(isAdminMode){setAdminTab(nt);setSelClient(null);}else setClientTab(nt);
+      if(el){
+        el.style.transition="none";
+        el.style.transform=dir==="left"?"translateX(100%)":"translateX(-100%)";
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{
+          el.style.transition="transform 130ms ease-out";
+          el.style.transform="translateX(0)";
+          setTimeout(()=>{el.style.transition="";el.style.transform="";swiping.current=false;},140);
+        }));
+      }else swiping.current=false;
+    },125);
+  };
 
   const renderContent=()=>{
     // Експерійовані клієнти — рендеримо ExpiredScreen напряму, не змінюючи screen state
@@ -5592,7 +5631,7 @@ export default function FitCoreApp() {
             rightEl={isAdminMode&&adminTab==="payments"&&!selClient&&<div style={{fontSize:12,background:"rgba(232,168,50,.1)",color:C.amber,border:"1px solid rgba(232,168,50,.3)",borderRadius:20,padding:"4px 12px",fontWeight:700}}>оплати</div>}
           />
         )}
-        <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column",position:"relative",zIndex:2}}>{renderContent()}</div>
+        <div ref={contentRef} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column",position:"relative",zIndex:2}}>{renderContent()}</div>
         {showNav&&<BNav active={isAdminMode?adminTab:clientTab} onChange={id=>{if(isAdminMode){setAdminTab(id);setSelClient(null);}else setClientTab(id);}} isAdmin={isAdminMode}/>}
       </div>
     </>
