@@ -614,7 +614,7 @@ const Welcome = ({onStart,onLogin}) => (
 // ═══ PLAN SELECT ═══
 const PLANS_STATIC = {
   start:{
-    name:"START", price:123, stars:230,
+    name:"START", price:123, stars:250,
     desc:"Базовий старт для новачків",
     features:["Шаблонний тренувальний план","Базовий план харчування (КБЖУ)","Трекінг ваги і прогресу","Чекіни без фідбеку"],
     no:["AI персоналізація","Фідбек тренера","БАДи"]
@@ -807,7 +807,7 @@ const DUR_FUNNEL = {
   12: "🔥 Максимальний результат · Безперервний прогрес весь рік · Найбільша знижка",
 };
 const PRICES_UAH_TABLE={123:{1:123,3:314,6:554,12:959},164:{1:164,3:418,6:738,12:1279},287:{1:287,3:731,6:1292,12:2238}};
-const PRICES_STARS_TABLE={230:{1:230,3:590,6:1040,12:1800},310:{1:310,3:790,6:1390,12:2400},540:{1:540,3:1370,6:2420,12:4200}};
+const PRICES_STARS_TABLE={250:{1:250,3:640,6:1130,12:1950},310:{1:310,3:790,6:1390,12:2400},540:{1:540,3:1370,6:2420,12:4200}};
 function dCalc(base,months){return PRICES_UAH_TABLE[base]?.[months]??Math.round(base*months*(1-DUR_DISC[months]/100));}
 function dStars(base,months){return PRICES_STARS_TABLE[base]?.[months]??Math.round(base*months*(1-DUR_DISC[months]/100));}
 function dSaved(base,months){return Math.round(base*months)-dCalc(base,months);}
