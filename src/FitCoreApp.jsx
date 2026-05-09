@@ -684,7 +684,7 @@ const MenuScreen = ({plans,payLinks,onSelectPlan,clientPlan,onShowReviews}) => {
       {/* Plan cards */}
       {Object.entries(p).map(([k,plan])=>{
         const price=dCalc(plan.price,months);
-        const stars=dStars(plan.stars||1450,months);
+        const stars=dStars(plan.stars||250,months);
         const saved=dSaved(plan.price,months);
         const perMo=months>1?Math.round(price/months):null;
         const isMine=clientPlan===k;
@@ -889,7 +889,7 @@ const PlanSelect = ({plans,payLinks,onSelect}) => {
       {/* Plan cards */}
       {Object.entries(p).map(([k,plan])=>{
         const price=dCalc(plan.price,months);
-        const stars=dStars(plan.stars||1450,months);
+        const stars=dStars(plan.stars||250,months);
         const saved=dSaved(plan.price,months);
         const perMo=months>1?Math.round(price/months):null;
         return(
@@ -932,7 +932,7 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
   const plan=(plans||PLANS_STATIC)[planKey];
   const link=(payLinks||{})[planKey]||"#";
   const totalPrice=dCalc((plan?.price)||0,months);
-  const totalStars=dStars((plan?.stars)||1450,months);
+  const totalStars=dStars((plan?.stars)||250,months);
   const saved=dSaved((plan?.price)||0,months);
   const disc=DUR_DISC[months]||0;
   const [sending,setSending]=useState(false);
@@ -5279,7 +5279,7 @@ const ExpiredScreen = ({client, plans, onSelectPlan}) => {
           {Object.entries(p).map(([key, plan])=>{
             const monthly = plan.price * months;
             const total = dCalc(plan.price, months);
-            const stars = dStars(plan.stars||1450, months);
+            const stars = dStars(plan.stars||250, months);
             const saved = monthly - total;
             const perMonth = months > 1 ? Math.round(total / months) : null;
 
@@ -5418,9 +5418,14 @@ export default function FitCoreApp() {
             setScreen("expired");
           } else if (st === "blocked" && screen !== "blocked") {
             setScreen("blocked");
+          } else if (["active","trial"].includes(st) && ["pending_payment","pending_approval"].includes(screen)) {
+            setScreen("client");
+            setClientTab("plan");
           }
         }
-      } catch {}
+      } catch(e) {
+        console.error("Status check error:", e);
+      }
     }, 60000);
     return () => clearInterval(statusCheckInterval);
   },[]);
