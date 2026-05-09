@@ -2821,6 +2821,98 @@ const TrainingSchedule = ({userId}) => {
 
 
 // ═══════════════════════════════════════════════════════════════
+// РЕФЕРАЛЬНА ПРОГРАМА
+// ═══════════════════════════════════════════════════════════════
+const ReferralScreen = ({userId, onBack}) => {
+  const [data, setData] = React.useState(null);
+  const [copied, setCopied] = React.useState(false);
+
+  React.useEffect(() => {
+    apiGet(`/api/client/${userId}/referral-stats`).then(r => {
+      if(r?.ok) setData(r);
+    }).catch(()=>{});
+  }, [userId]);
+
+  const copyLink = () => {
+    if(!data?.ref_link) return;
+    haptic("light");
+    if(navigator.clipboard) {
+      navigator.clipboard.writeText(data.ref_link).then(()=>{
+        setCopied(true);
+        haptic("success");
+        setTimeout(()=>setCopied(false), 2000);
+      });
+    }
+  };
+
+  return (
+    <Scr>
+      <div style={{display:"flex",flexDirection:"column",gap:SP[3]}}>
+        <Card variant="accent" padding="20px">
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:48,marginBottom:8}}>🎁</div>
+            <H level={2}>Реферальна програма</H>
+            <p style={{...F.body,color:C.ts,marginTop:SP[2],lineHeight:1.5}}>
+              Запроси друга — отримай <span style={{color:C.acc,fontWeight:800}}>50 FitCoins</span>.<br/>
+              Твій друг отримає <span style={{color:C.acc,fontWeight:800}}>25 FitCoins</span> після першої оплати.
+            </p>
+          </div>
+        </Card>
+
+        {data ? (
+          <>
+            <Card variant="elevated" padding="16px">
+              <SectionLabel>Твоє посилання</SectionLabel>
+              <div style={{
+                background:C.s2, borderRadius:R.md, padding:"12px 14px",
+                fontFamily:"monospace", fontSize:12, color:C.tm,
+                wordBreak:"break-all", marginTop:SP[2], marginBottom:SP[3],
+                border:`1px solid ${C.bc}`,
+              }}>
+                {data.ref_link}
+              </div>
+              <Btn variant="primary" size="md" onClick={copyLink} style={{width:"100%"}}>
+                {copied ? "✅ Скопійовано!" : "Скопіювати посилання"}
+              </Btn>
+            </Card>
+
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:SP[2]}}>
+              <Card variant="elevated" padding="16px" style={{textAlign:"center"}}>
+                <div style={{...F.h1,color:C.acc}}>{data.total_referrals}</div>
+                <div style={{...F.caption,color:C.ts,marginTop:4}}>Друзів приєдналось</div>
+              </Card>
+              <Card variant="elevated" padding="16px" style={{textAlign:"center"}}>
+                <div style={{...F.h1,color:C.acc}}>{data.coins_earned}</div>
+                <div style={{...F.caption,color:C.ts,marginTop:4}}>FitCoins зароблено</div>
+              </Card>
+            </div>
+
+            {data.referrals?.length > 0 && (
+              <Card variant="elevated" padding="16px">
+                <SectionLabel>Твої реферали</SectionLabel>
+                <div style={{display:"flex",flexDirection:"column",gap:SP[1],marginTop:SP[2]}}>
+                  {data.referrals.map((r,i)=>(
+                    <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:i<data.referrals.length-1?`1px solid ${C.bc}`:"none"}}>
+                      <span style={{...F.body,color:C.tm}}>{r.name}</span>
+                      <span style={{...F.caption,color:C.ts}}>{r.date}</span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+          </>
+        ) : (
+          <div style={{display:"flex",flexDirection:"column",gap:SP[2]}}>
+            <Skel height={100}/>
+            <Skel height={80}/>
+          </div>
+        )}
+      </div>
+    </Scr>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
 // EЩЕ — хаб додаткових фіч
 // ═══════════════════════════════════════════════════════════════
 const MoreScreen = ({clientData, onNav}) => {
@@ -2829,6 +2921,7 @@ const MoreScreen = ({clientData, onNav}) => {
   const isActive = clientData?.status === "active";
   const items = [
     ...(isActive ? [{id:"menu", icon:"📦", title:"Змінити або продовжити пакет", desc:"Обери новий тариф або продовж поточний", locked:false}] : []),
+    {id:"referral", icon:"🎁", title:"Запроси друга", desc:"Поділись реферальним посиланням — отримай FitCoins", locked:false},
     {id:"photos", icon:"📸", title:"Прогрес у фото", desc:"Роби фото щотижня і бачь реальну різницю", locked:false},
     {id:"schedule", icon:"📅", title:"Календар тренувань", desc:"Обери дні + нагадування за 5 годин", locked:false},
     {id:"progress", icon:"📊", title:"Чекіни і прогрес", desc:"Повна історія твоїх показників", locked:false},
@@ -5468,7 +5561,7 @@ export default function FitCoreApp() {
 
   const isAdminMode=screen==="admin";
   const showNav=["client","admin"].includes(screen)&&!checkinMode&&!["expired","trial_expired"].includes(clientData?.status||"")&&!["welcome","onboarding","onboarding_success","pending_approval","pending_payment"].includes(screen);
-  const titles={ranking: "Рейтинг", plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",menu:"Тарифи і меню",supplements:"БАДи",profile:"Профіль",aichat:"Чат з Матіасом",more:"Додатково",photos:"Прогрес у фото",recipes:"Рецепти",schedule:"Календар",macros:"КБЖУ калькулятор",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування",chat:"Чат з клієнтами"};
+  const titles={ranking: "Рейтинг", plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",menu:"Тарифи і меню",supplements:"БАДи",profile:"Профіль",aichat:"Чат з Матіасом",more:"Додатково",photos:"Прогрес у фото",recipes:"Рецепти",schedule:"Календар",macros:"КБЖУ калькулятор",referral:"Запроси друга",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування",chat:"Чат з клієнтами"};
   const topTitle=checkinMode?"Чекін":isAdminMode?(selClient?"Профіль клієнта":titles[adminTab]):titles[clientTab];
   const showTopNav=["client","admin"].includes(screen)&&clientTab!=="profile"&&!(isAdminMode&&adminTab==="dashboard")&&!["expired","trial_expired"].includes(clientData?.status||"")&&!["welcome","onboarding","onboarding_success","pending_approval","pending_payment"].includes(screen);
 
@@ -5614,6 +5707,7 @@ export default function FitCoreApp() {
       if(clientTab==="schedule")return <TrainingSchedule userId={userId}/>;
       if(clientTab==="macros")return <MacrosCalculator userId={userId} questionnaire={questionnaire} onBack={()=>setClientTab("more")}/>;
       if(clientTab==="more")return <MoreScreen clientData={clientData} onNav={setClientTab}/>;
+      if(clientTab==="referral")return <ReferralScreen userId={userId} onBack={()=>setClientTab("more")}/>;
       if(clientTab==="progress")return <Progress userId={userId}/>;
       if(clientTab==="menu")return <MenuScreen plans={plans} payLinks={payLinks} onSelectPlan={(p,m)=>{setSelPlan(p);setSelMonths(m||1);setScreen("payment");}} clientPlan={clientData?.plan} onShowReviews={()=>setClientTab("reviews")}/>;
       if(clientTab==="supplements")return <SupplementsScreen userId={userId} clientPlan={clientData?.plan} isAdmin={isAdmin}/>;
@@ -5632,7 +5726,7 @@ export default function FitCoreApp() {
         <FloatingParticles count={10}/>
         {showTopNav&&(
           <TNav title={topTitle}
-            onBack={selClient?()=>setSelClient(null):checkinMode?()=>setCheckin(false):isAdminMode?()=>setScreen("client"):undefined}
+            onBack={selClient?()=>setSelClient(null):checkinMode?()=>setCheckin(false):isAdminMode?()=>setScreen("client"):clientTab==="referral"?()=>setClientTab("more"):undefined}
             rightEl={isAdminMode&&adminTab==="payments"&&!selClient&&<div style={{fontSize:12,background:"rgba(232,168,50,.1)",color:C.amber,border:"1px solid rgba(232,168,50,.3)",borderRadius:20,padding:"4px 12px",fontWeight:700}}>оплати</div>}
           />
         )}
