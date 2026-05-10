@@ -212,6 +212,21 @@ const G = () => (
       78%{transform:rotateX(2deg) translateY(-1px) scale(0.99);}
       100%{opacity:1;transform:rotateX(0deg) translateY(0px) scale(1);}
     }
+    @keyframes wlStamp{
+      0%{opacity:0;transform:translateY(-70px) scale(1.25);}
+      60%{opacity:1;transform:translateY(5px) scale(0.97);}
+      78%{transform:translateY(-2px) scale(1.01);}
+      100%{opacity:1;transform:translateY(0) scale(1);}
+    }
+    @keyframes wlDustTL{0%{opacity:1;transform:translate(0,0) scale(1);}100%{opacity:0;transform:translate(-22px,-18px) scale(0);}}
+    @keyframes wlDustTR{0%{opacity:1;transform:translate(0,0) scale(1);}100%{opacity:0;transform:translate(22px,-18px) scale(0);}}
+    @keyframes wlDustBL{0%{opacity:1;transform:translate(0,0) scale(1);}100%{opacity:0;transform:translate(-16px,15px) scale(0);}}
+    @keyframes wlDustBR{0%{opacity:1;transform:translate(0,0) scale(1);}100%{opacity:0;transform:translate(16px,15px) scale(0);}}
+    @keyframes wlInkSmear{
+      0%{transform:scaleX(0);opacity:1;}
+      80%{transform:scaleX(1.06);}
+      100%{transform:scaleX(1);opacity:1;}
+    }
 
     /* — utility classes — */
     .glow{animation:glowBreathe 4s ease-in-out infinite;}
@@ -1579,21 +1594,28 @@ const WelcomeScreen = ({onStart}) => (
 
       {/* Logo block */}
       <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,position:"relative"}}>
-        {/* FitCore logo — rockets from Z-depth at 100ms */}
-        <div style={{
-          fontSize:44,fontWeight:900,letterSpacing:-2,color:C.tm,lineHeight:1,
-          textShadow:`0 0 30px ${C.acc}, 0 0 60px rgba(200,245,58,0.3)`,
-          opacity:0,
-          animation:"wlLogoZ 420ms cubic-bezier(0.2,0,0.3,1) 100ms forwards",
-        }}>
-          FitCore
+        {/* FitCore logo — rubber stamp from above at 80ms */}
+        <div style={{position:"relative",display:"inline-block"}}>
+          <div style={{
+            fontSize:44,fontWeight:900,letterSpacing:-2,color:C.tm,lineHeight:1,
+            textShadow:`0 0 30px ${C.acc}, 0 0 60px rgba(200,245,58,0.3)`,
+            opacity:0,
+            animation:"wlStamp 300ms cubic-bezier(0.2,0,0.3,1) 80ms forwards",
+          }}>
+            FitCore
+          </div>
+          {/* Dust particles scatter at stamp impact (265ms) */}
+          <div style={{position:"absolute",width:7,height:7,borderRadius:"50%",background:C.acc,top:-2,left:-2,opacity:0,animation:"wlDustTL 320ms ease-out 265ms forwards"}}/>
+          <div style={{position:"absolute",width:6,height:6,borderRadius:"50%",background:C.acc,top:-2,right:-2,opacity:0,animation:"wlDustTR 320ms ease-out 265ms forwards"}}/>
+          <div style={{position:"absolute",width:5,height:5,borderRadius:"50%",background:"rgba(200,245,58,0.7)",bottom:0,left:6,opacity:0,animation:"wlDustBL 300ms ease-out 280ms forwards"}}/>
+          <div style={{position:"absolute",width:5,height:5,borderRadius:"50%",background:"rgba(200,245,58,0.6)",bottom:0,right:6,opacity:0,animation:"wlDustBR 300ms ease-out 280ms forwards"}}/>
         </div>
 
-        {/* Lime underline SLAMS in at 800ms */}
+        {/* Lime underline — ink smear at stamp landing (270ms) */}
         <div style={{
           height:3,borderRadius:R.full,background:C.gradAcc,width:140,
           transformOrigin:"left center",transform:"scaleX(0)",
-          animation:"wlLineSlam 120ms cubic-bezier(0.4,0,0.2,1) 800ms forwards",
+          animation:"wlInkSmear 70ms cubic-bezier(0.4,0,0.2,1) 270ms forwards",
           boxShadow:`0 0 16px ${C.acc}, 0 0 32px rgba(200,245,58,0.5)`,
         }}/>
 
