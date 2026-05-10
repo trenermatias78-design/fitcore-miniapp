@@ -937,14 +937,23 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
   const disc=DUR_DISC[months]||0;
   const [sending,setSending]=useState(false);
   const [sent,setSent]=useState(false);
+  const [wallet,setWallet]=useState(null);
+  const [useCoins,setUseCoins]=useState(false);
+
+  useEffect(()=>{
+    if(userId) apiGet(`/api/client/${userId}/wallet`).then(r=>setWallet(r)).catch(()=>{});
+  },[userId]);
+
+  const coinsBalance=Math.floor(wallet?.balance_eur||0);
+  const coinsDiscount=useCoins?Math.min(coinsBalance,totalPrice):0;
+  const finalPrice=totalPrice-coinsDiscount;
 
   const sendScreenshot=async()=>{
     if(!userId)return;
     setSending(true);
     try{
-      await apiPost(`/api/client/${userId}/payment-screenshot`,{plan:planKey,months});
+      await apiPost(`/api/client/${userId}/payment-screenshot`,{plan:planKey,months,coins_applied:coinsDiscount});
       setSent(true);
-      // Не робимо автоматичний перехід — клієнт бачить інструкцію і сам вирішує
     }catch(e){
       alert("Помилка: "+e.message);
     }
@@ -1026,6 +1035,12 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
             <span>Пробний доступ</span>
             <span style={{fontWeight:700}}>3 дні безкоштовно</span>
           </div>
+          {coinsBalance > 0 && (
+            <div style={{display:"flex",justifyContent:"space-between",padding:"4px 0",color:useCoins?C.acc:C.ts,alignItems:"center"}}>
+              <span>💰 FitCoins ({coinsBalance} FC)</span>
+              <span style={{fontWeight:700}}>{useCoins?`−${coinsDiscount.toLocaleString()} ₴`:"не застосовано"}</span>
+            </div>
+          )}
         </div>
 
         <div style={{borderTop:`1px solid ${C.bc}`,marginTop:12,paddingTop:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -1033,9 +1048,36 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
             <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8}}>До сплати</div>
             <div style={{fontSize:11,color:C.td,marginTop:2}}>або {totalStars.toLocaleString()} ⭐</div>
           </div>
-          <div style={{fontSize:32,fontWeight:900,color:C.acc,letterSpacing:-1}}>{totalPrice.toLocaleString()} ₴</div>
+          <div style={{fontSize:32,fontWeight:900,color:C.acc,letterSpacing:-1}}>{finalPrice.toLocaleString()} ₴</div>
         </div>
       </div>
+
+      {/* FitCoins toggle */}
+      {coinsBalance > 0 && (
+        <div onClick={()=>{haptic("selection");setUseCoins(v=>!v);}} style={{
+          background:useCoins?"rgba(200,245,58,0.08)":C.s1,
+          border:`1.5px solid ${useCoins?C.acc:C.bc}`,
+          borderRadius:R.lg,padding:"14px 16px",
+          display:"flex",alignItems:"center",gap:12,cursor:"pointer",
+          transition:`border-color ${T.base}`,
+        }}>
+          <div style={{
+            width:44,height:44,borderRadius:R.md,flexShrink:0,
+            background:useCoins?C.accDim:"rgba(255,255,255,0.04)",
+            display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,
+          }}>💰</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:14,fontWeight:800,color:C.tm}}>
+              Застосувати FitCoins
+              <span style={{fontSize:11,color:C.acc,background:C.accDim,border:`1px solid rgba(200,245,58,0.3)`,padding:"2px 7px",borderRadius:R.full,fontWeight:800,marginLeft:6}}>{coinsBalance} FC</span>
+            </div>
+            <div style={{fontSize:12,color:C.ts,marginTop:2}}>
+              {useCoins?`Знижка −${coinsDiscount.toLocaleString()} ₴ — до оплати ${finalPrice.toLocaleString()} ₴`:`Знижка ${coinsBalance.toLocaleString()} ₴ на цю підписку`}
+            </div>
+          </div>
+          <Tog value={useCoins} onChange={()=>{}}/>
+        </div>
+      )}
 
       {/* Choose method */}
       <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginTop:6}}>Спосіб оплати</div>
@@ -1046,7 +1088,7 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
           <div style={{width:44,height:44,background:"rgba(200,245,58,.1)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:24}}>💳</div>
           <div style={{flex:1}}>
-            <div style={{fontSize:16,fontWeight:800,color:C.tm}}>Monobank · {totalPrice.toLocaleString()} ₴</div>
+            <div style={{fontSize:16,fontWeight:800,color:C.tm}}>Monobank · {finalPrice.toLocaleString()} ₴</div>
             <div style={{fontSize:12,color:C.ts,marginTop:2}}>Оплата через банку MatiasFitness</div>
           </div>
         </div>
@@ -1058,7 +1100,7 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
           }
           if(window.Telegram?.WebApp?.openLink){window.Telegram.WebApp.openLink(link);}
           else{window.open(link,"_blank");}
-        }}>Оплатити {totalPrice.toLocaleString()} ₴</PBtn>
+        }}>Оплатити {finalPrice.toLocaleString()} ₴</PBtn>
         <div style={{fontSize:12,color:C.td,marginTop:10,lineHeight:1.5}}>
           Після оплати — натисни кнопку нижче «Я оплатив», тренер активує доступ протягом 1 години.
         </div>
@@ -4329,31 +4371,35 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
           </div>
         </Card>
 
-        {/* Bosses + Wallet — gamification */}
-        {(totalBosses > 0 || (wallet?.balance_eur || 0) > 0) && (
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:SP[2]}}>
-            <Card variant={totalBosses > 0 ? "accent" : "elevated"} glow={totalBosses > 0} padding={14}>
-              <SectionLabel accent={totalBosses > 0}>Бос. за місяць</SectionLabel>
+        {/* Bosses + FitCoins — gamification */}
+        <div style={{display:"grid",gridTemplateColumns:totalBosses > 0 ? "1fr 1fr" : "1fr",gap:SP[2]}}>
+          {totalBosses > 0 && (
+            <Card variant="accent" glow padding={14}>
+              <SectionLabel accent>Бос. за місяць</SectionLabel>
               <div style={{display:"flex",alignItems:"baseline",gap:6,marginTop:4}}>
-                <span style={{fontSize:30,fontWeight:900,color:totalBosses > 0 ? C.acc : C.td,letterSpacing:-1,lineHeight:1.1}} className="num">
+                <span style={{fontSize:30,fontWeight:900,color:C.acc,letterSpacing:-1,lineHeight:1.1}} className="num">
                   <AnimatedNum value={monthBosses}/>
                 </span>
                 <span style={{fontSize:18}}>🏆</span>
               </div>
               <div style={{fontSize:11,color:C.ts,marginTop:2,fontWeight:600}}>всього: <span className="num">{totalBosses}</span></div>
             </Card>
-            <Card variant={(wallet?.balance_eur||0) > 0 ? "accent" : "elevated"} glow={(wallet?.balance_eur||0) > 0} padding={14}>
-              <SectionLabel accent={(wallet?.balance_eur||0) > 0}>Баланс</SectionLabel>
-              <div style={{display:"flex",alignItems:"baseline",gap:3,marginTop:4}}>
-                <span style={{fontSize:30,fontWeight:900,color:(wallet?.balance_eur||0) > 0 ? C.acc : C.td,letterSpacing:-1,lineHeight:1.1}} className="num">
-                  <AnimatedNum value={wallet?.balance_eur||0} decimals={(wallet?.balance_eur||0)%1!==0?1:0}/>
-                </span>
-                <span style={{fontSize:14,color:C.ts,fontWeight:700}}>€</span>
-              </div>
-              <div style={{fontSize:11,color:C.ts,marginTop:2,fontWeight:600}}>знижка</div>
-            </Card>
-          </div>
-        )}
+          )}
+          <Card variant={(wallet?.balance_eur||0) > 0 ? "accent" : "elevated"} glow={(wallet?.balance_eur||0) > 0} padding={14}>
+            <SectionLabel accent={(wallet?.balance_eur||0) > 0}>FitCoins</SectionLabel>
+            <div style={{display:"flex",alignItems:"baseline",gap:4,marginTop:4}}>
+              <span style={{fontSize:30,fontWeight:900,color:(wallet?.balance_eur||0) > 0 ? C.acc : C.td,letterSpacing:-1,lineHeight:1.1}} className="num">
+                <AnimatedNum value={Math.floor(wallet?.balance_eur||0)}/>
+              </span>
+              <span style={{fontSize:14,color:(wallet?.balance_eur||0) > 0 ? C.acc : C.td,fontWeight:800}}>FC</span>
+            </div>
+            <div style={{fontSize:11,color:C.ts,marginTop:2,fontWeight:600,lineHeight:1.3}}>
+              {(wallet?.balance_eur||0) > 0
+                ? `= ${Math.floor(wallet.balance_eur)} ₴ знижки на підписку`
+                : "запрошуй друзів → +50 FC"}
+            </div>
+          </Card>
+        </div>
         <div style={{display:"flex",gap:7}}>
           {["Дані","Відгуки","Сповіщення"].map((t,i)=>(
             <button key={t} onClick={()=>setProfileTab(i)}
