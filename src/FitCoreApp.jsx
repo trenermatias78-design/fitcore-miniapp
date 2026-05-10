@@ -2909,40 +2909,57 @@ const ReferralScreen = ({userId, onBack}) => {
 
   return (
     <Scr>
-      {/* Hero */}
+
+      {/* ── Hero ───────────────────────────────────────────────── */}
       <Card variant="accent" padding="20px">
-        <div style={{textAlign:"center"}}>
-          <div style={{fontSize:52,marginBottom:SP[3]}}>🎁</div>
-          <H level={2}>Реферальна програма</H>
-          <div style={{marginTop:SP[3],display:"flex",flexDirection:"column",gap:SP[2]}}>
-            <div style={{display:"flex",alignItems:"center",gap:SP[2],background:"rgba(0,0,0,0.2)",borderRadius:R.md,padding:"10px 14px"}}>
-              <span style={{fontSize:20}}>👤</span>
-              <span style={{...F.body,color:C.ts,lineHeight:1.5,textAlign:"left"}}>
-                Ти отримуєш <span style={{color:C.acc,fontWeight:800}}>50 FitCoins</span> коли друг реєструється
-              </span>
+        <div style={{textAlign:"center",marginBottom:16}}>
+          <div style={{fontSize:44,lineHeight:"52px"}}>🎁</div>
+          <div style={{fontSize:18,fontWeight:800,color:C.tm,marginTop:10,letterSpacing:-0.3}}>
+            Реферальна програма
+          </div>
+        </div>
+
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{
+            display:"flex",flexDirection:"row",alignItems:"flex-start",gap:10,
+            background:"rgba(0,0,0,0.22)",borderRadius:10,padding:"11px 13px",
+          }}>
+            <div style={{fontSize:16,lineHeight:"20px",flexShrink:0,marginTop:1}}>👤</div>
+            <div style={{fontSize:13,fontWeight:500,color:C.ts,lineHeight:1.55}}>
+              Ти отримуєш{" "}
+              <span style={{color:C.acc,fontWeight:800}}>50 FitCoins</span>
+              {" "}після першої оплати друга
             </div>
-            <div style={{display:"flex",alignItems:"center",gap:SP[2],background:"rgba(0,0,0,0.2)",borderRadius:R.md,padding:"10px 14px"}}>
-              <span style={{fontSize:20}}>🤝</span>
-              <span style={{...F.body,color:C.ts,lineHeight:1.5,textAlign:"left"}}>
-                Друг отримує <span style={{color:C.acc,fontWeight:800}}>25 FitCoins</span> після першої оплати
-              </span>
+          </div>
+
+          <div style={{
+            display:"flex",flexDirection:"row",alignItems:"flex-start",gap:10,
+            background:"rgba(0,0,0,0.22)",borderRadius:10,padding:"11px 13px",
+          }}>
+            <div style={{fontSize:16,lineHeight:"20px",flexShrink:0,marginTop:1}}>🤝</div>
+            <div style={{fontSize:13,fontWeight:500,color:C.ts,lineHeight:1.55}}>
+              Твій друг отримує{" "}
+              <span style={{color:C.acc,fontWeight:800}}>25 FitCoins</span>
+              {" "}при першій оплаті
             </div>
           </div>
         </div>
       </Card>
 
-      {/* Посилання */}
+      {/* ── Посилання ──────────────────────────────────────────── */}
       <Card variant="elevated" padding="16px">
-        <SectionLabel>Твоє посилання</SectionLabel>
+        <div style={{fontSize:11,fontWeight:700,color:C.ts,textTransform:"uppercase",letterSpacing:0.8,marginBottom:10}}>
+          Твоє посилання
+        </div>
         <div style={{
-          background:C.s2, borderRadius:R.md, padding:"12px 14px",
-          fontFamily:"monospace", fontSize:11, color:C.ts,
-          wordBreak:"break-all", marginTop:SP[2], marginBottom:SP[3],
-          border:`1px solid ${C.bc}`, lineHeight:1.6,
+          background:C.s2,borderRadius:8,padding:"10px 12px",
+          fontFamily:"monospace",fontSize:11,color:C.ts,
+          wordBreak:"break-all",lineHeight:1.6,
+          border:`1px solid ${C.bc}`,marginBottom:12,
         }}>
           {refLink}
         </div>
-        <div style={{display:"flex",gap:SP[2]}}>
+        <div style={{display:"flex",flexDirection:"row",gap:8}}>
           <Btn variant="secondary" size="md" onClick={copyLink} style={{flex:1}}>
             {copied ? "✅ Скопійовано!" : "📋 Копіювати"}
           </Btn>
@@ -2952,48 +2969,56 @@ const ReferralScreen = ({userId, onBack}) => {
         </div>
       </Card>
 
-      {/* Статистика */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:SP[2]}}>
+      {/* ── Статистика ─────────────────────────────────────────── */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
         <Card variant="elevated" padding="14px">
-          <div style={{...F.meta,color:C.ts,marginBottom:SP[1]}}>ДРУЗІВ</div>
-          <div style={{fontSize:28,fontWeight:900,color:C.acc,lineHeight:1.1,marginBottom:4}}>
-            {data ? data.total_referrals : <Skel w={40} h={28}/>}
+          <div style={{fontSize:11,fontWeight:700,color:C.ts,textTransform:"uppercase",letterSpacing:0.8,marginBottom:8}}>
+            Друзів
           </div>
-          <div style={{...F.caption,color:C.td}}>приєдналось</div>
+          {data
+            ? <div style={{fontSize:24,fontWeight:900,color:C.acc,lineHeight:1,marginBottom:5}}>{data.total_referrals}</div>
+            : <Skel h={24} style={{width:32,marginBottom:5}}/>
+          }
+          <div style={{fontSize:11,color:C.td,fontWeight:500}}>приєдналось</div>
         </Card>
+
         <Card variant="elevated" padding="14px">
-          <div style={{...F.meta,color:C.ts,marginBottom:SP[1]}}>FITCOINS</div>
-          <div style={{fontSize:28,fontWeight:900,color:C.acc,lineHeight:1.1,marginBottom:4}}>
-            {data ? data.coins_earned : <Skel w={40} h={28}/>}
+          <div style={{fontSize:11,fontWeight:700,color:C.ts,textTransform:"uppercase",letterSpacing:0.8,marginBottom:8}}>
+            FitCoins
           </div>
-          <div style={{...F.caption,color:C.td}}>зароблено</div>
+          {data
+            ? <div style={{fontSize:24,fontWeight:900,color:C.acc,lineHeight:1,marginBottom:5}}>{data.coins_earned}</div>
+            : <Skel h={24} style={{width:32,marginBottom:5}}/>
+          }
+          <div style={{fontSize:11,color:C.td,fontWeight:500}}>зароблено</div>
         </Card>
       </div>
 
-      {/* Список рефералів */}
+      {/* ── Список рефералів ───────────────────────────────────── */}
       {data?.referrals?.length > 0 && (
         <Card variant="elevated" padding="16px">
-          <SectionLabel>Твої реферали</SectionLabel>
-          <div style={{marginTop:SP[2]}}>
-            {data.referrals.map((r,i)=>(
-              <div key={i} style={{
-                display:"flex",justifyContent:"space-between",alignItems:"center",
-                padding:"10px 0",
-                borderBottom:i<data.referrals.length-1?`1px solid ${C.bc}`:"none",
-              }}>
-                <span style={{...F.body,color:C.tm}}>{r.name}</span>
-                <span style={{...F.caption,color:C.ts}}>{r.date}</span>
-              </div>
-            ))}
+          <div style={{fontSize:11,fontWeight:700,color:C.ts,textTransform:"uppercase",letterSpacing:0.8,marginBottom:12}}>
+            Твої реферали
           </div>
+          {data.referrals.map((r,i)=>(
+            <div key={i} style={{
+              display:"flex",justifyContent:"space-between",alignItems:"center",
+              paddingTop:9,paddingBottom:9,
+              borderBottom:i<data.referrals.length-1?`1px solid ${C.bc}`:"none",
+            }}>
+              <span style={{fontSize:13,fontWeight:500,color:C.tm}}>{r.name}</span>
+              <span style={{fontSize:11,fontWeight:500,color:C.ts}}>{r.date}</span>
+            </div>
+          ))}
         </Card>
       )}
 
       {err && (
-        <div style={{textAlign:"center",padding:SP[5],color:C.ts,...F.body}}>
+        <div style={{textAlign:"center",padding:20,fontSize:13,color:C.ts}}>
           Не вдалось завантажити статистику
         </div>
       )}
+
     </Scr>
   );
 };
