@@ -2823,25 +2823,45 @@ const TrainingSchedule = ({userId}) => {
 // ═══════════════════════════════════════════════════════════════
 // РЕФЕРАЛЬНА ПРОГРАМА
 // ═══════════════════════════════════════════════════════════════
+const BOT_USERNAME = "fitcore_matias_bot";
+
 const ReferralScreen = ({userId, onBack}) => {
   const [data, setData] = React.useState(null);
   const [copied, setCopied] = React.useState(false);
+  const [err, setErr] = React.useState(false);
+
+  // Посилання доступне одразу — не чекаємо API
+  const refLink = data?.ref_link || `https://t.me/${BOT_USERNAME}?start=ref${userId}`;
 
   React.useEffect(() => {
     apiGet(`/api/client/${userId}/referral-stats`).then(r => {
       if(r?.ok) setData(r);
-    }).catch(()=>{});
+      else setErr(true);
+    }).catch(()=>setErr(true));
   }, [userId]);
 
   const copyLink = () => {
-    if(!data?.ref_link) return;
     haptic("light");
     if(navigator.clipboard) {
-      navigator.clipboard.writeText(data.ref_link).then(()=>{
+      navigator.clipboard.writeText(refLink).then(()=>{
         setCopied(true);
         haptic("success");
         setTimeout(()=>setCopied(false), 2000);
       });
+    }
+  };
+
+  const shareLink = () => {
+    haptic("light");
+    const text = encodeURIComponent("Тренуюсь з AI-тренером Матіасом у FitCore 💪 Приєднуйся — отримаєш 25 FitCoins при першій оплаті!");
+    const url = encodeURIComponent(refLink);
+    const shareUrl = `https://t.me/share/url?url=${url}&text=${text}`;
+    if(tg?.openTelegramLink) {
+      tg.openTelegramLink(shareUrl);
+    } else if(window.Telegram?.WebApp?.openLink) {
+      window.Telegram.WebApp.openLink(shareUrl);
+    } else {
+      copyLink();
     }
   };
 
@@ -2859,23 +2879,28 @@ const ReferralScreen = ({userId, onBack}) => {
           </div>
         </Card>
 
+        <Card variant="elevated" padding="16px">
+          <SectionLabel>Твоє посилання</SectionLabel>
+          <div style={{
+            background:C.s2, borderRadius:R.md, padding:"12px 14px",
+            fontFamily:"monospace", fontSize:12, color:C.tm,
+            wordBreak:"break-all", marginTop:SP[2], marginBottom:SP[3],
+            border:`1px solid ${C.bc}`,
+          }}>
+            {refLink}
+          </div>
+          <div style={{display:"flex",gap:SP[2]}}>
+            <Btn variant="secondary" size="md" onClick={copyLink} style={{flex:1}}>
+              {copied ? "✅ Скопійовано!" : "Копіювати"}
+            </Btn>
+            <Btn variant="primary" size="md" onClick={shareLink} style={{flex:1}}>
+              Поділитись
+            </Btn>
+          </div>
+        </Card>
+
         {data ? (
           <>
-            <Card variant="elevated" padding="16px">
-              <SectionLabel>Твоє посилання</SectionLabel>
-              <div style={{
-                background:C.s2, borderRadius:R.md, padding:"12px 14px",
-                fontFamily:"monospace", fontSize:12, color:C.tm,
-                wordBreak:"break-all", marginTop:SP[2], marginBottom:SP[3],
-                border:`1px solid ${C.bc}`,
-              }}>
-                {data.ref_link}
-              </div>
-              <Btn variant="primary" size="md" onClick={copyLink} style={{width:"100%"}}>
-                {copied ? "✅ Скопійовано!" : "Скопіювати посилання"}
-              </Btn>
-            </Card>
-
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:SP[2]}}>
               <Card variant="elevated" padding="16px" style={{textAlign:"center"}}>
                 <div style={{...F.h1,color:C.acc}}>{data.total_referrals}</div>
@@ -2901,10 +2926,10 @@ const ReferralScreen = ({userId, onBack}) => {
               </Card>
             )}
           </>
-        ) : (
+        ) : err ? null : (
           <div style={{display:"flex",flexDirection:"column",gap:SP[2]}}>
-            <Skel height={100}/>
             <Skel height={80}/>
+            <Skel height={60}/>
           </div>
         )}
       </div>
