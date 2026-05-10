@@ -5571,6 +5571,7 @@ export default function FitCoreApp() {
   const [clientTab,setClientTab]=useState("plan");const [adminTab,setAdminTab]=useState("dashboard");
   const [selClient,setSelClient]=useState(null);const [selPlan,setSelPlan]=useState(null);const [selMonths,setSelMonths]=useState(1);
   const [checkinMode,setCheckin]=useState(false);
+  const [appBootFlash,setAppBootFlash]=useState(true);
   const contentRef=useRef(null);const touchX=useRef(0);const touchY=useRef(0);const swiping=useRef(false);
 
   useEffect(()=>{
@@ -5835,6 +5836,11 @@ export default function FitCoreApp() {
         {/* Глобальний living background — за всім додатком */}
         <LivingBackground intensity={0.7}/>
         <FloatingParticles count={10}/>
+        {/* ── POWER IMPACT boot flash — plays once on every app open ── */}
+        {appBootFlash&&<>
+          <div style={{position:"absolute",inset:0,zIndex:50,pointerEvents:"none",background:C.acc,opacity:0,animation:"wlFlashPower 300ms ease-out forwards"}} onAnimationEnd={()=>setAppBootFlash(false)}/>
+          <div style={{position:"absolute",inset:-40,zIndex:49,pointerEvents:"none",background:`radial-gradient(ellipse at 50% 50%, transparent 42%, rgba(200,245,58,0.5) 100%)`,opacity:0,animation:"wlEdgeGlow 550ms ease-out forwards"}}/>
+        </>}
         {showTopNav&&(
           <TNav title={topTitle}
             onBack={selClient?()=>setSelClient(null):checkinMode?()=>setCheckin(false):isAdminMode?()=>setScreen("client"):clientTab==="referral"?()=>setClientTab("more"):undefined}
