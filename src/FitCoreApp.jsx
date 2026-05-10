@@ -5693,6 +5693,7 @@ export default function FitCoreApp() {
             }}/>
           </div>
           <div style={{fontSize:14,color:"rgba(255,255,255,.4)",letterSpacing:2,textTransform:"uppercase"}}>AI Trainer by Matias</div>
+          <div style={{fontSize:10,color:"rgba(200,245,58,.4)",letterSpacing:1}}>v2.1</div>
           <DumbbellLoader/>
         </div>
       </div>
