@@ -2868,14 +2868,14 @@ const TrainingSchedule = ({userId}) => {
 const BOT_USERNAME = "fitcore_matias_bot";
 
 const ReferralScreen = ({userId, onBack}) => {
-  const [data, setData] = React.useState(null);
-  const [copied, setCopied] = React.useState(false);
-  const [err, setErr] = React.useState(false);
+  const [data, setData] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [err, setErr] = useState(false);
 
   // Посилання доступне одразу — не чекаємо API
   const refLink = data?.ref_link || `https://t.me/${BOT_USERNAME}?start=ref${userId}`;
 
-  React.useEffect(() => {
+  useEffect(() => {
     apiGet(`/api/client/${userId}/referral-stats`).then(r => {
       if(r?.ok) setData(r);
       else setErr(true);
