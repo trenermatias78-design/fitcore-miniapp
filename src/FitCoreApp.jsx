@@ -5670,20 +5670,26 @@ export default function FitCoreApp() {
         <img src="/photo3.jpg" alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 20%"}}/>
         <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(8,8,8,.4) 0%,rgba(8,8,8,.75) 50%,rgba(8,8,8,.97) 100%)"}}/>
         <div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",alignItems:"center",gap:24}}>
-          <div style={{animation:"titlePulse 400ms ease-out 950ms both",display:"inline-block"}}>
-            <div style={{display:"flex",justifyContent:"center"}}>
-              {"FITCORE".split("").map((ch,i)=>(
-                <span key={i} style={{
-                  display:"inline-block",
-                  fontSize:42,fontWeight:900,color:C.tm,letterSpacing:-2,lineHeight:1,
-                  animation:`letterReveal 380ms cubic-bezier(0.16,1,0.3,1) ${i*80}ms both`,
-                }}>{ch}</span>
-              ))}
+          <div style={{display:"inline-block",position:"relative"}}>
+            {/* FITCORE — rubber stamp від висоти */}
+            <div style={{
+              fontSize:42,fontWeight:900,color:C.tm,letterSpacing:-2,lineHeight:1,
+              opacity:0,
+              animation:"wlStamp 300ms cubic-bezier(0.2,0,0.3,1) 100ms forwards, titlePulse 400ms ease-out 950ms both",
+            }}>
+              FITCORE
             </div>
+            {/* Dust частинки при ударі (265ms) */}
+            <div style={{position:"absolute",width:7,height:7,borderRadius:"50%",background:C.acc,top:-2,left:-2,opacity:0,animation:"wlDustTL 320ms ease-out 265ms forwards"}}/>
+            <div style={{position:"absolute",width:6,height:6,borderRadius:"50%",background:C.acc,top:-2,right:-2,opacity:0,animation:"wlDustTR 320ms ease-out 265ms forwards"}}/>
+            <div style={{position:"absolute",width:5,height:5,borderRadius:"50%",background:"rgba(200,245,58,0.7)",bottom:8,left:6,opacity:0,animation:"wlDustBL 300ms ease-out 280ms forwards"}}/>
+            <div style={{position:"absolute",width:5,height:5,borderRadius:"50%",background:"rgba(200,245,58,0.6)",bottom:8,right:6,opacity:0,animation:"wlDustBR 300ms ease-out 280ms forwards"}}/>
+            {/* Мятна лінія — ink smear (270ms) */}
             <div style={{
               height:2,background:C.acc,borderRadius:1,marginTop:8,
-              transformOrigin:"left center",
-              animation:"lineGrow 600ms cubic-bezier(0.16,1,0.3,1) 840ms both",
+              transformOrigin:"left center",transform:"scaleX(0)",
+              animation:"wlInkSmear 70ms cubic-bezier(0.4,0,0.2,1) 270ms forwards",
+              boxShadow:`0 0 12px ${C.acc}, 0 0 24px rgba(200,245,58,0.4)`,
             }}/>
           </div>
           <div style={{fontSize:14,color:"rgba(255,255,255,.4)",letterSpacing:2,textTransform:"uppercase"}}>AI Trainer by Matias</div>
