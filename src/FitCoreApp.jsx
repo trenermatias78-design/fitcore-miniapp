@@ -5665,35 +5665,28 @@ export default function FitCoreApp() {
         @keyframes dbAppear{from{opacity:0;transform:scale(.6);}to{opacity:1;transform:scale(1);}}
         .db-spin{animation:dbSpin 1.4s ease-in-out forwards;}
         .db-appear{animation:dbAppear .5s ease forwards;}
+        @keyframes gravityFall{0%{transform:translateY(-240px);opacity:0;}10%{opacity:1;}100%{transform:translateY(0);opacity:1;}}
+        @keyframes springSettle{0%{transform:translateY(0);}40%{transform:translateY(-15px);}70%{transform:translateY(4px);}100%{transform:translateY(0);}}
+        @keyframes impactFlash{0%{opacity:0;}20%{opacity:0.6;}100%{opacity:0;}}
+        @keyframes impactShake{0%{transform:translateY(0);}20%{transform:translateY(-7px);}45%{transform:translateY(5px);}65%{transform:translateY(-3px);}82%{transform:translateY(2px);}100%{transform:translateY(0);}}
+        @keyframes underlineCenter{from{transform:scaleX(0);}to{transform:scaleX(1);}}
+        @keyframes riseFromBelow{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
       `}</style>
-      <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",position:"relative",overflow:"hidden"}}>
+      <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",position:"relative",overflow:"hidden",animation:"impactShake 200ms ease-out 395ms both"}}>
         <img src="/photo3.jpg" alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 20%"}}/>
         <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(8,8,8,.4) 0%,rgba(8,8,8,.75) 50%,rgba(8,8,8,.97) 100%)"}}/>
+        <div style={{position:"absolute",inset:0,background:"#fff",opacity:0,pointerEvents:"none",zIndex:10,animation:"impactFlash 250ms ease-out 395ms forwards"}}/>
         <div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",alignItems:"center",gap:24}}>
-          <div style={{display:"inline-block",position:"relative"}}>
-            {/* FITCORE — rubber stamp від висоти */}
-            <div style={{
-              fontSize:42,fontWeight:900,color:C.tm,letterSpacing:-2,lineHeight:1,
-              opacity:0,
-              animation:"wlStamp 300ms cubic-bezier(0.2,0,0.3,1) 100ms forwards, titlePulse 400ms ease-out 950ms both",
-            }}>
-              FITCORE
-            </div>
-            {/* Dust частинки при ударі (265ms) */}
-            <div style={{position:"absolute",width:7,height:7,borderRadius:"50%",background:C.acc,top:-2,left:-2,opacity:0,animation:"wlDustTL 320ms ease-out 265ms forwards"}}/>
-            <div style={{position:"absolute",width:6,height:6,borderRadius:"50%",background:C.acc,top:-2,right:-2,opacity:0,animation:"wlDustTR 320ms ease-out 265ms forwards"}}/>
-            <div style={{position:"absolute",width:5,height:5,borderRadius:"50%",background:"rgba(200,245,58,0.7)",bottom:8,left:6,opacity:0,animation:"wlDustBL 300ms ease-out 280ms forwards"}}/>
-            <div style={{position:"absolute",width:5,height:5,borderRadius:"50%",background:"rgba(200,245,58,0.6)",bottom:8,right:6,opacity:0,animation:"wlDustBR 300ms ease-out 280ms forwards"}}/>
-            {/* Мятна лінія — ink smear (270ms) */}
+          <div style={{display:"inline-block",position:"relative",animation:"gravityFall 350ms ease-in 50ms both, springSettle 320ms ease-out 400ms both"}}>
+            <div style={{fontSize:42,fontWeight:900,color:C.tm,letterSpacing:-2,lineHeight:1}}>FITCORE</div>
             <div style={{
               height:2,background:C.acc,borderRadius:1,marginTop:8,
-              transformOrigin:"left center",transform:"scaleX(0)",
-              animation:"wlInkSmear 70ms cubic-bezier(0.4,0,0.2,1) 270ms forwards",
+              transformOrigin:"center",transform:"scaleX(0)",
+              animation:"underlineCenter 300ms cubic-bezier(0.34,1.2,0.64,1) 450ms forwards",
               boxShadow:`0 0 12px ${C.acc}, 0 0 24px rgba(200,245,58,0.4)`,
             }}/>
           </div>
-          <div style={{fontSize:14,color:"rgba(255,255,255,.4)",letterSpacing:2,textTransform:"uppercase"}}>AI Trainer by Matias</div>
-          <div style={{fontSize:10,color:"rgba(200,245,58,.4)",letterSpacing:1}}>v2.1</div>
+          <div style={{fontSize:14,color:"rgba(255,255,255,.4)",letterSpacing:2,textTransform:"uppercase",opacity:0,animation:"riseFromBelow 400ms ease-out 700ms forwards"}}>AI Trainer by Matias</div>
           <DumbbellLoader/>
         </div>
       </div>
