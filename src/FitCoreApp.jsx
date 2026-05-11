@@ -5620,8 +5620,7 @@ export default function FitCoreApp() {
         if(auth.client){
           try{const d=await apiGet(`/api/client/${auth.user_id}`);setQst(d.questionnaire);}catch{}
           const st=auth.client.status;
-          if(auth.is_admin)setScreen("admin");
-          else if(["active","trial"].includes(st))setScreen("client");
+          if(["active","trial"].includes(st))setScreen("client");
           else if(st==="pending_approval")setScreen("pending_approval");
           else if(st==="pending_payment")setScreen("pending_payment");
           else if(["expired","trial_expired"].includes(st))setScreen("expired");
@@ -5783,7 +5782,7 @@ export default function FitCoreApp() {
         if(auth?.client) setClient(auth.client);
         try{const d=await apiGet(`/api/client/${userId}`);setQst(d.questionnaire);}catch{}
       }catch{}
-      if(isAdmin){setScreen("admin");}else{setScreen("client");setClientTab("plan");}
+      setScreen("client");setClientTab("plan");
     }}/>;
     if(screen==="pending_approval")return(
       <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 28px",textAlign:"center"}}>
