@@ -5612,9 +5612,10 @@ export default function FitCoreApp() {
         setUserId(auth.user_id);setIsAdmin(auth.is_admin);setPlans(auth.plans);setPayLinks(auth.payment_links);setClient(auth.client);
         if(auth.is_admin){try{const s=await apiGet("/api/admin/settings");setSettings(s);}catch{}}
         if(auth.client){
-          try{const d=await apiGet(`/api/client/${auth.user_id}`);setQst(d.questionnaire);}catch{}
+          let qstData=null;
+          try{const d=await apiGet(`/api/client/${auth.user_id}`);setQst(d.questionnaire);qstData=d.questionnaire;}catch{}
           const st=auth.client.status;
-          if(auth.is_admin&&!d?.questionnaire)setScreen("welcome");
+          if(auth.is_admin&&!qstData)setScreen("welcome");
           else if(auth.is_admin)setScreen("admin");
           else if(["active","trial"].includes(st))setScreen("client");
           else if(st==="pending_approval")setScreen("pending_approval");
