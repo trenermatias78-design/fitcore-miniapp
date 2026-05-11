@@ -5402,9 +5402,15 @@ const AdminBroadcast = () => {
 };
 
 // ═══ ADMIN: SETTINGS ═══
-const AdminSettings = ({settings,onExitAdmin}) => {
+const AdminSettings = ({settings,onExitAdmin,onFillQuestionnaire}) => {
   return(
     <Scr>
+      <div style={{fontSize:16,fontWeight:700,color:C.tm}}>Профіль тренера</div>
+      <button onClick={onFillQuestionnaire} style={{background:"rgba(200,245,58,.06)",border:"1px solid rgba(200,245,58,.2)",borderRadius:16,padding:"16px 18px",display:"flex",alignItems:"center",gap:10,width:"100%"}}>
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 4a4 4 0 100 8 4 4 0 000-8zm-7 14c0-3.314 3.134-6 7-6s7 2.686 7 6" stroke={C.acc} strokeWidth="1.8" strokeLinecap="round"/></svg>
+        <div style={{textAlign:"left"}}><div style={{fontSize:15,fontWeight:700,color:C.acc}}>Заповнити / оновити мою анкету</div><div style={{fontSize:12,color:C.ts,marginTop:2}}>Потрібно для AI-генерації твого особистого плану</div></div>
+      </button>
+      <div style={{height:1,background:C.bc}}/>
       <div style={{fontSize:16,fontWeight:700,color:C.tm}}>Автоматизація</div>
       <div style={{background:"rgba(200,245,58,.05)",border:"1px solid rgba(200,245,58,.15)",borderRadius:16,padding:"14px 16px"}}>
         <div style={{fontSize:13,color:C.ts,lineHeight:1.7}}>Всі автоматичні функції запущені на сервері постійно:</div>
@@ -5612,11 +5618,9 @@ export default function FitCoreApp() {
         setUserId(auth.user_id);setIsAdmin(auth.is_admin);setPlans(auth.plans);setPayLinks(auth.payment_links);setClient(auth.client);
         if(auth.is_admin){try{const s=await apiGet("/api/admin/settings");setSettings(s);}catch{}}
         if(auth.client){
-          let qstData=null;
-          try{const d=await apiGet(`/api/client/${auth.user_id}`);setQst(d.questionnaire);qstData=d.questionnaire;}catch{}
+          try{const d=await apiGet(`/api/client/${auth.user_id}`);setQst(d.questionnaire);}catch{}
           const st=auth.client.status;
-          if(auth.is_admin&&!qstData)setScreen("welcome");
-          else if(auth.is_admin)setScreen("admin");
+          if(auth.is_admin)setScreen("admin");
           else if(["active","trial"].includes(st))setScreen("client");
           else if(st==="pending_approval")setScreen("pending_approval");
           else if(st==="pending_payment")setScreen("pending_payment");
@@ -5829,7 +5833,7 @@ export default function FitCoreApp() {
       if(adminTab==="chat")return <AdminChat/>;
       if(adminTab==="payments")return <AdminPayments/>;
       if(adminTab==="broadcast")return <AdminBroadcast/>;
-      if(adminTab==="settings")return <AdminSettings settings={settings} onExitAdmin={onExitAdmin}/>;
+      if(adminTab==="settings")return <AdminSettings settings={settings} onExitAdmin={onExitAdmin} onFillQuestionnaire={()=>setScreen("onboarding")}/>;
     }
     if(screen==="client"){
       if(checkinMode)return <Checkin userId={userId} onDone={()=>setCheckin(false)}/>;
