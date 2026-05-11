@@ -5614,7 +5614,8 @@ export default function FitCoreApp() {
         if(auth.client){
           try{const d=await apiGet(`/api/client/${auth.user_id}`);setQst(d.questionnaire);}catch{}
           const st=auth.client.status;
-          if(auth.is_admin)setScreen("admin");
+          if(auth.is_admin&&!d?.questionnaire)setScreen("welcome");
+          else if(auth.is_admin)setScreen("admin");
           else if(["active","trial"].includes(st))setScreen("client");
           else if(st==="pending_approval")setScreen("pending_approval");
           else if(st==="pending_payment")setScreen("pending_payment");
@@ -5772,13 +5773,12 @@ export default function FitCoreApp() {
       setScreen("onboarding_success");
     }}/>;
     if(screen==="onboarding_success")return <OnboardingSuccess onContinue={async()=>{
-      // Reload client data after plan is generated
       try{
         const auth = await apiPost("/api/auth", {});
         if(auth?.client) setClient(auth.client);
+        try{const d=await apiGet(`/api/client/${userId}`);setQst(d.questionnaire);}catch{}
       }catch{}
-      setScreen("client");
-      setClientTab("plan");
+      if(isAdmin){setScreen("admin");}else{setScreen("client");setClientTab("plan");}
     }}/>;
     if(screen==="pending_approval")return(
       <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 28px",textAlign:"center"}}>
