@@ -3765,8 +3765,8 @@ const TrainPlan = ({userId}) => {
 
   return(
     <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-      <div style={{position:"relative",height:140,flexShrink:0,overflow:"hidden"}}>
-        <img src={PHOTOS.trainer_plan} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 20%"}}/>
+      <div style={{position:"relative",height:200,flexShrink:0,overflow:"hidden"}}>
+        <img src={PHOTOS.trainer_plan} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 40%"}}/>
         <div style={{position:"absolute",inset:0,background:"linear-gradient(90deg,rgba(10,10,10,.92) 0%,rgba(10,10,10,.5) 55%,rgba(10,10,10,.1) 100%)"}}/>
         <div style={{position:"absolute",left:0,top:0,bottom:0,display:"flex",flexDirection:"column",justifyContent:"center",padding:"0 18px"}}>
           <div style={{fontSize:11,color:C.acc,fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>Тиждень {data.week_number||1}</div>
