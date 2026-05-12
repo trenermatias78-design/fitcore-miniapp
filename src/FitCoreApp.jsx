@@ -3768,12 +3768,12 @@ const TrainPlan = ({userId}) => {
       <div style={{position:"relative",height:200,flexShrink:0,overflow:"hidden"}}>
         <img src={PHOTOS.trainer_plan} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 40%"}}/>
         <div style={{position:"absolute",inset:0,background:"linear-gradient(90deg,rgba(10,10,10,.92) 0%,rgba(10,10,10,.5) 55%,rgba(10,10,10,.1) 100%)"}}/>
-        <div style={{position:"absolute",left:0,top:0,bottom:0,display:"flex",flexDirection:"column",justifyContent:"center",padding:"0 18px"}}>
+        <div style={{position:"absolute",left:0,bottom:16,padding:"0 18px"}}>
           <div style={{fontSize:11,color:C.acc,fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>Тиждень {data.week_number||1}</div>
           <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-.8,marginTop:3}}>{days.length} тренувань</div>
           <div style={{fontSize:12,color:"rgba(255,255,255,.5)",marginTop:3}}>{days.filter(d=>d.exercises?.length).map(d=>d.muscle_group?.split(" ")[0]).slice(0,3).join(" · ")}</div>
         </div>
-        <button onClick={generate} disabled={gen} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"rgba(200,245,58,.15)",border:`1px solid rgba(200,245,58,.3)`,borderRadius:10,padding:"6px 12px",color:C.acc,fontSize:11,fontWeight:700}}>
+        <button onClick={generate} disabled={gen} style={{position:"absolute",right:14,bottom:16,background:"rgba(200,245,58,.15)",border:`1px solid rgba(200,245,58,.3)`,borderRadius:10,padding:"6px 12px",color:C.acc,fontSize:11,fontWeight:700}}>
           {gen?"...":"Оновити"}
         </button>
       </div>
