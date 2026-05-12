@@ -3389,16 +3389,16 @@ const WorkoutScreen = ({userId, day, weekNumber, onClose}) => {
   const playBeep = () => {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      [0, 0.18, 0.36].forEach(t => {
+      [0, 0.28, 0.56].forEach(t => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.frequency.value = 880;
-        gain.gain.setValueAtTime(0.5, ctx.currentTime + t);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.15);
+        gain.gain.setValueAtTime(1.0, ctx.currentTime + t);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.25);
         osc.start(ctx.currentTime + t);
-        osc.stop(ctx.currentTime + t + 0.15);
+        osc.stop(ctx.currentTime + t + 0.25);
       });
     } catch {}
   };
