@@ -1573,9 +1573,6 @@ const WelcomeScreen = ({onStart}) => (
     <LivingBackground intensity={1.4}/>
     <FloatingParticles count={24}/>
 
-    {/* ── FLASH — electric punch at 350ms ── */}
-    <div style={{position:"absolute",inset:0,zIndex:11,pointerEvents:"none",background:C.acc,opacity:0,animation:"wlFlashPower 300ms ease-out 350ms forwards"}}/>
-
     {/* ── EDGE GLOW BURST — radiates outward at 350ms ── */}
     <div style={{position:"absolute",inset:-40,zIndex:10,pointerEvents:"none",background:`radial-gradient(ellipse at 50% 50%, transparent 42%, rgba(200,245,58,0.5) 100%)`,opacity:0,animation:"wlEdgeGlow 550ms ease-out 350ms forwards"}}/>
 
@@ -5599,7 +5596,6 @@ export default function FitCoreApp() {
   const [clientTab,setClientTab]=useState("plan");const [adminTab,setAdminTab]=useState("dashboard");
   const [selClient,setSelClient]=useState(null);const [selPlan,setSelPlan]=useState(null);const [selMonths,setSelMonths]=useState(1);
   const [checkinMode,setCheckin]=useState(false);
-  const [appBootFlash,setAppBootFlash]=useState(true);
   const contentRef=useRef(null);const touchX=useRef(0);const touchY=useRef(0);const swiping=useRef(false);
 
   useEffect(()=>{
@@ -5680,7 +5676,6 @@ export default function FitCoreApp() {
       <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",position:"relative",overflow:"hidden",animation:"impactShake 200ms ease-out 395ms both"}}>
         <img src="/photo3.jpg" alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 20%"}}/>
         <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(8,8,8,.4) 0%,rgba(8,8,8,.75) 50%,rgba(8,8,8,.97) 100%)"}}/>
-        <div style={{position:"absolute",inset:0,background:"#fff",opacity:0,pointerEvents:"none",zIndex:10,animation:"impactFlash 250ms ease-out 395ms forwards"}}/>
         <div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",alignItems:"center",gap:24}}>
           <div style={{display:"inline-block",position:"relative",animation:"gravityFall 350ms ease-in 50ms both, springSettle 320ms ease-out 400ms both"}}>
             <div style={{fontSize:42,fontWeight:900,color:C.tm,letterSpacing:-2,lineHeight:1}}>FITCORE</div>
@@ -5862,11 +5857,6 @@ export default function FitCoreApp() {
         {/* Глобальний living background — за всім додатком */}
         <LivingBackground intensity={0.7}/>
         <FloatingParticles count={10}/>
-        {/* ── POWER IMPACT boot flash — plays once on every app open ── */}
-        {appBootFlash&&<>
-          <div style={{position:"absolute",inset:0,zIndex:50,pointerEvents:"none",background:C.acc,opacity:0,animation:"wlFlashPower 300ms ease-out forwards"}} onAnimationEnd={()=>setAppBootFlash(false)}/>
-          <div style={{position:"absolute",inset:-40,zIndex:49,pointerEvents:"none",background:`radial-gradient(ellipse at 50% 50%, transparent 42%, rgba(200,245,58,0.5) 100%)`,opacity:0,animation:"wlEdgeGlow 550ms ease-out forwards"}}/>
-        </>}
         {showTopNav&&(
           <TNav title={topTitle}
             onBack={selClient?()=>setSelClient(null):checkinMode?()=>setCheckin(false):isAdminMode?()=>setScreen("client"):clientTab==="referral"?()=>setClientTab("more"):undefined}
