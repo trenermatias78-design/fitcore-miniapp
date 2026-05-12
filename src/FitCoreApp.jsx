@@ -5709,7 +5709,7 @@ export default function FitCoreApp() {
         @keyframes riseFromBelow{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
       `}</style>
       <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",position:"relative",overflow:"hidden",animation:"impactShake 200ms ease-out 395ms both"}}>
-        <img src="/photo3.jpg" alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 20%"}}/>
+        <img src="/photo_2026-05-12 12.04.32.jpeg" alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 20%"}}/>
         <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(8,8,8,.4) 0%,rgba(8,8,8,.75) 50%,rgba(8,8,8,.97) 100%)"}}/>
         <div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",alignItems:"center",gap:24}}>
           <div style={{display:"inline-block",position:"relative",animation:"gravityFall 350ms ease-in 50ms both, springSettle 320ms ease-out 400ms both"}}>
