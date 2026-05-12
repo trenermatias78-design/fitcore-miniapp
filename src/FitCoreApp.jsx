@@ -24,7 +24,7 @@ const apiPost = (p,b) => api(p, { method:"POST", body:b });
 const PHOTOS = {
   trainer_welcome: "/photo2.jpg",
   trainer_profile: "/photo1.jpg",
-  trainer_plan:    "/photo3.jpg",
+  trainer_plan:    "/photo_2026-05-12 10.59.04.jpeg",
 };
 
 // ═══════════════════════════════════════════════════════════════
