@@ -5057,7 +5057,7 @@ const AdminClientDetail = ({client,onBack}) => {
       if(detail?.client) setDetail({...detail, client:{...detail.client, status:"pending_questionnaire", plan:null}});
     }catch(e){setMsg("Помилка: "+e.message);}
   };
-  const generate=async()=>{setGen(true);try{await apiPost(`/api/client/${client.user_id}/generate-plan`,{});setMsg("✓ Новий план згенеровано");}catch(e){setMsg("Помилка: "+e.message);}setGen(false);};
+  const generate=async()=>{setGen(true);try{await apiPost(`/api/client/${client.user_id}/generate-plan`,{force_regenerate:true});setMsg("✓ Новий план згенеровано");}catch(e){setMsg("Помилка: "+e.message);}setGen(false);};
 
   if(loading) return <Spin/>;
 
