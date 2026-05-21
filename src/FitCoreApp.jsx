@@ -108,6 +108,7 @@ const G = () => (
     @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
     @keyframes shimmer{0%{background-position:-1000px 0;}100%{background-position:1000px 0;}}
     @keyframes accentPulse{0%,100%{box-shadow:0 0 0 0 rgba(200,245,58,0);}50%{box-shadow:0 0 0 8px rgba(200,245,58,0.15);}}
+    @keyframes heartPulse{0%,100%{transform:scale(1);filter:drop-shadow(0 0 3px rgba(255,60,80,0.5));}45%{transform:scale(1.35);filter:drop-shadow(0 0 10px rgba(255,60,80,0.9));}55%{transform:scale(1.28);filter:drop-shadow(0 0 14px rgba(255,60,80,1));}}
     @keyframes blinkBorder{0%,100%{border-color:${C.acc};}50%{border-color:#e8ff80;}}
     @keyframes scaleIn{from{opacity:0;transform:scale(0.94);}to{opacity:1;transform:scale(1);}}
     @keyframes drawPath{from{stroke-dashoffset:1000;}to{stroke-dashoffset:0;}}
@@ -1380,6 +1381,95 @@ const ExModal = ({ex, onClose}) => {
 };
 
 
+
+
+// ═══ CARDIO MODAL — підказка кардіо-блоку для тренувального дня ═══
+const CardioModal = ({cardio, dayName, onClose}) => {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => { requestAnimationFrame(() => setVisible(true)); }, []);
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  const handleClose = () => { setVisible(false); setTimeout(onClose, 160); };
+
+  const typeColor = cardio.type === "HIIT"
+    ? "#ff3c50"
+    : cardio.type === "Zone 2"
+    ? "#3ca0ff"
+    : "#ff8c00";
+
+  const typeEmoji = cardio.type === "HIIT" ? "⚡" : cardio.type === "Zone 2" ? "🫀" : "🏃";
+
+  const content = (
+    <div
+      onClick={handleClose}
+      style={{
+        position:"fixed", inset:0,
+        background: visible ? "rgba(0,0,0,.75)" : "rgba(0,0,0,0)",
+        backdropFilter: visible ? "blur(5px)" : "blur(0px)",
+        WebkitBackdropFilter: visible ? "blur(5px)" : "blur(0px)",
+        zIndex:9999,
+        display:"flex", alignItems:"center", justifyContent:"center",
+        padding:16,
+        transition:"background .18s ease-out, backdrop-filter .18s ease-out",
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          position:"relative",
+          width:"100%", maxWidth:400,
+          background:C.s1,
+          borderRadius:20,
+          border:`1px solid rgba(255,60,80,0.25)`,
+          boxShadow:`0 20px 60px rgba(0,0,0,.7), 0 0 0 1px rgba(255,60,80,0.12)`,
+          padding:"18px 18px 20px",
+          opacity: visible ? 1 : 0,
+          transform: `scale(${visible ? 1 : 0.9})`,
+          transition:"opacity .18s ease-out, transform .18s ease-out",
+        }}
+      >
+        {/* Header */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontSize:22,lineHeight:1}}>❤️</span>
+            <div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:2}}>Кардіо-блок · {dayName}</div>
+              <div style={{fontSize:17,fontWeight:900,color:C.tm,lineHeight:1.2}}>Після силового</div>
+            </div>
+          </div>
+          <button
+            onClick={handleClose}
+            style={{background:C.s2,border:`1px solid ${C.bc}`,borderRadius:10,width:30,height:30,color:C.ts,fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}
+          >×</button>
+        </div>
+
+        {/* Type badge + duration */}
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+          <div style={{background:`rgba(${cardio.type==="HIIT"?"255,60,80":cardio.type==="Zone 2"?"60,160,255":"255,140,0"},0.15)`,border:`1px solid rgba(${cardio.type==="HIIT"?"255,60,80":cardio.type==="Zone 2"?"60,160,255":"255,140,0"},0.4)`,borderRadius:R.full,padding:"4px 12px",fontSize:12,fontWeight:800,color:typeColor,letterSpacing:.4}}>
+            {typeEmoji} {cardio.type}
+          </div>
+          <div style={{fontSize:13,color:C.ts,fontWeight:600}}>
+            ⏱ {cardio.duration_minutes} хв
+          </div>
+        </div>
+
+        {/* Description */}
+        <div style={{background:`rgba(${cardio.type==="HIIT"?"255,60,80":cardio.type==="Zone 2"?"60,160,255":"255,140,0"},0.07)`,border:`1px solid rgba(${cardio.type==="HIIT"?"255,60,80":cardio.type==="Zone 2"?"60,160,255":"255,140,0"},0.18)`,borderRadius:14,padding:"13px 15px"}}>
+          <div style={{fontSize:11,color:typeColor,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:7}}>💡 Як виконувати</div>
+          <div style={{fontSize:14,color:C.tm,lineHeight:1.75}}>{cardio.note}</div>
+        </div>
+
+        <div style={{fontSize:11,color:C.td,textAlign:"center",marginTop:12,lineHeight:1.5}}>Кардіо після силового — не замінює, а доповнює тренування</div>
+      </div>
+    </div>
+  );
+
+  return createPortal(content, document.body);
+};
 
 
 // ═══════════════════════════════════════════════════════════════
@@ -3730,6 +3820,7 @@ const TrainPlan = ({userId}) => {
   const [gen,setGen]=useState(false);
   const [genErr,setGenErr]=useState("");
   const [selEx,setSelEx]=useState(null);
+  const [selCardio,setSelCardio]=useState(null);
   const [activeWorkout, setActiveWorkout] = useState(null); // { day, weekNumber }
   const load=useCallback(async()=>{
     try{setLoad(true);const r=await apiGet(`/api/client/${userId}/plan`);setData(r.plan);}
@@ -3785,7 +3876,23 @@ const TrainPlan = ({userId}) => {
           <div key={i} style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,overflow:"hidden"}}>
             <div style={{background:C.s2,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${C.bc}`}}>
               <div style={{fontSize:17,fontWeight:800,color:C.tm}}>{d.day}</div>
-              {d.muscle_group&&<div style={{fontSize:11,color:"#0a0a0a",background:C.acc,padding:"4px 12px",borderRadius:20,fontWeight:800}}>{d.muscle_group}</div>}
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                {d.cardio_block&&(
+                  <div
+                    onClick={e=>{e.stopPropagation();haptic("light");setSelCardio(d);}}
+                    title="Кардіо-блок"
+                    style={{
+                      width:32,height:32,borderRadius:"50%",
+                      background:"rgba(255,60,80,0.18)",
+                      border:"1.5px solid rgba(255,60,80,0.55)",
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      fontSize:16,cursor:"pointer",flexShrink:0,userSelect:"none",
+                      animation:"heartPulse 1.5s ease-in-out infinite",
+                    }}
+                  >❤️</div>
+                )}
+                {d.muscle_group&&<div style={{fontSize:11,color:"#0a0a0a",background:C.acc,padding:"4px 12px",borderRadius:20,fontWeight:800}}>{d.muscle_group}</div>}
+              </div>
             </div>
             {hasExercises&&(
               <div style={{padding:"10px 16px",display:"flex",flexDirection:"column",gap:8}}>
@@ -3831,6 +3938,7 @@ const TrainPlan = ({userId}) => {
         </div>}
       </div>
       {selEx&&<ExModal ex={selEx} onClose={()=>setSelEx(null)}/>}
+      {selCardio?.cardio_block&&<CardioModal cardio={selCardio.cardio_block} dayName={selCardio.day} onClose={()=>setSelCardio(null)}/>}
     </div>
   );
 };
