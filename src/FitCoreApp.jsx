@@ -1472,6 +1472,100 @@ const CardioModal = ({cardio, dayName, onClose}) => {
 };
 
 
+// ═══ SWAP MODAL — вибір альтернативної вправи ═══
+const SwapModal = ({ex, exerciseIndex, dayName, currentSwap, onSwap, onRevert, onClose}) => {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => { requestAnimationFrame(() => setVisible(true)); }, []);
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  const handleClose = () => { setVisible(false); setTimeout(onClose, 160); };
+  const alternatives = ex.alternatives || [];
+
+  const content = (
+    <div
+      onClick={handleClose}
+      style={{
+        position:"fixed", inset:0,
+        background: visible ? "rgba(0,0,0,.78)" : "rgba(0,0,0,0)",
+        backdropFilter: visible ? "blur(5px)" : "blur(0px)",
+        WebkitBackdropFilter: visible ? "blur(5px)" : "blur(0px)",
+        zIndex:9999,
+        display:"flex", alignItems:"flex-end", justifyContent:"center",
+        transition:"background .18s ease-out, backdrop-filter .18s ease-out",
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width:"100%", maxWidth:480,
+          background:C.s1,
+          borderRadius:"20px 20px 0 0",
+          border:`1px solid ${C.bc}`,
+          borderBottom:"none",
+          boxShadow:"0 -8px 48px rgba(0,0,0,.65)",
+          paddingBottom:24,
+          opacity: visible ? 1 : 0,
+          transform: `translateY(${visible ? 0 : 40}px)`,
+          transition:"opacity .18s ease-out, transform .18s ease-out",
+        }}
+      >
+        <div style={{width:40,height:4,borderRadius:2,background:C.bc,margin:"10px auto 16px"}}/>
+
+        <div style={{padding:"0 18px 14px",borderBottom:`1px solid ${C.bc}`}}>
+          <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:4}}>⇄ Замінити вправу</div>
+          <div style={{fontSize:16,fontWeight:900,color:C.tm,lineHeight:1.3}}>{ex.name}</div>
+        </div>
+
+        <div style={{padding:"12px 18px 0",display:"flex",flexDirection:"column",gap:8}}>
+          {currentSwap && (
+            <div
+              onClick={() => { haptic("light"); onRevert(); handleClose(); }}
+              style={{display:"flex",alignItems:"center",gap:10,padding:"11px 14px",background:"rgba(200,245,58,0.08)",border:`1px solid rgba(200,245,58,0.3)`,borderRadius:12,cursor:"pointer"}}
+            >
+              <span style={{fontSize:16,flexShrink:0}}>↩</span>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:12,color:C.acc,fontWeight:700}}>Повернути оригінал</div>
+                <div style={{fontSize:12,color:C.ts,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{ex.name}</div>
+              </div>
+            </div>
+          )}
+
+          <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.6,marginTop:currentSwap?4:0}}>
+            {currentSwap ? "Інші варіанти" : "Оберіть заміну"}
+          </div>
+
+          {alternatives.map((alt, i) => {
+            const isActive = currentSwap === alt;
+            return (
+              <div
+                key={i}
+                onClick={() => { haptic("light"); onSwap(alt); handleClose(); }}
+                style={{
+                  display:"flex", alignItems:"center", justifyContent:"space-between",
+                  padding:"13px 14px",
+                  background: isActive ? "rgba(200,245,58,0.1)" : C.s2,
+                  border:`1px solid ${isActive ? "rgba(200,245,58,0.4)" : C.bc}`,
+                  borderRadius:12, cursor:"pointer",
+                }}
+              >
+                <div style={{fontSize:14,fontWeight:isActive?700:500,color:C.tm}}>{alt}</div>
+                {isActive && <span style={{fontSize:13,color:C.acc,fontWeight:900,flexShrink:0}}>✓</span>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
+  return createPortal(content, document.body);
+};
+
+
 // ═══════════════════════════════════════════════════════════════
 // HERO MOMENT — повноекранне святкування з конфетті + flash
 // ═══════════════════════════════════════════════════════════════
@@ -3821,11 +3915,25 @@ const TrainPlan = ({userId}) => {
   const [genErr,setGenErr]=useState("");
   const [selEx,setSelEx]=useState(null);
   const [selCardio,setSelCardio]=useState(null);
+  const [selSwap,setSelSwap]=useState(null); // {ex, exerciseIndex, dayName}
+  const [swaps,setSwaps]=useState({});
   const [activeWorkout, setActiveWorkout] = useState(null); // { day, weekNumber }
   const load=useCallback(async()=>{
-    try{setLoad(true);const r=await apiGet(`/api/client/${userId}/plan`);setData(r.plan);}
+    try{setLoad(true);const r=await apiGet(`/api/client/${userId}/plan`);setData(r.plan);setSwaps(r.plan?.swaps||{});}
     catch(e){console.error(e);}finally{setLoad(false);}
   },[userId]);
+  const doSwap=useCallback(async(dayName,exName,swappedTo)=>{
+    const key=`${dayName}||${exName}`;
+    setSwaps(prev=>({...prev,[key]:swappedTo}));
+    try{await apiPost(`/api/client/${userId}/exercise-swap`,{plan_id:data?.id,day_name:dayName,exercise_name:exName,swapped_to:swappedTo});}
+    catch(e){console.error(e);load();}
+  },[userId,data,load]);
+  const doRevert=useCallback(async(dayName,exName)=>{
+    const key=`${dayName}||${exName}`;
+    setSwaps(prev=>{const n={...prev};delete n[key];return n;});
+    try{await api(`/api/client/${userId}/exercise-swap`,{method:"DELETE",body:{plan_id:data?.id,day_name:dayName,exercise_name:exName}});}
+    catch(e){console.error(e);load();}
+  },[userId,data,load]);
   useEffect(()=>{load();},[load]);
   const generate=async()=>{
     setGen(true);setGenErr("");
@@ -3896,23 +4004,33 @@ const TrainPlan = ({userId}) => {
             </div>
             {hasExercises&&(
               <div style={{padding:"10px 16px",display:"flex",flexDirection:"column",gap:8}}>
-                {(d.exercises||[]).map((ex,j)=>(
+                {(d.exercises||[]).map((ex,j)=>{
+                  const swapKey=`${d.day}||${ex.name}`;
+                  const activeSwap=swaps[swapKey];
+                  const displayName=activeSwap||ex.name;
+                  const hasAlts=(ex.alternatives||[]).length>0;
+                  return(
                   <div key={j}>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}>
-                        <div style={{width:6,height:6,borderRadius:"50%",background:C.acc,flexShrink:0}}/>
-                        <div style={{fontSize:14,color:C.tm}}>{ex.name}</div>
-                        {getExTip(ex.name)&&(
-                          <div onClick={e=>{e.stopPropagation();setSelEx(ex);}}
+                      <div style={{display:"flex",alignItems:"center",gap:8,flex:1,minWidth:0}}>
+                        <div style={{width:6,height:6,borderRadius:"50%",background:activeSwap?C.acc:"rgba(200,245,58,0.5)",flexShrink:0}}/>
+                        <div style={{fontSize:14,color:activeSwap?C.acc:C.tm,fontWeight:activeSwap?700:400,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{displayName}</div>
+                        {getExTip(displayName)&&(
+                          <div onClick={e=>{e.stopPropagation();setSelEx({...ex,name:displayName});}}
                             style={{fontSize:10,color:"#0a0a0a",background:C.acc,borderRadius:6,padding:"1px 7px",fontWeight:900,flexShrink:0,cursor:"pointer",userSelect:"none"}}>?</div>
                         )}
+                        {hasAlts&&(
+                          <div onClick={e=>{e.stopPropagation();haptic("light");setSelSwap({ex,dayName:d.day});}}
+                            style={{fontSize:11,color:activeSwap?"#0a0a0a":C.ts,background:activeSwap?C.acc:"rgba(255,255,255,0.07)",border:`1px solid ${activeSwap?"transparent":"rgba(255,255,255,0.12)"}`,borderRadius:6,padding:"1px 7px",fontWeight:800,flexShrink:0,cursor:"pointer",userSelect:"none",letterSpacing:.2}}>⇄</div>
+                        )}
                       </div>
-                      <div style={{fontSize:13,color:C.acc,fontWeight:700,background:"rgba(200,245,58,.08)",padding:"4px 10px",borderRadius:8}}>{ex.sets}×{ex.reps}</div>
+                      <div style={{fontSize:13,color:C.acc,fontWeight:700,background:"rgba(200,245,58,.08)",padding:"4px 10px",borderRadius:8,flexShrink:0,marginLeft:6}}>{ex.sets}×{ex.reps}</div>
                     </div>
                     {ex.note&&<div style={{fontSize:12,color:C.td,fontStyle:"italic",marginTop:3,paddingLeft:14}}>📌 {ex.note}</div>}
                     {ex.technique&&<div style={{fontSize:12,color:"rgba(200,245,58,0.75)",marginTop:4,paddingLeft:14,lineHeight:1.5}}>💡 {ex.technique}</div>}
                   </div>
-                ))}
+                  );
+                })}
                 {d.rest_note&&<div style={{fontSize:12,color:C.td,fontStyle:"italic",marginTop:4}}>{d.rest_note}</div>}
               </div>
             )}
@@ -3939,6 +4057,14 @@ const TrainPlan = ({userId}) => {
       </div>
       {selEx&&<ExModal ex={selEx} onClose={()=>setSelEx(null)}/>}
       {selCardio?.cardio_block&&<CardioModal cardio={selCardio.cardio_block} dayName={selCardio.day} onClose={()=>setSelCardio(null)}/>}
+      {selSwap&&<SwapModal
+        ex={selSwap.ex}
+        dayName={selSwap.dayName}
+        currentSwap={swaps[`${selSwap.dayName}||${selSwap.ex.name}`]}
+        onSwap={(alt)=>doSwap(selSwap.dayName,selSwap.ex.name,alt)}
+        onRevert={()=>doRevert(selSwap.dayName,selSwap.ex.name)}
+        onClose={()=>setSelSwap(null)}
+      />}
     </div>
   );
 };
