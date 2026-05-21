@@ -4026,8 +4026,9 @@ const TrainPlan = ({userId}) => {
                       </div>
                       <div style={{fontSize:13,color:C.acc,fontWeight:700,background:"rgba(200,245,58,.08)",padding:"4px 10px",borderRadius:8,flexShrink:0,marginLeft:6}}>{ex.sets}×{ex.reps}</div>
                     </div>
-                    {ex.note&&<div style={{fontSize:12,color:C.td,fontStyle:"italic",marginTop:3,paddingLeft:14}}>📌 {ex.note}</div>}
-                    {ex.technique&&<div style={{fontSize:12,color:"rgba(200,245,58,0.75)",marginTop:4,paddingLeft:14,lineHeight:1.5}}>💡 {ex.technique}</div>}
+                    {!activeSwap&&ex.note&&<div style={{fontSize:12,color:C.td,fontStyle:"italic",marginTop:3,paddingLeft:14}}>📌 {ex.note}</div>}
+                    {activeSwap&&getExTip(displayName)?.tip&&<div style={{fontSize:12,color:"rgba(200,245,58,0.75)",marginTop:4,paddingLeft:14,lineHeight:1.5}}>💡 {getExTip(displayName).tip}</div>}
+                    {!activeSwap&&ex.technique&&<div style={{fontSize:12,color:"rgba(200,245,58,0.75)",marginTop:4,paddingLeft:14,lineHeight:1.5}}>💡 {ex.technique}</div>}
                   </div>
                   );
                 })}
@@ -4038,7 +4039,7 @@ const TrainPlan = ({userId}) => {
             {/* Кнопка Почати тренування */}
             {hasExercises && (
               <div style={{padding:"0 16px 12px"}}>
-                <Btn variant="primary" size="md" onClick={()=>{haptic("medium");setActiveWorkout({day: d, weekNumber: data.week_number || 1});}} hapticKind="medium">
+                <Btn variant="primary" size="md" onClick={()=>{haptic("medium");const dayWithSwaps={...d,exercises:(d.exercises||[]).map(ex=>{const sw=swaps[`${d.day}||${ex.name}`];return sw?{...ex,name:sw,note:undefined}:ex;})};setActiveWorkout({day:dayWithSwaps,weekNumber:data.week_number||1});}} hapticKind="medium">
                   ▶ Почати тренування
                 </Btn>
               </div>
