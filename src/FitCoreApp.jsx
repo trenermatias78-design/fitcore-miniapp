@@ -266,8 +266,42 @@ const G = () => (
 
     /* number counter animation — used inline */
     .num{font-variant-numeric:tabular-nums;font-feature-settings:'tnum';}
+
+    /* gradient text — for key numbers and hero headings */
+    .grad-text{
+      background:linear-gradient(135deg,#ffffff 40%,#c8f53a 100%);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+
+    /* film grain overlay */
+    @keyframes grainMove{
+      0%,100%{transform:translate(0,0);}
+      10%{transform:translate(-3%,-2%);}
+      20%{transform:translate(2%,3%);}
+      30%{transform:translate(-1%,1%);}
+      40%{transform:translate(3%,-3%);}
+      50%{transform:translate(-2%,2%);}
+      60%{transform:translate(1%,-1%);}
+      70%{transform:translate(-3%,3%);}
+      80%{transform:translate(2%,-2%);}
+      90%{transform:translate(-1%,3%);}
+    }
+    .grain-overlay{
+      position:fixed;inset:-30%;width:160%;height:160%;
+      pointer-events:none;z-index:9998;
+      opacity:0.038;
+      animation:grainMove 0.9s steps(1) infinite;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-repeat:repeat;
+      background-size:260px 260px;
+      mix-blend-mode:overlay;
+    }
   `}</style>
 );
+
+const GrainOverlay = () => <div className="grain-overlay" aria-hidden="true"/>;
 
 // ═══════════════════════════════════════════════════════════════
 // HAPTICS — тактильний відгук через Telegram WebApp
@@ -590,36 +624,55 @@ const BNav = ({active,onChange,isAdmin}) => {
     menu: c=><><rect x="2" y="4" width="14" height="1.8" rx=".9" fill={c}/><rect x="2" y="8.1" width="10" height="1.8" rx=".9" fill={c}/><rect x="2" y="12.2" width="12" height="1.8" rx=".9" fill={c}/></>,
     ranking: c=><><path d="M3 16h2v-5H3v5zm5 0h2V8H8v8zm5 0h2v-3h-2v3zM2 4l3 2 4-4 4 4 3-2v3H2V4z" stroke={c} strokeWidth="1.4" strokeLinejoin="round" fill="none"/></>,
   };
+  const activeIdx = tabs.findIndex(t => t.id === active);
+  const n = tabs.length;
+  const pct = 100 / n;
   return (
     <div style={{
-      display:"flex",borderTop:`1px solid ${C.bc}`,
-      background:"rgba(10,10,10,0.6)",
+      position:"fixed",bottom:0,left:0,right:0,zIndex:100,
+      borderTop:`1px solid ${C.bc}`,
+      background:"rgba(10,10,10,0.65)",
       backdropFilter:"blur(22px) saturate(140%)",WebkitBackdropFilter:"blur(22px) saturate(140%)",
       paddingBottom:"env(safe-area-inset-bottom,0px)",
-      position:"fixed",bottom:0,left:0,right:0,zIndex:100,
     }}>
-      {tabs.map(t=>{
-        const isAct=active===t.id;
-        const color=isAct?C.acc:C.ts;
-        return (
-          <button key={t.id} onClick={()=>{haptic("light");onChange(t.id);}}
-            style={{
-              flex:1,background:"none",display:"flex",flexDirection:"column",
-              alignItems:"center",gap:3,padding:"10px 0 12px",
-              transition:`color ${T.fast} ${E.out}`,
-            }}>
-            <div style={{
-              width:isAct?22:4,height:3,borderRadius:R.full,
-              background:isAct?C.gradAcc:"transparent",
-              marginBottom:4,
-              transition:`all ${T.base} ${E.out}`,
-              boxShadow:isAct?"0 0 8px rgba(200,245,58,0.5)":"none",
-            }}/>
-            <svg width="22" height="22" viewBox="0 0 18 18" fill="none" style={{transition:`transform ${T.base} ${E.out}`,transform:isAct?"scale(1.1)":"scale(1)"}}>{icons[t.id]?icons[t.id](color):null}</svg>
-            <span style={{fontSize:9,fontWeight:isAct?800:600,color,letterSpacing:0.1,transition:`all ${T.fast} ${E.out}`}}>{t.l}</span>
-          </button>
-        );
-      })}
+      {/* Рідкий індикатор — пілюля що переповзає між табами */}
+      <div style={{
+        position:"absolute",
+        top:5,
+        left:`${activeIdx * pct}%`,
+        width:`${pct}%`,
+        height:"calc(100% - 10px - env(safe-area-inset-bottom,0px))",
+        transition:`left 320ms cubic-bezier(0.34,1.56,0.64,1)`,
+        padding:"0 5px",
+        pointerEvents:"none",
+      }}>
+        <div style={{
+          width:"100%",height:"100%",borderRadius:14,
+          background:"rgba(200,245,58,0.09)",
+          border:"1px solid rgba(200,245,58,0.18)",
+          boxShadow:"0 0 16px rgba(200,245,58,0.08)",
+        }}/>
+      </div>
+      {/* Tabs */}
+      <div style={{display:"flex",position:"relative"}}>
+        {tabs.map(t=>{
+          const isAct=active===t.id;
+          const color=isAct?C.acc:C.ts;
+          return (
+            <button key={t.id} onClick={()=>{haptic("light");onChange(t.id);}}
+              style={{
+                flex:1,background:"none",display:"flex",flexDirection:"column",
+                alignItems:"center",gap:3,padding:"10px 0 12px",
+                transition:`color ${T.fast} ${E.out}`,
+              }}>
+              <svg width="22" height="22" viewBox="0 0 18 18" fill="none"
+                style={{transition:`transform ${T.base} ${E.out}`,transform:isAct?"scale(1.12)":"scale(1)"}}
+              >{icons[t.id]?icons[t.id](color):null}</svg>
+              <span style={{fontSize:9,fontWeight:isAct?800:600,color,letterSpacing:0.1,transition:`all ${T.fast} ${E.out}`}}>{t.l}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 };
@@ -3547,7 +3600,7 @@ const Leaderboard = ({userId}) => {
                   </div>
                 </div>
                 <div style={{textAlign:"right",flexShrink:0}}>
-                  <div style={{fontSize:18,fontWeight:900,color:C.acc,letterSpacing:-0.4,lineHeight:1}} className="num">
+                  <div style={{fontSize:18,fontWeight:900,letterSpacing:-0.4,lineHeight:1}} className="num grad-text">
                     {r.bosses_count || 0}
                   </div>
                   <div style={{fontSize:9,color:C.ts,fontWeight:700,letterSpacing:0.4,textTransform:"uppercase"}}>🏆</div>
@@ -4667,7 +4720,7 @@ const Progress = ({userId}) => {
         <div style={{position:"absolute",right:-10,top:-20,fontSize:120,opacity:0.08,filter:"blur(2px)"}}>🔥</div>
         <SectionLabel accent style={{marginBottom:8}}>Поточний стрік</SectionLabel>
         <div style={{display:"flex",alignItems:"baseline",gap:8,position:"relative",zIndex:1}}>
-          <span style={{fontSize:56,fontWeight:900,color:C.acc,letterSpacing:-2.4,lineHeight:1}} className="num">
+          <span style={{fontSize:56,fontWeight:900,letterSpacing:-2.4,lineHeight:1}} className="num grad-text">
             <AnimatedNum value={data.streak||0}/>
           </span>
           <span style={{fontSize:18,color:C.ts,fontWeight:800}}>{data.streak===1?"день":data.streak<5?"дні":"днів"}</span>
@@ -4811,7 +4864,7 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
             <Card variant="accent" glow padding={14}>
               <SectionLabel accent>Бос. за місяць</SectionLabel>
               <div style={{display:"flex",alignItems:"baseline",gap:6,marginTop:4}}>
-                <span style={{fontSize:30,fontWeight:900,color:C.acc,letterSpacing:-1,lineHeight:1.1}} className="num">
+                <span style={{fontSize:30,fontWeight:900,letterSpacing:-1,lineHeight:1.1}} className="num grad-text">
                   <AnimatedNum value={monthBosses}/>
                 </span>
                 <span style={{fontSize:18}}>🏆</span>
@@ -4982,7 +5035,7 @@ const AdminDash = () => {
         <div style={{position:"absolute",right:-40,top:-40,width:180,height:180,borderRadius:"50%",background:C.acc,opacity:0.06,filter:"blur(20px)"}}/>
         <SectionLabel accent>Виручка місяця</SectionLabel>
         <div style={{display:"flex",alignItems:"baseline",gap:8,marginTop:4}}>
-          <span style={{fontSize:48,fontWeight:900,color:C.tm,letterSpacing:-2,lineHeight:1}} className="num">
+          <span style={{fontSize:48,fontWeight:900,letterSpacing:-2,lineHeight:1}} className="num grad-text">
             <AnimatedNum value={stats.revenue_month||0}/>
           </span>
           <span style={{fontSize:18,color:C.ts,fontWeight:700}}>₴</span>
@@ -6236,6 +6289,7 @@ export default function FitCoreApp() {
   return(
     <>
       <G/>
+      <GrainOverlay/>
       <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",position:"relative",overflow:"hidden"}}>
         {/* Глобальний living background — за всім додатком */}
         <LivingBackground intensity={0.7}/>
