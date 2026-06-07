@@ -847,6 +847,10 @@ function dSaved(base,months){return Math.round(base*months)-dCalc(base,months);}
 
 const PlanSelect = ({plans,payLinks,onSelect}) => {
   const [months,setMonths]=useState(1);
+  const [stats,setStats]=useState(null);
+  useEffect(()=>{
+    apiGet("/api/social-stats").then(r=>setStats(r)).catch(()=>{});
+  },[]);
   const p=plans||PLANS_STATIC;
   return (
     <Scr>
@@ -904,7 +908,7 @@ const PlanSelect = ({plans,payLinks,onSelect}) => {
             const on=months===m;
             const disc=DUR_DISC[m];
             return(
-              <div key={m} onClick={()=>setMonths(m)}
+              <div key={m} onClick={()=>{haptic("selection");setMonths(m);}}
                 style={{borderRadius:14,border:`2px solid ${on?C.acc:C.bc}`,background:on?"rgba(200,245,58,.08)":C.s2,padding:"10px 6px",cursor:"pointer",textAlign:"center",position:"relative",transition:"all .15s"}}>
                 {disc>0&&<div style={{position:"absolute",top:-8,left:"50%",transform:"translateX(-50%)",background:m===12?C.acc:m===6?"#e8a832":"#4a9fdf",color:"#080808",fontSize:8,fontWeight:900,padding:"2px 5px",borderRadius:6,whiteSpace:"nowrap",lineHeight:1.4}}>-{disc}%</div>}
                 <div style={{fontSize:m===12?10:12,fontWeight:800,color:on?C.acc:C.ts,lineHeight:1.3}}>{m===12?"1 рік":m+"міс"}</div>
@@ -986,8 +990,10 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
     setSending(true);
     try{
       await apiPost(`/api/client/${userId}/payment-screenshot`,{plan:planKey,months,coins_applied:coinsDiscount});
+      haptic("success");
       setSent(true);
     }catch(e){
+      haptic("error");
       alert("Помилка: "+e.message);
     }
     setSending(false);
@@ -1108,7 +1114,7 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
               {useCoins?`Знижка −${coinsDiscount.toLocaleString()} ₴ — до оплати ${finalPrice.toLocaleString()} ₴`:`Знижка ${coinsBalance.toLocaleString()} ₴ на цю підписку`}
             </div>
           </div>
-          <Tog value={useCoins} onChange={()=>{}}/>
+          <Tog on={useCoins} onToggle={()=>{haptic("selection");setUseCoins(v=>!v);}}/>
         </div>
       )}
 
@@ -1145,7 +1151,7 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
           <div style={{width:44,height:44,background:"rgba(246,201,14,.1)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:24}}>⭐</div>
           <div style={{flex:1}}>
             <div style={{fontSize:16,fontWeight:800,color:C.tm}}>Telegram Stars · {totalStars.toLocaleString()} ⭐</div>
-            <div style={{fontSize:12,color:C.ts,marginTop:2}}>≈ {totalPrice.toLocaleString()} ₴ · активація автоматична</div>
+            <div style={{fontSize:12,color:C.ts,marginTop:2}}>≈ {totalPrice.toLocaleString()} ₴ · активація автоматична{coinsDiscount>0?" · FitCoins не застосовуються":""}</div>
           </div>
         </div>
         <button onClick={()=>{
@@ -1155,8 +1161,7 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
           const link = `https://t.me/fitcore_matias_bot?start=pay_${planKey}_${months}`;
           if(tg && tg.openTelegramLink){
             tg.openTelegramLink(link);
-            // Закриваємо Mini App щоб клієнт побачив інвойс у боті
-            setTimeout(()=>{ try{ tg.close(); }catch{} }, 600);
+            // Не закриваємо Mini App — клієнт може повернутись після оплати
           } else {
             window.location.href = link;
           }
@@ -2474,7 +2479,7 @@ const ProgressPhotos = ({userId}) => {
   const removePhoto = async (id) => {
     if(!confirm("Видалити це фото?")) return;
     try{
-      await fetch(`${API}/api/client/${userId}/progress-photos/${id}`, {
+      await fetch(`${API_BASE}/api/client/${userId}/progress-photos/${id}`, {
         method:"DELETE",
         headers:{"X-Telegram-Init-Data": window.Telegram?.WebApp?.initData || ""}
       });
@@ -4364,7 +4369,7 @@ const ReviewsScreen = ({userId}) => {
           <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
             <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,marginBottom:8}}>Що найбільше подобається?</div>
             <textarea value={pos} onChange={e=>setPos(e.target.value)} placeholder="Розкажи що тобі подобається в програмі..." rows={3}
-              style={{background:C.s2,border:`1px solid ${pos?C.bc2:C.bc}`,borderRadius:12,padding:"12px",color:C.tm,fontSize:14,width:"100%",resize:"none",lineHeight:1.6}}/>
+              style={{background:C.s2,border:`1px solid ${pos?C.bcStrong:C.bc}`,borderRadius:12,padding:"12px",color:C.tm,fontSize:14,width:"100%",resize:"none",lineHeight:1.6}}/>
           </div>
           <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
             <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,marginBottom:8}}>Що можна покращити?</div>
@@ -4412,11 +4417,12 @@ const ReviewsScreen = ({userId}) => {
 };
 
 // ═══ NOTIFICATIONS SETTINGS ═══
-const NotificationsScreen = ({userId,nutritionPlan}) => {
+const NotificationsScreen = ({userId,nutritionPlan:nutritionPlanProp}) => {
   const [settings,setSettings]=useState(null);
   const [loading,setLoad]=useState(true);
   const [saving,setSave]=useState(false);
   const [saved,setSaved]=useState(false);
+  const [nutritionPlan,setNutritionPlan]=useState(nutritionPlanProp||null);
 
   const DAYS=[{n:"Пн",v:"1"},{n:"Вт",v:"2"},{n:"Ср",v:"3"},{n:"Чт",v:"4"},{n:"Пт",v:"5"},{n:"Сб",v:"6"},{n:"Нд",v:"7"}];
 
@@ -4428,6 +4434,12 @@ const NotificationsScreen = ({userId,nutritionPlan}) => {
       setSettings({workout_enabled:true,workout_time:"18:00",workout_days:"1,3,5",checkin_enabled:true,water_enabled:true,meal_settings:{}});
       setLoad(false);
     });
+    // Підтягуємо план харчування якщо не передано через prop
+    if(!nutritionPlanProp){
+      apiGet(`/api/client/${userId}/plan`).then(r=>{
+        try{const p=JSON.parse(r.plan?.plan_text||"{}");if(p.nutrition?.meals)setNutritionPlan(p.nutrition);}catch{}
+      }).catch(()=>{});
+    }
   },[userId]);
 
   const save=async()=>{
@@ -4930,7 +4942,7 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
         {profileTab===1&&<ReviewsScreen userId={userId}/>}
         {profileTab===2&&<NotificationsScreen userId={userId}/>}
         {client?.status==="trial"&&<div className="pu" onClick={onBuyPlan} style={{background:C.acc,borderRadius:16,padding:"16px 20px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-          <div><div style={{fontSize:17,fontWeight:800,color:"#0a0a0a"}}>Придбати тариф</div><div style={{fontSize:12,color:"rgba(10,10,10,.55)",fontWeight:600,marginTop:2}}>від 799 ₴ / місяць</div></div>
+          <div><div style={{fontSize:17,fontWeight:800,color:"#0a0a0a"}}>Придбати тариф</div><div style={{fontSize:12,color:"rgba(10,10,10,.55)",fontWeight:600,marginTop:2}}>від {PLANS_STATIC.start.price.toLocaleString()} ₴ / місяць</div></div>
           <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="13" fill="rgba(0,0,0,.2)"/><path d="M9 14h10M14 9l5 5-5 5" stroke="#0a0a0a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </div>}
         <button onClick={onCheckin} style={{background:C.s1,border:`1px solid ${C.bc}`,borderRadius:16,padding:"16px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%"}}>
@@ -5364,18 +5376,21 @@ const AdminClientDetail = ({client,onBack}) => {
   },[client.user_id, period]);
 
   const activate=async plan=>{
-    await apiPost(`/api/admin/client/${client.user_id}/activate`,{plan, months: activateMonths});
-    const exp=new Date(); exp.setDate(exp.getDate()+activateMonths*30);
-    const expStr=exp.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'numeric'});
-    const mLabel=activateMonths===1?"місяць":activateMonths<5?"місяці":"місяців";
-    setMsg(`✓ Активовано ${plan.toUpperCase()} на ${activateMonths} ${mLabel} до ${expStr}`);
+    try{
+      await apiPost(`/api/admin/client/${client.user_id}/activate`,{plan, months: activateMonths});
+      const exp=new Date(); exp.setDate(exp.getDate()+activateMonths*30);
+      const expStr=exp.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'numeric'});
+      const mLabel=activateMonths===1?"місяць":activateMonths<5?"місяці":"місяців";
+      setMsg(`✓ Активовано ${plan.toUpperCase()} на ${activateMonths} ${mLabel} до ${expStr}`);
+    }catch(e){setMsg("❌ Помилка активації: "+e.message);}
   };
   const block=async()=>{
     if(!confirm("Заблокувати клієнта? Він втратить доступ до додатку."))return;
-    await apiPost(`/api/admin/client/${client.user_id}/block`,{});
-    setMsg("✓ Заблоковано");
-    // Локально оновлюємо статус щоб кнопки одразу перемкнулися
-    if(detail?.client) setDetail({...detail, client:{...detail.client, status:"blocked"}});
+    try{
+      await apiPost(`/api/admin/client/${client.user_id}/block`,{});
+      setMsg("✓ Заблоковано");
+      if(detail?.client) setDetail({...detail, client:{...detail.client, status:"blocked"}});
+    }catch(e){setMsg("❌ Помилка блокування: "+e.message);}
   };
   const unblockReset=async()=>{
     if(!confirm("Розблокувати і скинути? Клієнт зможе пройти анкету заново і отримати trial 3 дні. Анкета, план і AI-чат будуть видалені."))return;
@@ -6005,14 +6020,16 @@ export default function FitCoreApp() {
         if (r.client) {
           setClient(r.client);
           const st = r.client.status;
-          if (["expired","trial_expired"].includes(st) && screen !== "expired") {
-            setScreen("expired");
-          } else if (st === "blocked" && screen !== "blocked") {
-            setScreen("blocked");
-          } else if (["active","trial"].includes(st) && ["pending_payment","pending_approval"].includes(screen)) {
-            setScreen("client");
-            setClientTab("plan");
-          }
+          // Використовуємо functional updater щоб уникнути stale closure на screen
+          setScreen(prevScreen => {
+            if (["expired","trial_expired"].includes(st) && prevScreen !== "expired") return "expired";
+            if (st === "blocked" && prevScreen !== "blocked") return "blocked";
+            if (["active","trial"].includes(st) && ["pending_payment","pending_approval"].includes(prevScreen)) {
+              setClientTab("plan");
+              return "client";
+            }
+            return prevScreen;
+          });
         }
       } catch(e) {
         console.error("Status check error:", e);
@@ -6177,7 +6194,10 @@ export default function FitCoreApp() {
         </div>
       );
     }
-    if(screen==="payment")return <Payment planKey={selPlan} months={selMonths||1} plans={plans} payLinks={payLinks} onBack={()=>{setClientTab("menu");setScreen("client");}} onPaid={()=>setScreen("pending_payment")} userId={userId}/>;
+    if(screen==="payment"){
+      const isExpired=clientData&&["expired","trial_expired"].includes(clientData.status);
+      return <Payment planKey={selPlan} months={selMonths||1} plans={plans} payLinks={payLinks} onBack={isExpired?()=>setScreen("expired"):()=>{setClientTab("menu");setScreen("client");}} onPaid={()=>setScreen("pending_payment")} userId={userId}/>;
+    }
     if(screen==="expired"){
       return <ExpiredScreen client={clientData} plans={plans} onSelectPlan={(p,m)=>{setSelPlan(p);setSelMonths(m||1);setScreen("payment");}}/>;
     }
@@ -6222,7 +6242,7 @@ export default function FitCoreApp() {
         <FloatingParticles count={10}/>
         {showTopNav&&(
           <TNav title={topTitle}
-            onBack={selClient?()=>setSelClient(null):checkinMode?()=>setCheckin(false):isAdminMode?()=>setScreen("client"):clientTab==="referral"?()=>setClientTab("more"):undefined}
+            onBack={selClient?()=>setSelClient(null):checkinMode?()=>setCheckin(false):isAdminMode?()=>setScreen("client"):["referral","photos","schedule","progress","recipes"].includes(clientTab)?()=>setClientTab("more"):undefined}
             rightEl={isAdminMode&&adminTab==="payments"&&!selClient&&<div style={{fontSize:12,background:"rgba(232,168,50,.1)",color:C.amber,border:"1px solid rgba(232,168,50,.3)",borderRadius:20,padding:"4px 12px",fontWeight:700}}>оплати</div>}
           />
         )}
