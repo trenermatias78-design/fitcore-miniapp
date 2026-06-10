@@ -3469,14 +3469,6 @@ const MoreScreen = ({clientData, onNav}) => {
     {id:"schedule", icon:"📅", title:"Календар тренувань", desc:"Обери дні + нагадування за 5 годин", locked:false},
     {id:"progress", icon:"📊", title:"Чекіни і прогрес", desc:"Повна історія твоїх показників", locked:false},
     {id:"macros", icon:"🧮", title:"КБЖУ калькулятор", desc:"Розрахуй персональну норму калорій і макросів", locked:false},
-    {
-      id:"recipes",
-      icon:"🍽",
-      title:"Рецепти під КБЖУ",
-      desc: isVIP ? "Персональні рецепти від AI" : isTrial ? "✨ Доступно на пробному (1 категорія/день)" : "Доступно на VIP",
-      locked: !(isVIP || isTrial),
-      vipBadge: isTrial,
-    },
   ];
   return(
     <Scr>
@@ -4304,27 +4296,113 @@ const TrainPlan = ({userId}) => {
 };
 
 // ═══ NUTRITION ═══
-const Nutrition = ({userId, questionnaire}) => {
+const Nutrition = ({userId, questionnaire, clientData}) => {
   const [data,setData]=useState(null);
   const [loading,setLoad]=useState(true);
+  const [recipeStates,setRecStates]=useState({});
+
   useEffect(()=>{apiGet(`/api/client/${userId}/plan`).then(r=>{setData(r.plan);setLoad(false);}).catch(()=>setLoad(false));},[userId]);
+
+  const parseTime=(t)=>{if(!t)return 0;const p=t.split(":");return(parseInt(p[0])||0)*60+(parseInt(p[1])||0);};
+
+  const mealToCategory=(meal)=>{
+    const n=(meal.name||"").toLowerCase();
+    if(/сніданок/.test(n))return"breakfast";
+    if(/обід/.test(n))return"lunch";
+    if(/вечер/.test(n))return"dinner";
+    if(/перекус/.test(n))return"snack";
+    const h=parseTime(meal.time)/60;
+    if(h<10.5)return"breakfast";
+    if(h<14.5)return"lunch";
+    if(h<17.5)return"snack";
+    if(h<21)return"dinner";
+    return"snack";
+  };
+
+  const getMealStatuses=(meals)=>{
+    if(!meals||!meals.length)return[];
+    const now=new Date();const nowMins=now.getHours()*60+now.getMinutes();
+    const times=meals.map(m=>parseTime(m.time));
+    return meals.map((_,i)=>{
+      const start=times[i];
+      const end=i<meals.length-1?times[i+1]:24*60;
+      if(nowMins>=start&&nowMins<end)return"current";
+      if(nowMins>=end)return"past";
+      return"upcoming";
+    });
+  };
+
+  const getCurrentInfo=(meals,statuses)=>{
+    const now=new Date();const nowMins=now.getHours()*60+now.getMinutes();
+    const ci=statuses.indexOf("current");
+    if(ci!==-1)return{idx:ci,meal:meals[ci],type:"current"};
+    const ui=statuses.indexOf("upcoming");
+    if(ui!==-1){
+      const diff=parseTime(meals[ui].time)-nowMins;
+      const h=Math.floor(diff/60);const m=diff%60;
+      const timeStr=h>0?`через ${h}год ${m>0?m+"хв":""}`:`через ${m}хв`;
+      return{idx:ui,meal:meals[ui],type:"upcoming",timeStr};
+    }
+    return null;
+  };
+
+  const isVIP=clientData?.plan==="vip";
+  const isTrial=clientData?.status==="trial";
+  const hasRecipes=isVIP||isTrial;
+  const CAT_EMOJI={breakfast:"🍳",lunch:"🍲",dinner:"🍽",snack:"🥗"};
+
+  const loadRecipes=async(mealIdx,meal,refresh=false)=>{
+    if(!hasRecipes)return;
+    const cat=mealToCategory(meal);
+    setRecStates(p=>({...p,[mealIdx]:{...p[mealIdx],loading:true,error:null,trialBlock:false}}));
+    try{
+      const r=await apiGet(`/api/client/${userId}/recipes?category=${cat}${refresh?"&refresh=1":""}`);
+      setRecStates(p=>({...p,[mealIdx]:{...p[mealIdx],loading:false,loaded:true,recipes:r.recipes||[]}}));
+    }catch(e){
+      const msg=e.message||"";
+      if(msg.includes("trial_limit")){
+        setRecStates(p=>({...p,[mealIdx]:{...p[mealIdx],loading:false,loaded:true,recipes:[],trialBlock:true}}));
+      }else{
+        setRecStates(p=>({...p,[mealIdx]:{...p[mealIdx],loading:false,error:"Не вдалося завантажити. Спробуй пізніше."}}));
+      }
+    }
+  };
+
+  const toggleRecipes=(mealIdx,meal)=>{
+    const st=recipeStates[mealIdx]||{};
+    const nowVisible=!st.visible;
+    setRecStates(p=>({...p,[mealIdx]:{...p[mealIdx],visible:nowVisible,expanded:null}}));
+    if(nowVisible&&!st.loaded&&!st.loading)loadRecipes(mealIdx,meal);
+    haptic("light");
+  };
+
+  const toggleRecipeCard=(mealIdx,ri)=>{
+    const st=recipeStates[mealIdx]||{};
+    setRecStates(p=>({...p,[mealIdx]:{...p[mealIdx],expanded:st.expanded===ri?null:ri}}));
+    haptic("light");
+  };
+
   if(loading)return <Spin/>;
   if(!data)return <Scr><div style={{padding:"50px 0",textAlign:"center",color:C.ts,fontSize:15}}>Харчування не призначено</div></Scr>;
   let nut=null;
   try{const p=JSON.parse(data.plan_text||"{}");nut=p.nutrition||null;}catch{}
   if(!nut)return <Scr><div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}><div style={{fontSize:14,color:C.tm,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{data.nutrition_text||"Не знайдено"}</div></div></Scr>;
-  // Реальні % від КБЖУ-норми: якщо є questionnaire — відносно цілей, інакше — відносно калорій плану
-  const tProt = questionnaire?.protein_g || 0;
-  const tFat  = questionnaire?.fat_g    || 0;
-  const tCarb = questionnaire?.carbs_g  || 0;
-  const totalCal = (nut.protein||0)*4 + (nut.fat||0)*9 + (nut.carbs||0)*4 || 1;
-  const pProt = tProt ? Math.min(100,Math.round((nut.protein||0)/tProt*100)) : Math.round((nut.protein||0)*4/totalCal*100);
-  const pFat  = tFat  ? Math.min(100,Math.round((nut.fat||0)/tFat*100))    : Math.round((nut.fat||0)*9/totalCal*100);
-  const pCarb = tCarb ? Math.min(100,Math.round((nut.carbs||0)/tCarb*100)) : Math.round((nut.carbs||0)*4/totalCal*100);
+
+  const tProt=questionnaire?.protein_g||0;const tFat=questionnaire?.fat_g||0;const tCarb=questionnaire?.carbs_g||0;
+  const totalCal=(nut.protein||0)*4+(nut.fat||0)*9+(nut.carbs||0)*4||1;
+  const pProt=tProt?Math.min(100,Math.round((nut.protein||0)/tProt*100)):Math.round((nut.protein||0)*4/totalCal*100);
+  const pFat=tFat?Math.min(100,Math.round((nut.fat||0)/tFat*100)):Math.round((nut.fat||0)*9/totalCal*100);
+  const pCarb=tCarb?Math.min(100,Math.round((nut.carbs||0)/tCarb*100)):Math.round((nut.carbs||0)*4/totalCal*100);
   const macros=[{l:"Білок",v:`${nut.protein}г`,pct:pProt,c:C.acc},{l:"Жири",v:`${nut.fat}г`,pct:pFat,c:C.amber},{l:"Вуглеводи",v:`${nut.carbs}г`,pct:pCarb,c:C.blue}];
+
+  const meals=nut.meals||[];
+  const statuses=getMealStatuses(meals);
+  const currentInfo=getCurrentInfo(meals,statuses);
+
   return(
     <Scr>
-      <div style={{background:C.s1,borderRadius:18,border:`1px solid ${C.bc}`,padding:"16px",position:"relative",overflow:"hidden"}}>
+      {/* КБЖУ шапка */}
+      <div style={{background:`linear-gradient(180deg,#141414 0%,${C.s1} 100%)`,borderRadius:18,border:`1px solid ${C.bc}`,padding:"16px",position:"relative",overflow:"hidden",boxShadow:`inset 0 1px 0 rgba(255,255,255,0.07)`}}>
         <div style={{position:"absolute",right:-30,top:-30,width:130,height:130,borderRadius:"50%",background:C.acc,opacity:.04}}/>
         <div style={{fontSize:12,color:C.ts,textTransform:"uppercase",letterSpacing:.8,fontWeight:600}}>Денна норма</div>
         <div style={{marginTop:6}}><span style={{fontSize:48,fontWeight:900,color:C.tm,letterSpacing:-2,lineHeight:1}}>{nut.calories}</span> <span style={{fontSize:16,color:C.ts}}>ккал</span></div>
@@ -4333,39 +4411,184 @@ const Nutrition = ({userId, questionnaire}) => {
             <div key={m.l} style={{flex:1,background:C.s2,borderRadius:12,padding:"12px 10px"}}>
               <div style={{fontSize:11,color:C.ts,textTransform:"uppercase",letterSpacing:.5,fontWeight:600}}>{m.l}</div>
               <div style={{fontSize:18,fontWeight:800,color:C.tm,margin:"5px 0 6px"}}>{m.v}</div>
-              <div style={{height:3,background:C.bc,borderRadius:2}}><div style={{height:"100%",width:`${m.pct}%`,background:m.c,borderRadius:2}}/></div>
+              <div style={{height:3,background:C.bc,borderRadius:2}}><div style={{height:"100%",width:`${m.pct}%`,background:m.c,borderRadius:2,transition:"width 600ms ease"}}/></div>
             </div>
           ))}
         </div>
       </div>
-      {(nut.meals||[]).map((m,i)=>(
-        <div key={i} style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,overflow:"hidden"}}>
-          <div style={{background:C.s2,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div>
-              <div style={{fontSize:11,color:C.acc,fontWeight:700,background:"rgba(200,245,58,.1)",display:"inline-block",padding:"2px 9px",borderRadius:8,marginBottom:4}}>{m.time}</div>
-              <div style={{fontSize:17,fontWeight:800,color:C.tm}}>{m.name}</div>
-            </div>
-            <div style={{fontSize:26,fontWeight:900,color:C.acc}}>{m.kcal}</div>
-          </div>
-          <div style={{padding:"10px 16px",display:"flex",flexDirection:"column",gap:6}}>
-            {(m.foods||[]).map((f,j)=>(
-              <div key={j}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:15}}>
-                  <span style={{color:C.tm}}>{f.name}</span>
-                  <span style={{color:C.ts,background:C.s2,padding:"3px 10px",borderRadius:8,fontSize:13,fontWeight:600}}>{f.qty}</span>
-                </div>
-                {j<(m.foods||[]).length-1&&<div style={{height:1,background:C.bc,margin:"5px 0"}}/>}
+
+      {/* Зараз / Наступний прийом */}
+      {currentInfo?(
+        <div style={{
+          borderRadius:18,padding:"16px",
+          background:currentInfo.type==="current"
+            ?"linear-gradient(135deg,rgba(200,245,58,0.13) 0%,rgba(200,245,58,0.04) 100%)"
+            :`linear-gradient(180deg,#141414 0%,${C.s1} 100%)`,
+          border:currentInfo.type==="current"?"1.5px solid rgba(200,245,58,0.38)":`1px solid ${C.bc}`,
+          boxShadow:currentInfo.type==="current"?SH.glow:`inset 0 1px 0 rgba(255,255,255,0.07)`,
+        }}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:5,color:currentInfo.type==="current"?C.acc:C.ts}}>
+                {currentInfo.type==="current"?"Зараз":currentInfo.timeStr}
               </div>
-            ))}
+              <div style={{fontSize:20,fontWeight:900,color:C.tm,letterSpacing:-0.5,lineHeight:1.2}}>{currentInfo.meal.name}</div>
+              <div style={{fontSize:13,color:C.ts,marginTop:4}}>{currentInfo.meal.time} · {currentInfo.meal.kcal} ккал</div>
+            </div>
+            <div style={{fontSize:32,fontWeight:900,letterSpacing:-1,flexShrink:0,color:currentInfo.type==="current"?C.acc:C.ts}}>{currentInfo.meal.kcal}</div>
           </div>
         </div>
-      ))}
-      {nut.water_liters&&<div style={{background:C.s1,borderRadius:14,border:`1px solid ${C.bc}`,padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-        <div><div style={{fontSize:13,color:C.ts}}>Вода на день</div><div style={{fontSize:22,fontWeight:800,color:C.tm,marginTop:3}}>{nut.water_liters} <span style={{fontSize:14,color:C.ts,fontWeight:500}}>літрів</span></div></div>
-        <div style={{display:"flex",gap:4}}>
-          {Array.from({length:10},(_,i)=><div key={i} style={{width:10,height:28,borderRadius:4,background:i<Math.round(nut.water_liters/0.28)?C.acc:C.s3}}/>)}
+      ):(
+        <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px",textAlign:"center"}}>
+          <div style={{fontSize:13,color:C.ts}}>Сьогодні всі прийоми завершено ✓</div>
         </div>
-      </div>}
+      )}
+
+      <SectionLabel style={{marginBottom:4}}>Всі прийоми · {meals.length}</SectionLabel>
+
+      {/* Список прийомів */}
+      {meals.map((m,i)=>{
+        const status=statuses[i];
+        const isPast=status==="past";
+        const isCurrent=status==="current";
+        const rSt=recipeStates[i]||{};
+        const cat=mealToCategory(m);
+        const emoji=CAT_EMOJI[cat]||"🍴";
+
+        return(
+          <div key={i} style={{
+            borderRadius:16,
+            border:isCurrent?"1.5px solid rgba(200,245,58,0.3)":`1px solid ${C.bc}`,
+            overflow:"hidden",
+            opacity:isPast?0.5:1,
+            transition:`opacity ${T.base} ${E.out}`,
+            background:`linear-gradient(180deg,#141414 0%,${C.s1} 100%)`,
+            boxShadow:isCurrent?"0 0 20px rgba(200,245,58,0.07)":`inset 0 1px 0 rgba(255,255,255,0.05)`,
+          }}>
+            {/* Заголовок прийому */}
+            <div style={{background:C.s2,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div>
+                <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:4}}>
+                  <div style={{fontSize:11,color:C.acc,fontWeight:700,background:"rgba(200,245,58,.1)",display:"inline-block",padding:"2px 9px",borderRadius:8}}>{m.time}</div>
+                  {isCurrent&&<div style={{fontSize:9,color:"#0a0a0a",background:C.acc,fontWeight:900,padding:"2px 8px",borderRadius:8,letterSpacing:.5}}>ЗАРАЗ</div>}
+                </div>
+                <div style={{fontSize:17,fontWeight:800,color:C.tm}}>{m.name}</div>
+              </div>
+              <div style={{fontSize:24,fontWeight:900,color:isCurrent?C.acc:C.ts}}>{m.kcal}</div>
+            </div>
+
+            {/* Продукти */}
+            <div style={{padding:"10px 16px",display:"flex",flexDirection:"column",gap:6}}>
+              {(m.foods||[]).map((f,j)=>(
+                <div key={j}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:15}}>
+                    <span style={{color:C.tm}}>{f.name}</span>
+                    <span style={{color:C.ts,background:C.s2,padding:"3px 10px",borderRadius:8,fontSize:13,fontWeight:600}}>{f.qty}</span>
+                  </div>
+                  {j<(m.foods||[]).length-1&&<div style={{height:1,background:C.bc,margin:"5px 0"}}/>}
+                </div>
+              ))}
+            </div>
+
+            {/* Розділювач */}
+            <div style={{height:1,background:C.bc,margin:"0 16px"}}/>
+
+            {/* Рецепти секція */}
+            <div style={{padding:"10px 16px 12px"}}>
+              {!hasRecipes?(
+                <div style={{display:"flex",alignItems:"center",gap:7,fontSize:12,color:C.ts}}>
+                  <span style={{fontSize:9,color:"#d8b4fe",background:"rgba(168,85,247,0.15)",border:"1px solid rgba(168,85,247,0.3)",padding:"2px 7px",borderRadius:R.sm,fontWeight:800,letterSpacing:.5}}>VIP</span>
+                  Рецепти доступні на VIP
+                </div>
+              ):(
+                <>
+                  <button onClick={()=>toggleRecipes(i,m)} style={{
+                    background:"none",border:"none",padding:0,cursor:"pointer",
+                    display:"flex",alignItems:"center",gap:6,
+                    color:rSt.visible?C.acc:C.ts,fontSize:13,fontWeight:700,
+                    transition:`color ${T.base} ${E.out}`,
+                  }}>
+                    <span style={{fontSize:16,display:"inline-block",transform:`rotate(${rSt.visible?90:0}deg)`,transition:"transform .22s ease"}}>›</span>
+                    Рецепти · {m.name}
+                    {isTrial&&<span style={{fontSize:9,color:C.acc,background:C.accDim,border:"1px solid rgba(200,245,58,0.3)",padding:"2px 6px",borderRadius:R.sm,fontWeight:800}}>TRIAL</span>}
+                  </button>
+
+                  {rSt.visible&&(
+                    <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:8}}>
+                      {rSt.loading&&(
+                        <div style={{textAlign:"center",padding:"18px 0"}}>
+                          <div className="sp" style={{display:"inline-block",width:24,height:24,borderRadius:"50%",border:`2px solid ${C.s3}`,borderTopColor:C.acc}}/>
+                          <div style={{fontSize:12,color:C.ts,marginTop:8}}>Генеруємо рецепти...</div>
+                        </div>
+                      )}
+                      {rSt.error&&<div style={{fontSize:13,color:C.red}}>{rSt.error}</div>}
+                      {rSt.trialBlock&&(
+                        <div style={{background:"rgba(168,85,247,.08)",border:"1.5px solid rgba(168,85,247,.3)",borderRadius:12,padding:"12px",textAlign:"center"}}>
+                          <div style={{fontSize:13,fontWeight:800,color:C.tm,marginBottom:4}}>Сьогодні ліміт вичерпано</div>
+                          <div style={{fontSize:12,color:C.ts,lineHeight:1.5}}>На trial — 1 категорія на день. На VIP — без обмежень.</div>
+                        </div>
+                      )}
+                      {!rSt.loading&&rSt.loaded&&!rSt.trialBlock&&rSt.recipes&&rSt.recipes.length>0&&(
+                        <>
+                          <button onClick={()=>loadRecipes(i,m,true)} style={{background:"none",border:"none",color:C.td,fontSize:11,cursor:"pointer",padding:0,textAlign:"left",fontWeight:600}}>↺ Оновити рецепти</button>
+                          {rSt.recipes.map((r,ri)=>{
+                            const isOpen=rSt.expanded===ri;
+                            return(
+                              <div key={ri} onClick={()=>toggleRecipeCard(i,ri)} style={{
+                                background:C.s2,borderRadius:R.md,cursor:"pointer",
+                                border:`1px solid ${isOpen?"rgba(200,245,58,0.25)":C.bc}`,
+                                padding:"12px",transition:`border-color ${T.base} ${E.out}`,
+                              }}>
+                                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                                  <div style={{width:44,height:44,borderRadius:10,background:"linear-gradient(135deg,rgba(200,245,58,.15),rgba(200,245,58,.05))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{emoji}</div>
+                                  <div style={{flex:1,minWidth:0}}>
+                                    <div style={{fontSize:14,fontWeight:800,color:C.tm,marginBottom:3,lineHeight:1.3}}>{r.name}</div>
+                                    <div style={{display:"flex",gap:8,flexWrap:"wrap",fontSize:11,color:C.ts}}>
+                                      <span>🔥 {r.kcal} ккал</span><span>🥩 {r.protein_g}г</span><span>🍞 {r.carbs_g}г</span><span>🥑 {r.fat_g}г</span>
+                                      {r.time_min&&<span>⏱ {r.time_min} хв</span>}
+                                    </div>
+                                  </div>
+                                  <div style={{flexShrink:0,color:isOpen?C.acc:C.ts,fontSize:18,fontWeight:700,transform:`rotate(${isOpen?90:0}deg)`,transition:"transform .25s ease, color .2s"}}>›</div>
+                                </div>
+                                {isOpen&&(
+                                  <div style={{marginTop:10,paddingTop:10,borderTop:`1px solid ${C.bc}`}}>
+                                    <div style={{fontSize:11,color:C.acc,fontWeight:700,marginBottom:5,textTransform:"uppercase",letterSpacing:.8}}>Інгредієнти</div>
+                                    {(r.ingredients||[]).map((ing,j)=><div key={j} style={{fontSize:12,color:C.ts,marginBottom:3,paddingLeft:8}}>• {ing}</div>)}
+                                    <div style={{fontSize:11,color:C.acc,fontWeight:700,marginTop:8,marginBottom:5,textTransform:"uppercase",letterSpacing:.8}}>Приготування</div>
+                                    {(r.steps||[]).map((s,j)=>(
+                                      <div key={j} style={{fontSize:12,color:C.ts,marginBottom:4,display:"flex",gap:6}}><span style={{color:C.acc,fontWeight:700,flexShrink:0}}>{j+1}.</span><span>{s}</span></div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </>
+                      )}
+                      {!rSt.loading&&rSt.loaded&&!rSt.trialBlock&&(!rSt.recipes||rSt.recipes.length===0)&&(
+                        <div style={{fontSize:13,color:C.ts}}>Рецептів не знайдено. Спробуй оновити.</div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Вода */}
+      {nut.water_liters&&(
+        <div style={{background:`linear-gradient(180deg,#141414 0%,${C.s1} 100%)`,borderRadius:14,border:`1px solid ${C.bc}`,padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",boxShadow:`inset 0 1px 0 rgba(255,255,255,0.07)`}}>
+          <div>
+            <div style={{fontSize:13,color:C.ts}}>Вода на день</div>
+            <div style={{fontSize:22,fontWeight:800,color:C.tm,marginTop:3}}>{nut.water_liters} <span style={{fontSize:14,color:C.ts,fontWeight:500}}>літрів</span></div>
+          </div>
+          <div style={{display:"flex",gap:4}}>
+            {Array.from({length:10},(_,i)=><div key={i} style={{width:10,height:28,borderRadius:4,background:i<Math.round(nut.water_liters/0.28)?C.acc:C.s3}}/>)}
+          </div>
+        </div>
+      )}
     </Scr>
   );
 };
@@ -6210,7 +6433,7 @@ export default function FitCoreApp() {
 
   const isAdminMode=screen==="admin";
   const showNav=["client","admin"].includes(screen)&&!checkinMode&&!["expired","trial_expired"].includes(clientData?.status||"")&&!["welcome","onboarding","onboarding_success","pending_approval","pending_payment"].includes(screen);
-  const titles={ranking: "Рейтинг", plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",menu:"Тарифи і меню",supplements:"БАДи",profile:"Профіль",aichat:"Чат з Матіасом",more:"Додатково",photos:"Прогрес у фото",recipes:"Рецепти",schedule:"Календар",macros:"КБЖУ калькулятор",referral:"Запроси друга",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування",chat:"Чат з клієнтами"};
+  const titles={ranking: "Рейтинг", plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",menu:"Тарифи і меню",supplements:"БАДи",profile:"Профіль",aichat:"Чат з Матіасом",more:"Додатково",photos:"Прогрес у фото",schedule:"Календар",macros:"КБЖУ калькулятор",referral:"Запроси друга",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування",chat:"Чат з клієнтами"};
   const topTitle=checkinMode?"Чекін":isAdminMode?(selClient?"Профіль клієнта":titles[adminTab]):titles[clientTab];
   const showTopNav=["client","admin"].includes(screen)&&clientTab!=="profile"&&!(isAdminMode&&adminTab==="dashboard")&&!["expired","trial_expired"].includes(clientData?.status||"")&&!["welcome","onboarding","onboarding_success","pending_approval","pending_payment"].includes(screen);
 
@@ -6350,11 +6573,10 @@ export default function FitCoreApp() {
     if(screen==="client"){
       if(checkinMode)return <Checkin userId={userId} onDone={()=>setCheckin(false)}/>;
       if(clientTab==="plan")return <TrainPlan userId={userId}/>;
-      if(clientTab==="nutrition")return <Nutrition userId={userId} questionnaire={questionnaire}/>;
+      if(clientTab==="nutrition")return <Nutrition userId={userId} questionnaire={questionnaire} clientData={clientData}/>;
       if(clientTab==="aichat")return <AIChat userId={userId} clientData={clientData}/>;
       if(clientTab==="ranking")return <Leaderboard userId={userId}/>;
       if(clientTab==="photos")return <ProgressPhotos userId={userId}/>;
-      if(clientTab==="recipes")return <Recipes userId={userId} clientData={clientData}/>;
       if(clientTab==="schedule")return <TrainingSchedule userId={userId}/>;
       if(clientTab==="macros")return <MacrosCalculator userId={userId} questionnaire={questionnaire} onBack={()=>setClientTab("more")}/>;
       if(clientTab==="more")return <MoreScreen clientData={clientData} onNav={setClientTab}/>;
@@ -6381,7 +6603,7 @@ export default function FitCoreApp() {
         <FloatingParticles count={10}/>
         {showTopNav&&(
           <TNav title={topTitle}
-            onBack={selClient?()=>setSelClient(null):checkinMode?()=>setCheckin(false):isAdminMode?()=>setScreen("client"):["referral","photos","schedule","progress","recipes"].includes(clientTab)?()=>setClientTab("more"):undefined}
+            onBack={selClient?()=>setSelClient(null):checkinMode?()=>setCheckin(false):isAdminMode?()=>setScreen("client"):["referral","photos","schedule","progress"].includes(clientTab)?()=>setClientTab("more"):undefined}
             rightEl={isAdminMode&&adminTab==="payments"&&!selClient&&<div style={{fontSize:12,background:"rgba(232,168,50,.1)",color:C.amber,border:"1px solid rgba(232,168,50,.3)",borderRadius:20,padding:"4px 12px",fontWeight:700}}>оплати</div>}
           />
         )}
