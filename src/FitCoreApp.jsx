@@ -273,6 +273,7 @@ const G = () => (
       -webkit-background-clip:text;
       -webkit-text-fill-color:transparent;
       background-clip:text;
+      filter:drop-shadow(0 0 14px rgba(200,245,58,0.28));
     }
 
     /* film grain overlay */
@@ -298,10 +299,56 @@ const G = () => (
       background-size:260px 260px;
       mix-blend-mode:overlay;
     }
+
+    /* spring screen entry — translateY + scale, Apple spring curve */
+    @keyframes screenEnter{
+      from{opacity:0;transform:translateY(22px) scale(0.975);}
+      to{opacity:1;transform:translateY(0) scale(1);}
+    }
+    .se{animation:screenEnter 340ms cubic-bezier(0.16,1,0.3,1) forwards;}
+
+    /* tap ripple — radial glow from pointer position */
+    @keyframes rippleOut{
+      from{transform:scale(0);opacity:1;}
+      to{transform:scale(3.5);opacity:0;}
+    }
   `}</style>
 );
 
 const GrainOverlay = () => <div className="grain-overlay" aria-hidden="true"/>;
+
+// ═══════════════════════════════════════════════════════════════
+// AMBIENT LIGHT — кольорове джерело світла унікальне для кожного таба
+// ═══════════════════════════════════════════════════════════════
+const AMBIENT_CONFIGS = [
+  {id:"plan",      rgb:"200,245,58",  x:"88%"},
+  {id:"nutrition", rgb:"245,165,58",  x:"12%"},
+  {id:"aichat",    rgb:"159,74,245",  x:"82%"},
+  {id:"ranking",   rgb:"168,85,247",  x:"18%"},
+  {id:"profile",   rgb:"200,245,58",  x:"50%"},
+  {id:"progress",  rgb:"74,159,223",  x:"50%"},
+  {id:"more",      rgb:"200,245,58",  x:"88%"},
+  {id:"dashboard", rgb:"200,245,58",  x:"82%"},
+  {id:"clients",   rgb:"74,159,223",  x:"22%"},
+  {id:"chat",      rgb:"159,74,245",  x:"76%"},
+  {id:"payments",  rgb:"245,165,58",  x:"22%"},
+  {id:"plans",     rgb:"200,245,58",  x:"50%"},
+  {id:"payment",   rgb:"232,168,50",  x:"50%"},
+  {id:"expired",   rgb:"255,85,85",   x:"50%"},
+];
+
+const AmbientLight = ({activeId}) => (
+  <div style={{position:"absolute",top:0,left:0,right:0,height:"58%",pointerEvents:"none",zIndex:1,overflow:"hidden"}}>
+    {AMBIENT_CONFIGS.map(c=>(
+      <div key={c.id} style={{
+        position:"absolute",inset:0,
+        background:`radial-gradient(ellipse 100% 65% at ${c.x} -5%, rgba(${c.rgb},0.09) 0%, transparent 65%)`,
+        opacity: activeId===c.id ? 1 : 0,
+        transition:"opacity 700ms cubic-bezier(0.16,1,0.3,1)",
+      }}/>
+    ))}
+  </div>
+);
 
 // ═══════════════════════════════════════════════════════════════
 // HAPTICS — тактильний відгук через Telegram WebApp
@@ -352,6 +399,7 @@ const AnimatedNum = ({value, decimals=0, duration=600, suffix=""}) => {
 // size: sm (40px) | md (48px) | lg (56px)
 // ═══════════════════════════════════════════════════════════════
 const Btn = ({children, variant="primary", size="md", disabled, loading, fullWidth=true, onClick, leftIcon, rightIcon, hapticKind="light", style={}, ...rest}) => {
+  const [ripple, setRipple] = useState(null);
   const sizes = {
     sm: {h:40, px:14, fs:13, gap:6, radius:R.md},
     md: {h:48, px:18, fs:14, gap:8, radius:R.md},
@@ -362,26 +410,34 @@ const Btn = ({children, variant="primary", size="md", disabled, loading, fullWid
   const variants = {
     primary: {
       background: C.gradAcc, color: "#0a0a0a", border: "none",
-      boxShadow: SH.glow, hoverBg: C.gradAcc,
+      boxShadow: SH.glow, rippleColor: "rgba(0,0,0,0.18)",
     },
     secondary: {
       background: C.s2, color: C.tm, border: `1px solid ${C.bc}`,
-      boxShadow: SH.inner,
+      boxShadow: SH.inner, rippleColor: "rgba(200,245,58,0.14)",
     },
     ghost: {
       background: "transparent", color: C.tm, border: `1px solid ${C.bc}`,
-      boxShadow: "none",
+      boxShadow: "none", rippleColor: "rgba(200,245,58,0.12)",
     },
     danger: {
       background: "rgba(255,85,85,0.1)", color: C.red,
-      border: "1px solid rgba(255,85,85,0.25)", boxShadow: "none",
+      border: "1px solid rgba(255,85,85,0.25)", boxShadow: "none", rippleColor: "rgba(255,85,85,0.15)",
     },
     success: {
       background: "rgba(74,222,128,0.1)", color: C.green,
-      border: "1px solid rgba(74,222,128,0.25)", boxShadow: "none",
+      border: "1px solid rgba(74,222,128,0.25)", boxShadow: "none", rippleColor: "rgba(74,222,128,0.15)",
     },
   };
   const v = variants[variant] || variants.primary;
+
+  const handlePointerDown = (e) => {
+    if (disabled || loading) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const id = Date.now();
+    setRipple({x: e.clientX - rect.left, y: e.clientY - rect.top, id});
+    setTimeout(() => setRipple(r => r?.id === id ? null : r), 480);
+  };
 
   const handleClick = (e) => {
     if (disabled || loading) return;
@@ -391,6 +447,7 @@ const Btn = ({children, variant="primary", size="md", disabled, loading, fullWid
 
   return (
     <button
+      onPointerDown={handlePointerDown}
       onClick={handleClick}
       disabled={disabled || loading}
       style={{
@@ -412,10 +469,23 @@ const Btn = ({children, variant="primary", size="md", disabled, loading, fullWid
         opacity: disabled ? 0.45 : 1,
         cursor: (disabled || loading) ? "default" : "pointer",
         transition: `transform 100ms ${E.out}, box-shadow ${T.base} ${E.out}`,
+        position: "relative",
+        overflow: "hidden",
         ...style,
       }}
       {...rest}
     >
+      {ripple && (
+        <span key={ripple.id} style={{
+          position:"absolute",
+          left: ripple.x - 40, top: ripple.y - 40,
+          width: 80, height: 80,
+          borderRadius: "50%",
+          background: v.rippleColor,
+          animation: "rippleOut 480ms ease-out forwards",
+          pointerEvents: "none",
+        }}/>
+      )}
       {loading ? (
         <div className="sp" style={{width:16, height:16, borderRadius:"50%", border:`2px solid ${variant==="primary"?"rgba(0,0,0,0.25)":"rgba(255,255,255,0.18)"}`, borderTopColor: variant==="primary" ? "#0a0a0a" : C.acc}}/>
       ) : (
@@ -435,10 +505,21 @@ const Btn = ({children, variant="primary", size="md", disabled, loading, fullWid
 // ═══════════════════════════════════════════════════════════════
 const Card = ({children, variant="elevated", padding=16, onClick, glow, style={}, ...rest}) => {
   const variants = {
-    elevated: {background: C.s1, border: `1px solid ${C.bc}`, boxShadow: SH.inner},
+    elevated: {
+      background: `linear-gradient(180deg,#141414 0%,${C.s1} 100%)`,
+      border: `1px solid ${C.bc}`,
+      boxShadow: `inset 0 1px 0 rgba(255,255,255,0.07), 0 4px 16px rgba(0,0,0,0.35)`,
+    },
     flat: {background: C.s1, border: "none", boxShadow: "none"},
     outline: {background: "transparent", border: `1px solid ${C.bc}`, boxShadow: "none"},
     accent: {background: C.gradAccSubtle, border: `1px solid rgba(200,245,58,0.25)`, boxShadow: glow ? SH.glow : SH.inner},
+    glass: {
+      background: "rgba(255,255,255,0.03)",
+      backdropFilter: "blur(20px) saturate(120%)",
+      WebkitBackdropFilter: "blur(20px) saturate(120%)",
+      border: "1px solid rgba(255,255,255,0.08)",
+      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12), 0 8px 32px rgba(0,0,0,0.3)",
+    },
   };
   const v = variants[variant] || variants.elevated;
   return (
@@ -448,6 +529,7 @@ const Card = ({children, variant="elevated", padding=16, onClick, glow, style={}
         background: v.background,
         border: v.border,
         boxShadow: v.boxShadow,
+        ...(v.backdropFilter ? {backdropFilter:v.backdropFilter, WebkitBackdropFilter:v.WebkitBackdropFilter} : {}),
         borderRadius: R.lg,
         padding: typeof padding === "number" ? `${padding}px` : padding,
         cursor: onClick ? "pointer" : "default",
@@ -579,7 +661,7 @@ const GBtn = ({children,onClick,style={}}) => (
 );
 
 const Scr = ({children,style={}}) => (
-  <div className="fi" style={{flex:1,overflowY:"auto",padding:"12px 16px 110px",display:"flex",flexDirection:"column",gap:10,...style}}>{children}</div>
+  <div className="se" style={{flex:1,overflowY:"auto",padding:"12px 16px 110px",display:"flex",flexDirection:"column",gap:10,...style}}>{children}</div>
 );
 
 const TNav = ({title,onBack,rightEl}) => (
@@ -6286,6 +6368,8 @@ export default function FitCoreApp() {
     }
   };
 
+  const ambientId = screen==="client" ? clientTab : screen==="admin" ? adminTab : screen;
+
   return(
     <>
       <G/>
@@ -6293,6 +6377,7 @@ export default function FitCoreApp() {
       <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",position:"relative",overflow:"hidden"}}>
         {/* Глобальний living background — за всім додатком */}
         <LivingBackground intensity={0.7}/>
+        <AmbientLight activeId={ambientId}/>
         <FloatingParticles count={10}/>
         {showTopNav&&(
           <TNav title={topTitle}
