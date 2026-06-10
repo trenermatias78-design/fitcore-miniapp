@@ -4500,13 +4500,20 @@ const Nutrition = ({userId, questionnaire, clientData}) => {
                 </div>
               ):(
                 <>
-                  <button onClick={()=>toggleRecipes(i,m)} style={{
-                    background:"none",border:"none",padding:0,cursor:"pointer",
-                    display:"flex",alignItems:"center",gap:6,
-                    color:rSt.visible?C.acc:C.ts,fontSize:13,fontWeight:700,
-                    transition:`color ${T.base} ${E.out}`,
-                  }}>
-                    <span style={{fontSize:16,display:"inline-block",transform:`rotate(${rSt.visible?90:0}deg)`,transition:"transform .22s ease"}}>›</span>
+                  <button onClick={()=>toggleRecipes(i,m)}
+                    className={!rSt.visible?"pu":""}
+                    style={{
+                      background:rSt.visible?"rgba(200,245,58,0.12)":"rgba(200,245,58,0.07)",
+                      border:`1px solid ${rSt.visible?"rgba(200,245,58,0.45)":"rgba(200,245,58,0.22)"}`,
+                      borderRadius:R.full,
+                      padding:"7px 13px",
+                      cursor:"pointer",
+                      display:"inline-flex",alignItems:"center",gap:6,
+                      color:rSt.visible?C.acc:"rgba(200,245,58,0.75)",
+                      fontSize:13,fontWeight:700,
+                      transition:`background ${T.base} ${E.out}, border-color ${T.base} ${E.out}, color ${T.base} ${E.out}`,
+                    }}>
+                    <span style={{fontSize:15,display:"inline-block",transform:`rotate(${rSt.visible?90:0}deg)`,transition:"transform .22s ease"}}>›</span>
                     Рецепти · {m.name}
                     {isTrial&&<span style={{fontSize:9,color:C.acc,background:C.accDim,border:"1px solid rgba(200,245,58,0.3)",padding:"2px 6px",borderRadius:R.sm,fontWeight:800}}>TRIAL</span>}
                   </button>
