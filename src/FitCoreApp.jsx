@@ -324,7 +324,6 @@ const AMBIENT_CONFIGS = [
   {id:"plan",      rgb:"200,245,58",  x:"88%"},
   {id:"nutrition", rgb:"245,165,58",  x:"12%"},
   {id:"aichat",    rgb:"159,74,245",  x:"82%"},
-  {id:"ranking",   rgb:"168,85,247",  x:"18%"},
   {id:"profile",   rgb:"200,245,58",  x:"50%"},
   {id:"progress",  rgb:"74,159,223",  x:"50%"},
   {id:"more",      rgb:"200,245,58",  x:"88%"},
@@ -689,7 +688,7 @@ const TNav = ({title,onBack,rightEl}) => (
 const BNav = ({active,onChange,isAdmin}) => {
   const tabs = isAdmin
     ? [{id:"dashboard",l:"Огляд"},{id:"clients",l:"Клієнти"},{id:"chat",l:"Чат"},{id:"payments",l:"Оплати"},{id:"settings",l:"Налашт."}]
-    : [{id:"plan",l:"План"},{id:"nutrition",l:"Харч."},{id:"aichat",l:"Матіас"},{id:"ranking",l:"Топ"},{id:"more",l:"Ще"},{id:"profile",l:"Профіль"}];
+    : [{id:"plan",l:"План"},{id:"nutrition",l:"Харч."},{id:"aichat",l:"Матіас"},{id:"more",l:"Ще"},{id:"profile",l:"Профіль"}];
   const icons = {
     aichat: c=><><circle cx="9" cy="9" r="6.5" stroke={c} strokeWidth="1.8" fill="none"/><circle cx="6.5" cy="8.5" r="1" fill={c}/><circle cx="11.5" cy="8.5" r="1" fill={c}/><path d="M6 11.5c.8 1 1.9 1.5 3 1.5s2.2-.5 3-1.5" stroke={c} strokeWidth="1.5" strokeLinecap="round" fill="none"/></>,
     more: c=><><circle cx="4" cy="9" r="1.5" fill={c}/><circle cx="9" cy="9" r="1.5" fill={c}/><circle cx="14" cy="9" r="1.5" fill={c}/></>,
@@ -704,7 +703,6 @@ const BNav = ({active,onChange,isAdmin}) => {
     broadcast: c=><path d="M2 9l13-6-5 6 5 6-13-6z" fill={c}/>,
     settings: c=><><circle cx="9" cy="9" r="3" stroke={c} strokeWidth="1.8" fill="none"/><path d="M9 2v2M9 14v2M2 9h2M14 9h2" stroke={c} strokeWidth="1.8" strokeLinecap="round"/></>,
     menu: c=><><rect x="2" y="4" width="14" height="1.8" rx=".9" fill={c}/><rect x="2" y="8.1" width="10" height="1.8" rx=".9" fill={c}/><rect x="2" y="12.2" width="12" height="1.8" rx=".9" fill={c}/></>,
-    ranking: c=><><path d="M3 16h2v-5H3v5zm5 0h2V8H8v8zm5 0h2v-3h-2v3zM2 4l3 2 4-4 4 4 3-2v3H2V4z" stroke={c} strokeWidth="1.4" strokeLinejoin="round" fill="none"/></>,
   };
   const activeIdx = tabs.findIndex(t => t.id === active);
   const n = tabs.length;
@@ -6433,11 +6431,11 @@ export default function FitCoreApp() {
 
   const isAdminMode=screen==="admin";
   const showNav=["client","admin"].includes(screen)&&!checkinMode&&!["expired","trial_expired"].includes(clientData?.status||"")&&!["welcome","onboarding","onboarding_success","pending_approval","pending_payment"].includes(screen);
-  const titles={ranking: "Рейтинг", plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",menu:"Тарифи і меню",supplements:"БАДи",profile:"Профіль",aichat:"Чат з Матіасом",more:"Додатково",photos:"Прогрес у фото",schedule:"Календар",macros:"КБЖУ калькулятор",referral:"Запроси друга",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування",chat:"Чат з клієнтами"};
+  const titles={plan:"Мій план",nutrition:"Харчування",progress:"Прогрес",menu:"Тарифи і меню",supplements:"БАДи",profile:"Профіль",aichat:"Чат з Матіасом",more:"Додатково",photos:"Прогрес у фото",schedule:"Календар",macros:"КБЖУ калькулятор",referral:"Запроси друга",dashboard:"Дашборд",clients:"Клієнти",payments:"Оплати",broadcast:"Розсилка",settings:"Налаштування",chat:"Чат з клієнтами"};
   const topTitle=checkinMode?"Чекін":isAdminMode?(selClient?"Профіль клієнта":titles[adminTab]):titles[clientTab];
   const showTopNav=["client","admin"].includes(screen)&&clientTab!=="profile"&&!(isAdminMode&&adminTab==="dashboard")&&!["expired","trial_expired"].includes(clientData?.status||"")&&!["welcome","onboarding","onboarding_success","pending_approval","pending_payment"].includes(screen);
 
-  const C_TABS=["plan","nutrition","aichat","ranking","more","profile"];
+  const C_TABS=["plan","nutrition","aichat","more","profile"];
   const A_TABS=["dashboard","clients","payments"];
   const onTouchStart=e=>{touchX.current=e.touches[0].clientX;touchY.current=e.touches[0].clientY;};
   const onTouchEnd=e=>{
@@ -6575,7 +6573,6 @@ export default function FitCoreApp() {
       if(clientTab==="plan")return <TrainPlan userId={userId}/>;
       if(clientTab==="nutrition")return <Nutrition userId={userId} questionnaire={questionnaire} clientData={clientData}/>;
       if(clientTab==="aichat")return <AIChat userId={userId} clientData={clientData}/>;
-      if(clientTab==="ranking")return <Leaderboard userId={userId}/>;
       if(clientTab==="photos")return <ProgressPhotos userId={userId}/>;
       if(clientTab==="schedule")return <TrainingSchedule userId={userId}/>;
       if(clientTab==="macros")return <MacrosCalculator userId={userId} questionnaire={questionnaire} onBack={()=>setClientTab("more")}/>;
