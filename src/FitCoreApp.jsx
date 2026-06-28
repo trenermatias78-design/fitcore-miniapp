@@ -51,7 +51,7 @@ const C = {
 const SP = {1:4, 2:8, 3:12, 4:16, 5:20, 6:24, 8:32, 10:40, 12:48};
 
 // Радіуси (кутки)
-const R = {sm:8, md:12, lg:16, xl:20, full:9999};
+const R = {sm:8, md:12, lg:16, xl:20, xxl:24, full:9999};
 
 // Розмір шрифтів і висота рядка
 const F = {
@@ -83,6 +83,15 @@ const E = {
   out:    "cubic-bezier(0.16, 1, 0.3, 1)",     // плавний spring
   inOut:  "cubic-bezier(0.65, 0, 0.35, 1)",
   bounce: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+};
+
+// Скляний матеріал (frosted glass) — преміальна поверхня карток.
+// Напівпрозорий фон пропускає ambient light + film grain знизу = «живе» скло.
+const GLASS = {
+  background:"linear-gradient(165deg, rgba(34,34,34,0.72) 0%, rgba(17,17,17,0.60) 100%)",
+  backdropFilter:"blur(24px) saturate(150%)", WebkitBackdropFilter:"blur(24px) saturate(150%)",
+  border:"1px solid rgba(255,255,255,0.08)",
+  boxShadow:"0 8px 28px rgba(0,0,0,0.50), inset 0 1px 0 rgba(255,255,255,0.08)",
 };
 
 const G = () => (
@@ -117,6 +126,7 @@ const G = () => (
     @keyframes letterReveal{from{opacity:0;filter:blur(8px);transform:translateY(6px);}to{opacity:1;filter:blur(0);transform:translateY(0);}}
     @keyframes titlePulse{0%{transform:scale(1);}50%{transform:scale(1.04);}100%{transform:scale(1);}}
     @keyframes lineGrow{from{transform:scaleX(0);}to{transform:scaleX(1);}}
+    @keyframes cardRise{from{opacity:0;transform:translateY(22px) scale(0.985);}to{opacity:1;transform:translateY(0) scale(1);}}
 
     /* — LIVING APP animations — */
     @keyframes meshShift{
@@ -4294,6 +4304,20 @@ const TrainPlan = ({userId}) => {
 };
 
 // ═══ NUTRITION ═══
+// Тонкі outline-іконки прийомів їжі (без мультяшності, stroke 1.6)
+const NutIcon = ({type, size=22, color}) => {
+  const c = color || C.acc;
+  const p = {fill:"none", stroke:c, strokeWidth:1.6, strokeLinecap:"round", strokeLinejoin:"round"};
+  const paths = {
+    breakfast:<g {...p}><path d="M3 18h18"/><path d="M7 18a5 5 0 0110 0"/><path d="M12 4v3"/><path d="M5 9.2l1.7 1.3"/><path d="M19 9.2l-1.7 1.3"/></g>,
+    lunch:<g {...p}><path d="M4 11h16a8 8 0 01-16 0z"/><path d="M8.2 11c0-2 .7-3 1.5-3.8"/><path d="M12 11c0-2.4 1-3.4 1.8-4.2"/></g>,
+    dinner:<g {...p}><circle cx="10.5" cy="13" r="7"/><path d="M19 4v8"/><path d="M19 4c-1.4 0-2.4 1.4-2.4 3.4S17.6 11 19 11"/></g>,
+    snack:<g {...p}><path d="M12 8.2c-2.6-2.6-7-1-7 3.4 0 3.6 2.6 7.4 4.6 7.4.9 0 1.3-.4 2.4-.4s1.5.4 2.4.4c2 0 4.6-3.8 4.6-7.4 0-4.4-4.4-6-7-3.4z"/><path d="M12 8.2V5.6"/><path d="M12 5.6c0-1.2 1-2.2 2.2-2.2"/></g>,
+    water:<g {...p}><path d="M12 3.5s5.5 6.2 5.5 10.5a5.5 5.5 0 01-11 0c0-4.3 5.5-10.5 5.5-10.5z"/></g>,
+  };
+  return <svg width={size} height={size} viewBox="0 0 24 24" style={{display:"block"}}>{paths[type]||paths.snack}</svg>;
+};
+
 const Nutrition = ({userId, questionnaire, clientData}) => {
   const [data,setData]=useState(null);
   const [loading,setLoad]=useState(true);
@@ -4398,18 +4422,25 @@ const Nutrition = ({userId, questionnaire, clientData}) => {
   const currentInfo=getCurrentInfo(meals,statuses);
 
   return(
-    <Scr>
-      {/* КБЖУ шапка */}
-      <div style={{background:`linear-gradient(180deg,#141414 0%,${C.s1} 100%)`,borderRadius:18,border:`1px solid ${C.bc}`,padding:"16px",position:"relative",overflow:"hidden",boxShadow:`inset 0 1px 0 rgba(255,255,255,0.07)`}}>
-        <div style={{position:"absolute",right:-30,top:-30,width:130,height:130,borderRadius:"50%",background:C.acc,opacity:.04}}/>
-        <div style={{fontSize:12,color:C.ts,textTransform:"uppercase",letterSpacing:.8,fontWeight:600}}>Денна норма</div>
-        <div style={{marginTop:6}}><span style={{fontSize:48,fontWeight:900,color:C.tm,letterSpacing:-2,lineHeight:1}}>{nut.calories}</span> <span style={{fontSize:16,color:C.ts}}>ккал</span></div>
-        <div style={{display:"flex",gap:10,marginTop:14}}>
-          {macros.map(m=>(
-            <div key={m.l} style={{flex:1,background:C.s2,borderRadius:12,padding:"12px 10px"}}>
-              <div style={{fontSize:11,color:C.ts,textTransform:"uppercase",letterSpacing:.5,fontWeight:600}}>{m.l}</div>
-              <div style={{fontSize:18,fontWeight:800,color:C.tm,margin:"5px 0 6px"}}>{m.v}</div>
-              <div style={{height:3,background:C.bc,borderRadius:2}}><div style={{height:"100%",width:`${m.pct}%`,background:m.c,borderRadius:2,transition:"width 600ms ease"}}/></div>
+    <Scr style={{gap:16}}>
+      {/* КБЖУ шапка — glass hero */}
+      <div style={{...GLASS,borderRadius:R.xxl,padding:24,position:"relative",overflow:"hidden",animation:`cardRise 440ms ${E.out} both`}}>
+        <div style={{position:"absolute",right:-44,top:-54,width:170,height:170,borderRadius:"50%",background:C.acc,opacity:.07,filter:"blur(26px)",pointerEvents:"none"}}/>
+        <div style={{fontSize:11,color:C.ts,textTransform:"uppercase",letterSpacing:1.4,fontWeight:700}}>Денна норма</div>
+        <div style={{marginTop:10,display:"flex",alignItems:"baseline",gap:8}}>
+          <span style={{fontSize:56,fontWeight:900,color:C.tm,letterSpacing:-3,lineHeight:.92}}>{nut.calories}</span>
+          <span style={{fontSize:15,color:C.ts,fontWeight:600}}>ккал</span>
+        </div>
+        <div style={{marginTop:22,display:"flex",flexDirection:"column",gap:16}}>
+          {macros.map((m,idx)=>(
+            <div key={m.l}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:8}}>
+                <span style={{fontSize:13,color:C.ts,fontWeight:600,letterSpacing:.2}}>{m.l}</span>
+                <span style={{fontSize:15,color:C.tm,fontWeight:700,letterSpacing:-.2}}>{m.v}</span>
+              </div>
+              <div style={{height:2,background:"rgba(255,255,255,0.06)",borderRadius:2,overflow:"hidden"}}>
+                <div style={{height:"100%",width:`${m.pct}%`,borderRadius:2,background:`linear-gradient(90deg,${m.c}88,${m.c})`,boxShadow:`0 0 8px ${m.c}77`,transformOrigin:"left",animation:`lineGrow 900ms ${E.out} ${idx*120+200}ms both`}}/>
+              </div>
             </div>
           ))}
         </div>
@@ -4418,26 +4449,27 @@ const Nutrition = ({userId, questionnaire, clientData}) => {
       {/* Зараз / Наступний прийом */}
       {currentInfo?(
         <div style={{
-          borderRadius:18,padding:"16px",
-          background:currentInfo.type==="current"
-            ?"linear-gradient(135deg,rgba(199,255,46,0.13) 0%,rgba(199,255,46,0.04) 100%)"
-            :`linear-gradient(180deg,#141414 0%,${C.s1} 100%)`,
-          border:currentInfo.type==="current"?"1.5px solid rgba(199,255,46,0.38)":`1px solid ${C.bc}`,
-          boxShadow:currentInfo.type==="current"?SH.glow:`inset 0 1px 0 rgba(255,255,255,0.07)`,
+          ...GLASS,borderRadius:R.xxl,padding:"20px 22px",
+          animation:`cardRise 440ms ${E.out} 80ms both`,
+          ...(currentInfo.type==="current"?{
+            background:"linear-gradient(165deg, rgba(199,255,46,0.11) 0%, rgba(199,255,46,0.02) 100%), rgba(18,18,18,0.6)",
+            border:"1px solid rgba(199,255,46,0.35)",
+            boxShadow:`${SH.glow}, inset 0 1px 0 rgba(255,255,255,0.08)`,
+          }:{}),
         }}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:14}}>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:5,color:currentInfo.type==="current"?C.acc:C.ts}}>
+              <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:7,color:currentInfo.type==="current"?C.acc:C.ts}}>
                 {currentInfo.type==="current"?"Зараз":currentInfo.timeStr}
               </div>
-              <div style={{fontSize:20,fontWeight:900,color:C.tm,letterSpacing:-0.5,lineHeight:1.2}}>{currentInfo.meal.name}</div>
-              <div style={{fontSize:13,color:C.ts,marginTop:4}}>{currentInfo.meal.time} · {currentInfo.meal.kcal} ккал</div>
+              <div style={{fontSize:22,fontWeight:900,color:C.tm,letterSpacing:-.6,lineHeight:1.15}}>{currentInfo.meal.name}</div>
+              <div style={{fontSize:13,color:C.ts,marginTop:6}}>{currentInfo.meal.time} · {currentInfo.meal.kcal} ккал</div>
             </div>
-            <div style={{fontSize:32,fontWeight:900,letterSpacing:-1,flexShrink:0,color:currentInfo.type==="current"?C.acc:C.ts}}>{currentInfo.meal.kcal}</div>
+            <div style={{fontSize:34,fontWeight:900,letterSpacing:-1.5,flexShrink:0,color:currentInfo.type==="current"?C.acc:C.ts}}>{currentInfo.meal.kcal}</div>
           </div>
         </div>
       ):(
-        <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px",textAlign:"center"}}>
+        <div style={{...GLASS,borderRadius:R.xxl,padding:"18px 20px",textAlign:"center"}}>
           <div style={{fontSize:13,color:C.ts}}>Сьогодні всі прийоми завершено ✓</div>
         </div>
       )}
@@ -4455,24 +4487,28 @@ const Nutrition = ({userId, questionnaire, clientData}) => {
 
         return(
           <div key={i} style={{
-            borderRadius:16,
-            border:isCurrent?"1.5px solid rgba(199,255,46,0.3)":`1px solid ${C.bc}`,
+            ...GLASS,
+            borderRadius:R.xxl,
             overflow:"hidden",
-            opacity:isPast?0.5:1,
-            transition:`opacity ${T.base} ${E.out}`,
-            background:`linear-gradient(180deg,#141414 0%,${C.s1} 100%)`,
-            boxShadow:isCurrent?"0 0 20px rgba(199,255,46,0.07)":`inset 0 1px 0 rgba(255,255,255,0.05)`,
+            opacity:isPast?0.55:1,
+            animation:`cardRise 460ms ${E.out} ${Math.min(i,6)*70+120}ms both`,
+            ...(isCurrent?{border:"1px solid rgba(199,255,46,0.32)",boxShadow:"0 0 24px rgba(199,255,46,0.10), inset 0 1px 0 rgba(255,255,255,0.08)"}:{}),
           }}>
             {/* Заголовок прийому */}
-            <div style={{background:C.s2,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <div>
-                <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:4}}>
-                  <div style={{fontSize:11,color:C.acc,fontWeight:700,background:"rgba(199,255,46,.1)",display:"inline-block",padding:"2px 9px",borderRadius:8}}>{m.time}</div>
-                  {isCurrent&&<div style={{fontSize:9,color:"#080808",background:C.acc,fontWeight:900,padding:"2px 8px",borderRadius:8,letterSpacing:.5}}>ЗАРАЗ</div>}
+            <div style={{padding:"18px 20px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:14}}>
+              <div style={{display:"flex",alignItems:"center",gap:14,minWidth:0}}>
+                <div style={{width:44,height:44,borderRadius:R.md,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",background:isCurrent?"rgba(199,255,46,0.10)":"rgba(255,255,255,0.04)",border:`1px solid ${isCurrent?"rgba(199,255,46,0.25)":"rgba(255,255,255,0.06)"}`}}>
+                  <NutIcon type={cat} size={22} color={isCurrent?C.acc:C.ts}/>
                 </div>
-                <div style={{fontSize:17,fontWeight:800,color:C.tm}}>{m.name}</div>
+                <div style={{minWidth:0}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                    <span style={{fontSize:12,color:isCurrent?C.acc:C.ts,fontWeight:600,letterSpacing:.3}}>{m.time}</span>
+                    {isCurrent&&<span style={{fontSize:9,color:"#080808",background:C.acc,fontWeight:900,padding:"2px 8px",borderRadius:R.full,letterSpacing:.6}}>ЗАРАЗ</span>}
+                  </div>
+                  <div style={{fontSize:17,fontWeight:800,color:C.tm,letterSpacing:-.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.name}</div>
+                </div>
               </div>
-              <div style={{fontSize:24,fontWeight:900,color:isCurrent?C.acc:C.ts}}>{m.kcal}</div>
+              <div style={{fontSize:24,fontWeight:900,color:isCurrent?C.acc:C.tm,letterSpacing:-1,flexShrink:0}}>{m.kcal}</div>
             </div>
 
             {/* Продукти */}
@@ -4584,13 +4620,18 @@ const Nutrition = ({userId, questionnaire, clientData}) => {
 
       {/* Вода */}
       {nut.water_liters&&(
-        <div style={{background:`linear-gradient(180deg,#141414 0%,${C.s1} 100%)`,borderRadius:14,border:`1px solid ${C.bc}`,padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",boxShadow:`inset 0 1px 0 rgba(255,255,255,0.07)`}}>
-          <div>
-            <div style={{fontSize:13,color:C.ts}}>Вода на день</div>
-            <div style={{fontSize:22,fontWeight:800,color:C.tm,marginTop:3}}>{nut.water_liters} <span style={{fontSize:14,color:C.ts,fontWeight:500}}>літрів</span></div>
+        <div style={{...GLASS,borderRadius:R.xxl,padding:"20px 22px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:14,animation:`cardRise 460ms ${E.out} 200ms both`}}>
+          <div style={{display:"flex",alignItems:"center",gap:14}}>
+            <div style={{width:44,height:44,borderRadius:R.md,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(74,159,223,0.10)",border:"1px solid rgba(74,159,223,0.22)"}}>
+              <NutIcon type="water" size={22} color={C.blue}/>
+            </div>
+            <div>
+              <div style={{fontSize:12,color:C.ts,fontWeight:600,letterSpacing:.2}}>Вода на день</div>
+              <div style={{fontSize:24,fontWeight:900,color:C.tm,marginTop:3,letterSpacing:-.5}}>{nut.water_liters} <span style={{fontSize:14,color:C.ts,fontWeight:500}}>л</span></div>
+            </div>
           </div>
           <div style={{display:"flex",gap:4}}>
-            {Array.from({length:10},(_,i)=><div key={i} style={{width:10,height:28,borderRadius:4,background:i<Math.round(nut.water_liters/0.28)?C.acc:C.s3}}/>)}
+            {Array.from({length:10},(_,i)=>{const on=i<Math.round(nut.water_liters/0.28);return <div key={i} style={{width:8,height:30,borderRadius:R.full,background:on?C.blue:"rgba(255,255,255,0.06)",boxShadow:on?`0 0 6px ${C.blue}66`:"none"}}/>;})}
           </div>
         </div>
       )}
