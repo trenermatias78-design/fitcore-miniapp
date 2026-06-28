@@ -629,6 +629,33 @@ const Spin = () => (
   </div>
 );
 
+// Преміальні skeleton-лоадери — glass-плейсхолдери з shimmer (замість спінера).
+// Градієнт прозорості згори вниз = відчуття глибини.
+const SkelScreen = ({cards=4}) => (
+  <div className="se" style={{flex:1,overflowY:"auto",padding:"14px 16px 110px",display:"flex",flexDirection:"column",gap:14}}>
+    {Array.from({length:cards}).map((_,i)=>(
+      <div key={i} style={{...GLASS,borderRadius:R.xxl,padding:20,display:"flex",flexDirection:"column",gap:12,opacity:Math.max(0.35,1-i*0.14)}}>
+        <Skel w="38%" h={11}/>
+        <Skel w="68%" h={22}/>
+        <Skel w="52%" h={11}/>
+      </div>
+    ))}
+  </div>
+);
+const SkelList = ({rows=5}) => (
+  <div style={{display:"flex",flexDirection:"column",gap:12,padding:"4px 0"}}>
+    {Array.from({length:rows}).map((_,i)=>(
+      <div key={i} style={{...GLASS,borderRadius:R.lg,padding:16,display:"flex",alignItems:"center",gap:12,opacity:Math.max(0.35,1-i*0.14)}}>
+        <Skel w={44} h={44} r={R.md}/>
+        <div style={{flex:1,display:"flex",flexDirection:"column",gap:8}}>
+          <Skel w="55%" h={13}/>
+          <Skel w="35%" h={11}/>
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
 const Div = ({style={}}) => <div style={{height:1,background:C.bc,...style}}/>;
 
 const Bdg = ({children,v="green"}) => {
@@ -660,7 +687,7 @@ const GBtn = ({children,onClick,style={}}) => (
 );
 
 const Scr = ({children,style={}}) => (
-  <div className="se" style={{flex:1,overflowY:"auto",padding:"14px 16px 110px",display:"flex",flexDirection:"column",gap:14,...style}}>{children}</div>
+  <div className="se stg" style={{flex:1,overflowY:"auto",padding:"14px 16px 110px",display:"flex",flexDirection:"column",gap:14,...style}}>{children}</div>
 );
 
 const TNav = ({title,onBack,rightEl}) => (
@@ -2620,7 +2647,7 @@ const ProgressPhotos = ({userId}) => {
     }catch(e){console.error(e);}
   };
 
-  if(loading) return <Spin/>;
+  if(loading) return <SkelScreen/>;
 
   return(
     <Scr>
@@ -3234,7 +3261,7 @@ const TrainingSchedule = ({userId}) => {
     setSave(false);
   };
 
-  if(loading) return <Spin/>;
+  if(loading) return <SkelScreen/>;
 
   return(
     <Scr>
@@ -3531,7 +3558,7 @@ const Leaderboard = ({userId}) => {
     return () => { cancelled = true; };
   }, [userId, period]);
 
-  if (loading) return <Spin/>;
+  if (loading) return <SkelScreen/>;
 
   const lb = data.leaderboard || [];
   const myPos = data.my_position;
@@ -3955,7 +3982,7 @@ const WorkoutScreen = ({userId, day, weekNumber, onClose}) => {
     }
   };
 
-  if (loading) return <Spin/>;
+  if (loading) return <SkelScreen/>;
 
   const totalEx = exercises.length;
   const doneEx = exercises.filter(e => e.saved && !e.skipped).length;
@@ -4164,7 +4191,7 @@ const TrainPlan = ({userId}) => {
     catch(e){setGenErr(e.message);}
     setGen(false);
   };
-  if(loading)return <Spin/>;
+  if(loading)return <SkelScreen/>;
   if(!data)return(
     <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,padding:"0 24px"}}>
       <div style={{fontSize:18,fontWeight:700,color:C.ts,textAlign:"center"}}>План ще не готовий</div>
@@ -4394,7 +4421,7 @@ const Nutrition = ({userId, questionnaire, clientData}) => {
     haptic("light");
   };
 
-  if(loading)return <Spin/>;
+  if(loading)return <SkelScreen/>;
   if(!data)return <Scr><div style={{padding:"50px 0",textAlign:"center",color:C.ts,fontSize:15}}>Харчування не призначено</div></Scr>;
   let nut=null;
   try{const p=JSON.parse(data.plan_text||"{}");nut=p.nutrition||null;}catch{}
@@ -4788,7 +4815,7 @@ const ReviewsScreen = ({userId}) => {
         <div style={{fontSize:26,fontWeight:900,color:C.tm,letterSpacing:-1}}>Відгуки</div>
         <button onClick={()=>setForm(true)} style={{background:C.acc,color:"#080808",borderRadius:20,padding:"8px 16px",fontSize:13,fontWeight:800}}>+ Залишити</button>
       </div>
-      {loading?<Spin/>:reviews.length===0?(
+      {loading?<SkelList/>:reviews.length===0?(
         <div style={{padding:"40px 0",textAlign:"center"}}>
           <div style={{fontSize:32,marginBottom:12}}>💬</div>
           <div style={{fontSize:15,color:C.ts,lineHeight:1.7}}>Відгуків поки немає.<br/>Будь першим!</div>
@@ -4856,7 +4883,7 @@ const NotificationsScreen = ({userId,nutritionPlan:nutritionPlanProp}) => {
     setSettings(s=>({...s,meal_settings:{...s.meal_settings,[name]:{...s.meal_settings[name],enabled}}}));
   };
 
-  if(loading)return <Spin/>;
+  if(loading)return <SkelScreen/>;
 
   const mealItems=nutritionPlan?.meals||[
     {name:"Сніданок",time:"07:30"},{name:"Перекус",time:"10:30"},{name:"Обід",time:"13:00"},
@@ -4974,7 +5001,7 @@ const SupplementsScreen = ({userId,clientPlan,isAdmin}) => {
     setSaving(false);
   };
 
-  if(loading)return <Spin/>;
+  if(loading)return <SkelScreen/>;
   if(clientPlan!=="vip"&&!isAdmin)return(
     <Scr>
       <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 24px",textAlign:"center"}}>
@@ -5047,7 +5074,7 @@ const SupplementsScreen = ({userId,clientPlan,isAdmin}) => {
 const Progress = ({userId}) => {
   const [data,setData]=useState(null);const [loading,setLoad]=useState(true);
   useEffect(()=>{apiGet(`/api/client/${userId}/progress`).then(r=>{setData(r);setLoad(false);}).catch(()=>setLoad(false));},[userId]);
-  if(loading)return <Spin/>;
+  if(loading)return <SkelScreen/>;
   if(!data)return <Scr><div style={{padding:"50px 0",textAlign:"center",color:C.ts,fontSize:15}}>Немає даних</div></Scr>;
   const checkins=data.checkins||[];
   const maxW=checkins.length?Math.max(...checkins.map(c=>c.weight_kg||0)):1;
@@ -5367,7 +5394,7 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
 const AdminDash = () => {
   const [stats,setStats]=useState(null);const [loading,setLoad]=useState(true);
   useEffect(()=>{apiGet("/api/admin/stats").then(r=>{setStats(r);setLoad(false);}).catch(()=>setLoad(false));},[]);
-  if(loading)return <Spin/>;
+  if(loading)return <SkelScreen/>;
   if(!stats)return <Scr><div style={{padding:"50px 0",textAlign:"center",color:C.ts}}>Помилка завантаження</div></Scr>;
   return(
     <Scr>
@@ -5449,7 +5476,7 @@ const AdminClients = ({onSelect}) => {
         })}
       </div>
       <div style={{fontSize:12,color:C.ts,fontWeight:700,letterSpacing:0.5,textTransform:"uppercase"}}>Знайдено: <span style={{color:C.tm}}>{filtered.length}</span></div>
-      {loading ? <Spin/> : filtered.length===0 ? (
+      {loading ? <SkelList/> : filtered.length===0 ? (
         <Empty icon="🔍" title="Нікого не знайдено" subtitle="Спробуй змінити фільтр або пошук"/>
       ) : (
       <div className="stg" style={{display:"flex",flexDirection:"column",gap:SP[2]}}>
@@ -5639,7 +5666,7 @@ const AdminChat = () => {
   }
 
   // Список діалогів
-  if(loading) return <Spin/>;
+  if(loading) return <SkelScreen/>;
 
   return(
     <Scr>
@@ -5742,7 +5769,7 @@ const ProgressCharts = ({userId}) => {
           <button key={w} onClick={()=>setWeeks(w)} style={{flex:1,background:weeks===w?C.acc:C.s1,color:weeks===w?"#080808":C.ts,border:`1px solid ${weeks===w?C.acc:C.bc}`,borderRadius:10,padding:"8px 0",fontSize:12,fontWeight:700}}>{w} тижнів</button>
         ))}
       </div>
-      {loading && !data ? <Spin/> : (
+      {loading && !data ? <SkelScreen/> : (
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
           <Chart title="Вага" series={data?.weight} unit=" кг" color={C.acc} formatY={v=>v.toFixed(1)}/>
           <Chart title="Енергія" series={data?.energy} unit="/5" color="#4a9fdf"/>
@@ -5796,7 +5823,7 @@ const AdminClientDetail = ({client,onBack}) => {
   };
   const generate=async()=>{setGen(true);try{await apiPost(`/api/client/${client.user_id}/generate-plan`,{force_regenerate:true});setMsg("✓ Новий план згенеровано");}catch(e){setMsg("Помилка: "+e.message);}setGen(false);};
 
-  if(loading) return <Spin/>;
+  if(loading) return <SkelScreen/>;
 
   const qst = detail?.questionnaire;
   const sub = detail?.subscription || {};
@@ -6127,7 +6154,7 @@ const AdminPayments = () => {
           <button key={v} onClick={()=>setFilter(v)} style={{flex:1,padding:"10px 0",borderRadius:14,border:`1px solid ${filter===v?C.acc:C.bc}`,background:filter===v?"rgba(199,255,46,.1)":C.s1,color:filter===v?C.acc:C.ts,fontSize:13,fontWeight:700}}>{l}</button>
         ))}
       </div>
-      {loading?<Spin/>:payments.length===0?<div style={{padding:"50px 0",textAlign:"center",color:C.ts,fontSize:15}}>Немає оплат</div>:payments.map(p=>(
+      {loading?<SkelList/>:payments.length===0?<div style={{padding:"50px 0",textAlign:"center",color:C.ts,fontSize:15}}>Немає оплат</div>:payments.map(p=>(
         <div key={p.id} style={{background:C.s1,borderRadius:16,border:`1px solid ${filter==="submitted"?"rgba(232,168,50,.3)":C.bc}`,padding:"14px 16px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
             <div><div style={{fontSize:17,fontWeight:700,color:C.tm}}>{p.full_name||`ID ${p.user_id}`}</div><div style={{fontSize:13,color:C.ts,marginTop:2}}>{(p.plan||"").toUpperCase()} · {(p.submitted_at||"").slice(0,16)}</div></div>
