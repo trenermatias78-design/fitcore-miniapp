@@ -220,3 +220,41 @@ DUR_DISC = {1:0, 3:15, 6:25, 12:35}  // знижки %
 - **Розташування:** `~/fitcore-miniapp` (перенесено з `~/Desktop/fitcore-miniapp`)
 - **git:** окремий репо від `fitcore-bot` (`~/fitcore-bot`). Пушити незалежно.
 - **Admin access:** визначається по `user.id === ADMIN_ID` у відповіді `/api/auth`.
+
+---
+
+## Premium Design System (2026-06-28) — "$200/рік" редизайн
+
+Переведено весь застосунок на преміальний візуальний язик (Whoop/Oura/Apple Fitness).
+
+### Оновлена палітра (токени `C`, ~рядок 33)
+| Токен | Значення |
+|-------|----------|
+| `bg` | `#080808` |
+| `s1` | `#111111` |
+| `s2` (cards) | `#151515` |
+| `acc` | `#C7FF2E` (було #c8f53a) |
+| `acc2` | `#84FF72` |
+| `ts` | `#9E9E9E` |
+| `tt` | `#707070` |
+| `bc` / `bcStrong` | `rgba(255,255,255,0.08)` / `0.13` (translucent дільники) |
+
+`rgba(199,255,46,…)` — це акцент у glow/градієнтах (НЕ старий `200,245,58`).
+
+### Нові примітиви / утиліти
+- **`GLASS`** (module-level const, ~рядок 88) — frosted-glass матеріал: напівпрозорий градієнт + `backdrop-blur(24px)` + м'яка тінь + inner light. **Юзати `{...GLASS}` для нових карток.**
+- **`R.xxl` = 24** — стандартний радіус карток.
+- **`Card`** примітив: `elevated`/`glass` варіанти = `GLASS`; радіус 24; проп `radius` для override. 51 використання → весь застосунок glass.
+- **keyframe `cardRise`** — spring-поява знизу (translateY+scale). Застосовується через клас **`.stg`** (stagger по nth-child) — `Scr` має `.stg` за замовчуванням, тож усі екрани мають «живий вхід».
+- **`SkelScreen` / `SkelList`** — skeleton-лоадери (glass + shimmer) замість `<Spin/>`. Spin лишився тільки в chat-історії.
+- **`NutIcon`** (перед `Nutrition`) — outline-іконки їжі (breakfast/lunch/dinner/snack/water).
+- **`MoreIcon`** (перед `MoreScreen`) — outline-іконки меню «Ще».
+
+### Правила стилю (ВАЖЛИВО)
+- Нові картки — `{...GLASS}` + `borderRadius:R.xxl`, НЕ inline `background:C.s1`.
+- Внутрішні елементи (пігулки/рядки/інпути) — НЕ робити склом (лаги + погано виглядає). Скло тільки для карток-контейнерів.
+- Декоративні emoji (streak 🔥, медалі 🥇, трофей 🏆, рейтинги) — лишати. Замінювати на outline-SVG лише UI-іконки (меню, навігація).
+- Макро-чипи — кольорові літери Б(acc)/Ж(amber)/В(blue), без emoji.
+
+### Точка відкату
+git tag `premium-palette-backup-before` → `4e884d5`. Поетапні коміти: `0577ac1` (палітра) → `db2558c` (Nutrition) → `ccf98d3` (Card glass) → `67be893` (Plan/Profile) → `37b68de` (skeletons+stagger) → `2e368d8` (icons).
