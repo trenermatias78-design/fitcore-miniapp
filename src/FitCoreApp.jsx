@@ -255,7 +255,7 @@ const G = () => (
     .bl{animation:blinkBorder 2s ease-in-out infinite;}
 
     /* stagger for lists — items animate one after another */
-    .stg > *{animation:fadeUp ${T.slow} ${E.out} backwards;}
+    .stg > *{animation:cardRise ${T.slow} ${E.out} backwards;}
     .stg > *:nth-child(1){animation-delay:0ms;}
     .stg > *:nth-child(2){animation-delay:50ms;}
     .stg > *:nth-child(3){animation-delay:100ms;}
@@ -4199,13 +4199,13 @@ const TrainPlan = ({userId}) => {
           {gen?"...":"Оновити"}
         </button>
       </div>
-      <div style={{flex:1,overflowY:"auto",padding:"12px 16px 110px",display:"flex",flexDirection:"column",gap:10}}>
+      <div className="stg" style={{flex:1,overflowY:"auto",padding:"14px 16px 110px",display:"flex",flexDirection:"column",gap:14}}>
         <ProgressionSuggestion userId={userId} onUpdate={load}/>
         {days.length>0?days.map((d,i)=>{
           const hasExercises = (d.exercises||[]).length>0;
           return (
-          <div key={i} style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,overflow:"hidden"}}>
-            <div style={{background:C.s2,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${C.bc}`}}>
+          <div key={i} style={{...GLASS,borderRadius:R.xxl,overflow:"hidden"}}>
+            <div style={{background:"rgba(255,255,255,0.03)",padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
               <div style={{fontSize:17,fontWeight:800,color:C.tm}}>{d.day}</div>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
                 {d.cardio_block&&(
@@ -4270,11 +4270,11 @@ const TrainPlan = ({userId}) => {
           </div>
           );
         }):(
-          <div style={{background:C.s1,borderRadius:16,border:`1px solid ${C.bc}`,padding:"14px 16px"}}>
+          <div style={{...GLASS,borderRadius:R.xxl,padding:"16px 18px"}}>
             <div style={{fontSize:14,color:C.tm,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{data.plan_text}</div>
           </div>
         )}
-        {weekNote&&<div style={{background:"rgba(199,255,46,.05)",border:"1px solid rgba(199,255,46,.15)",borderRadius:14,padding:"12px 14px",display:"flex",gap:8}}>
+        {weekNote&&<div style={{background:"rgba(199,255,46,.05)",border:"1px solid rgba(199,255,46,.15)",borderRadius:R.xxl,padding:"14px 16px",display:"flex",gap:10}}>
           <div style={{width:3,background:C.acc,borderRadius:2,flexShrink:0}}/>
           <div style={{fontSize:13,color:C.ts,lineHeight:1.6}}>{weekNote}</div>
         </div>}
@@ -5187,7 +5187,7 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
           </div>
         </div>
       </div>
-      <div style={{flex:1,overflowY:"auto",padding:"16px 16px 120px",display:"flex",flexDirection:"column",gap:SP[3]}}>
+      <div className="stg" style={{flex:1,overflowY:"auto",padding:"16px 16px 120px",display:"flex",flexDirection:"column",gap:SP[3]}}>
         <Card variant="elevated" padding={"14px 16px"} style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div>
             <SectionLabel style={{marginBottom:2}}>Доступ</SectionLabel>
