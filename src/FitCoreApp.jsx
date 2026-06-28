@@ -2990,11 +2990,11 @@ const Recipes = ({userId,clientData}) => {
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:15,fontWeight:800,color:C.tm,marginBottom:4,lineHeight:1.3}}>{r.name}</div>
               <div style={{display:"flex",gap:8,flexWrap:"wrap",fontSize:11,color:C.ts}}>
-                <span>🔥 {r.kcal} ккал</span>
-                <span>🥩 {r.protein_g}г</span>
-                <span>🍞 {r.carbs_g}г</span>
-                <span>🥑 {r.fat_g}г</span>
-                {r.time_min && <span>⏱ {r.time_min} хв</span>}
+                <span><b style={{color:C.tm,fontWeight:800}}>{r.kcal}</b> ккал</span>
+                <span><b style={{color:C.acc,fontWeight:800}}>Б</b> {r.protein_g}г</span>
+                <span><b style={{color:C.blue,fontWeight:800}}>В</b> {r.carbs_g}г</span>
+                <span><b style={{color:C.amber,fontWeight:800}}>Ж</b> {r.fat_g}г</span>
+                {r.time_min && <span style={{color:C.td}}>{r.time_min} хв</span>}
               </div>
             </div>
 
@@ -3483,6 +3483,21 @@ const ReferralScreen = ({userId, onBack}) => {
 // ═══════════════════════════════════════════════════════════════
 // EЩЕ — хаб додаткових фіч
 // ═══════════════════════════════════════════════════════════════
+// Outline-іконки для меню "Ще" (тонкі, stroke 1.7, без emoji)
+const MoreIcon = ({type, size=24, color}) => {
+  const c = color || C.acc;
+  const p = {fill:"none", stroke:c, strokeWidth:1.7, strokeLinecap:"round", strokeLinejoin:"round"};
+  const paths = {
+    menu:<g {...p}><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13.2V21"/></g>,
+    referral:<g {...p}><rect x="3.5" y="8" width="17" height="4" rx="1"/><path d="M5 12v8.5h14V12"/><path d="M12 8v12.5"/><path d="M12 8S11 3.5 8.2 3.5A2.3 2.3 0 008 8h4z"/><path d="M12 8s1-4.5 3.8-4.5A2.3 2.3 0 0116 8h-4z"/></g>,
+    photos:<g {...p}><rect x="3" y="7.5" width="18" height="12.5" rx="2.5"/><circle cx="12" cy="13.7" r="3.3"/><path d="M8.5 7.5l1.3-2.3h4.4l1.3 2.3"/></g>,
+    schedule:<g {...p}><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17"/><path d="M8 3.5v3.5M16 3.5v3.5"/></g>,
+    progress:<g {...p}><path d="M4 4v15.5h16"/><path d="M7.5 15l3.3-3.8 3 2.4 4.7-5.6"/></g>,
+    macros:<g {...p}><rect x="5" y="3" width="14" height="18" rx="2.5"/><rect x="8" y="6" width="8" height="3.2" rx="0.8"/><path d="M9 14h.01M12 14h.01M15 14h.01M9 17.5h.01M12 17.5h.01M15 17.5h.01"/></g>,
+  };
+  return <svg width={size} height={size} viewBox="0 0 24 24" style={{display:"block"}}>{paths[type]||paths.menu}</svg>;
+};
+
 const MoreScreen = ({clientData, onNav}) => {
   const isVIP = clientData?.plan === "vip";
   const isTrial = clientData?.status === "trial";
@@ -3513,9 +3528,10 @@ const MoreScreen = ({clientData, onNav}) => {
           <div style={{
             width:48,height:48,borderRadius:R.md,
             background:C.gradAccSubtle,
+            border:"1px solid rgba(199,255,46,0.15)",
             display:"flex",alignItems:"center",justifyContent:"center",
-            fontSize:24,flexShrink:0,
-          }}>{it.icon}</div>
+            flexShrink:0,
+          }}><MoreIcon type={it.id} size={24} color={C.acc}/></div>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:15,fontWeight:800,color:C.tm,display:"flex",alignItems:"center",gap:6,letterSpacing:-0.1}}>
               {it.title}
@@ -4598,12 +4614,12 @@ const Nutrition = ({userId, questionnaire, clientData}) => {
                                 padding:"12px",transition:`border-color ${T.base} ${E.out}`,
                               }}>
                                 <div style={{display:"flex",alignItems:"center",gap:10}}>
-                                  <div style={{width:44,height:44,borderRadius:10,background:"linear-gradient(135deg,rgba(199,255,46,.15),rgba(199,255,46,.05))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{emoji}</div>
+                                  <div style={{width:44,height:44,borderRadius:10,background:"linear-gradient(135deg,rgba(199,255,46,.15),rgba(199,255,46,.05))",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><NutIcon type={cat} size={22} color={C.acc}/></div>
                                   <div style={{flex:1,minWidth:0}}>
                                     <div style={{fontSize:14,fontWeight:800,color:C.tm,marginBottom:3,lineHeight:1.3}}>{r.name}</div>
                                     <div style={{display:"flex",gap:8,flexWrap:"wrap",fontSize:11,color:C.ts}}>
-                                      <span>🔥 {r.kcal} ккал</span><span>🥩 {r.protein_g}г</span><span>🍞 {r.carbs_g}г</span><span>🥑 {r.fat_g}г</span>
-                                      {r.time_min&&<span>⏱ {r.time_min} хв</span>}
+                                      <span><b style={{color:C.tm,fontWeight:800}}>{r.kcal}</b> ккал</span><span><b style={{color:C.acc,fontWeight:800}}>Б</b> {r.protein_g}г</span><span><b style={{color:C.blue,fontWeight:800}}>В</b> {r.carbs_g}г</span><span><b style={{color:C.amber,fontWeight:800}}>Ж</b> {r.fat_g}г</span>
+                                      {r.time_min&&<span style={{color:C.td}}>{r.time_min} хв</span>}
                                     </div>
                                   </div>
                                   <div style={{flexShrink:0,color:isOpen?C.acc:C.ts,fontSize:18,fontWeight:700,transform:`rotate(${isOpen?90:0}deg)`,transition:"transform .25s ease, color .2s"}}>›</div>
