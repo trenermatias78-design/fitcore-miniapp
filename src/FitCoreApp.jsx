@@ -32,19 +32,19 @@ const PHOTOS = {
 // ═══════════════════════════════════════════════════════════════
 const C = {
   // Кольори фону (від темнішого до світлішого)
-  bg:"#0a0a0a", s1:"#111111", s2:"#161616", s3:"#1c1c1c",
+  bg:"#080808", s1:"#111111", s2:"#151515", s3:"#1c1c1c",
   // Акцент
-  acc:"#c8f53a", acc2:"#a8d420", accDim:"rgba(200,245,58,0.12)",
+  acc:"#C7FF2E", acc2:"#84FF72", accDim:"rgba(199,255,46,0.12)",
   // Текст
-  tm:"#ffffff", ts:"#888888", td:"#444444", tt:"#666666",
-  // Межі
-  bc:"#222222", bcStrong:"#2a2a2a",
+  tm:"#ffffff", ts:"#9E9E9E", td:"#444444", tt:"#707070",
+  // Межі (м'які translucent дільники — преміальний edge highlight)
+  bc:"rgba(255,255,255,0.08)", bcStrong:"rgba(255,255,255,0.13)",
   // Семантика
   red:"#ff5555", amber:"#e8a832", blue:"#4a9fdf", green:"#4ade80", purple:"#a855f7",
   // Градієнти
-  gradAcc:"linear-gradient(135deg,#c8f53a 0%,#a8d420 100%)",
-  gradAccSubtle:"linear-gradient(135deg,rgba(200,245,58,0.18) 0%,rgba(200,245,58,0.04) 100%)",
-  gradDark:"linear-gradient(180deg,#161616 0%,#0e0e0e 100%)",
+  gradAcc:"linear-gradient(135deg,#C7FF2E 0%,#84FF72 100%)",
+  gradAccSubtle:"linear-gradient(135deg,rgba(199,255,46,0.18) 0%,rgba(199,255,46,0.04) 100%)",
+  gradDark:"linear-gradient(180deg,#151515 0%,#0e0e0e 100%)",
 };
 
 // Простір — кратний 4
@@ -71,7 +71,7 @@ const SH = {
   md: "0 4px 16px rgba(0,0,0,0.4)",
   lg: "0 8px 28px rgba(0,0,0,0.5)",
   xl: "0 16px 48px rgba(0,0,0,0.6)",
-  glow: "0 0 24px rgba(200,245,58,0.25)",
+  glow: "0 0 24px rgba(199,255,46,0.25)",
   inner: "inset 0 1px 0 rgba(255,255,255,0.04)",
 };
 
@@ -107,7 +107,7 @@ const G = () => (
     @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
     @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
     @keyframes shimmer{0%{background-position:-1000px 0;}100%{background-position:1000px 0;}}
-    @keyframes accentPulse{0%,100%{box-shadow:0 0 0 0 rgba(200,245,58,0);}50%{box-shadow:0 0 0 8px rgba(200,245,58,0.15);}}
+    @keyframes accentPulse{0%,100%{box-shadow:0 0 0 0 rgba(199,255,46,0);}50%{box-shadow:0 0 0 8px rgba(199,255,46,0.15);}}
     @keyframes heartPulse{0%,100%{transform:scale(1);filter:drop-shadow(0 0 3px rgba(255,60,80,0.5));}45%{transform:scale(1.35);filter:drop-shadow(0 0 10px rgba(255,60,80,0.9));}55%{transform:scale(1.28);filter:drop-shadow(0 0 14px rgba(255,60,80,1));}}
     @keyframes blinkBorder{0%,100%{border-color:${C.acc};}50%{border-color:#e8ff80;}}
     @keyframes scaleIn{from{opacity:0;transform:scale(0.94);}to{opacity:1;transform:scale(1);}}
@@ -125,8 +125,8 @@ const G = () => (
       66%{background-position:60% 60%, 30% 30%, 20% 80%;}
     }
     @keyframes glowBreathe{
-      0%,100%{box-shadow:0 0 20px rgba(200,245,58,0.18), 0 0 40px rgba(200,245,58,0.08);}
-      50%{box-shadow:0 0 35px rgba(200,245,58,0.35), 0 0 70px rgba(200,245,58,0.18);}
+      0%,100%{box-shadow:0 0 20px rgba(199,255,46,0.18), 0 0 40px rgba(199,255,46,0.08);}
+      50%{box-shadow:0 0 35px rgba(199,255,46,0.35), 0 0 70px rgba(199,255,46,0.18);}
     }
     @keyframes floatUp{
       from{transform:translateY(110vh) scale(0.5);opacity:0;}
@@ -269,11 +269,11 @@ const G = () => (
 
     /* gradient text — for key numbers and hero headings */
     .grad-text{
-      background:linear-gradient(135deg,#ffffff 40%,#c8f53a 100%);
+      background:linear-gradient(135deg,#ffffff 40%,#C7FF2E 100%);
       -webkit-background-clip:text;
       -webkit-text-fill-color:transparent;
       background-clip:text;
-      filter:drop-shadow(0 0 14px rgba(200,245,58,0.28));
+      filter:drop-shadow(0 0 14px rgba(199,255,46,0.28));
     }
 
     /* film grain overlay */
@@ -321,17 +321,17 @@ const GrainOverlay = () => <div className="grain-overlay" aria-hidden="true"/>;
 // AMBIENT LIGHT — кольорове джерело світла унікальне для кожного таба
 // ═══════════════════════════════════════════════════════════════
 const AMBIENT_CONFIGS = [
-  {id:"plan",      rgb:"200,245,58",  x:"88%"},
+  {id:"plan",      rgb:"199,255,46",  x:"88%"},
   {id:"nutrition", rgb:"245,165,58",  x:"12%"},
   {id:"aichat",    rgb:"159,74,245",  x:"82%"},
-  {id:"profile",   rgb:"200,245,58",  x:"50%"},
+  {id:"profile",   rgb:"199,255,46",  x:"50%"},
   {id:"progress",  rgb:"74,159,223",  x:"50%"},
-  {id:"more",      rgb:"200,245,58",  x:"88%"},
-  {id:"dashboard", rgb:"200,245,58",  x:"82%"},
+  {id:"more",      rgb:"199,255,46",  x:"88%"},
+  {id:"dashboard", rgb:"199,255,46",  x:"82%"},
   {id:"clients",   rgb:"74,159,223",  x:"22%"},
   {id:"chat",      rgb:"159,74,245",  x:"76%"},
   {id:"payments",  rgb:"245,165,58",  x:"22%"},
-  {id:"plans",     rgb:"200,245,58",  x:"50%"},
+  {id:"plans",     rgb:"199,255,46",  x:"50%"},
   {id:"payment",   rgb:"232,168,50",  x:"50%"},
   {id:"expired",   rgb:"255,85,85",   x:"50%"},
 ];
@@ -408,16 +408,16 @@ const Btn = ({children, variant="primary", size="md", disabled, loading, fullWid
 
   const variants = {
     primary: {
-      background: C.gradAcc, color: "#0a0a0a", border: "none",
+      background: C.gradAcc, color: "#080808", border: "none",
       boxShadow: SH.glow, rippleColor: "rgba(0,0,0,0.18)",
     },
     secondary: {
       background: C.s2, color: C.tm, border: `1px solid ${C.bc}`,
-      boxShadow: SH.inner, rippleColor: "rgba(200,245,58,0.14)",
+      boxShadow: SH.inner, rippleColor: "rgba(199,255,46,0.14)",
     },
     ghost: {
       background: "transparent", color: C.tm, border: `1px solid ${C.bc}`,
-      boxShadow: "none", rippleColor: "rgba(200,245,58,0.12)",
+      boxShadow: "none", rippleColor: "rgba(199,255,46,0.12)",
     },
     danger: {
       background: "rgba(255,85,85,0.1)", color: C.red,
@@ -486,7 +486,7 @@ const Btn = ({children, variant="primary", size="md", disabled, loading, fullWid
         }}/>
       )}
       {loading ? (
-        <div className="sp" style={{width:16, height:16, borderRadius:"50%", border:`2px solid ${variant==="primary"?"rgba(0,0,0,0.25)":"rgba(255,255,255,0.18)"}`, borderTopColor: variant==="primary" ? "#0a0a0a" : C.acc}}/>
+        <div className="sp" style={{width:16, height:16, borderRadius:"50%", border:`2px solid ${variant==="primary"?"rgba(0,0,0,0.25)":"rgba(255,255,255,0.18)"}`, borderTopColor: variant==="primary" ? "#080808" : C.acc}}/>
       ) : (
         <>
           {leftIcon}
@@ -511,7 +511,7 @@ const Card = ({children, variant="elevated", padding=16, onClick, glow, style={}
     },
     flat: {background: C.s1, border: "none", boxShadow: "none"},
     outline: {background: "transparent", border: `1px solid ${C.bc}`, boxShadow: "none"},
-    accent: {background: C.gradAccSubtle, border: `1px solid rgba(200,245,58,0.25)`, boxShadow: glow ? SH.glow : SH.inner},
+    accent: {background: C.gradAccSubtle, border: `1px solid rgba(199,255,46,0.25)`, boxShadow: glow ? SH.glow : SH.inner},
     glass: {
       background: "rgba(255,255,255,0.03)",
       backdropFilter: "blur(20px) saturate(120%)",
@@ -632,25 +632,25 @@ const Spin = () => (
 const Div = ({style={}}) => <div style={{height:1,background:C.bc,...style}}/>;
 
 const Bdg = ({children,v="green"}) => {
-  const m = {green:[C.acc,C.acc,"rgba(200,245,58,.1)"],amber:[C.amber,"rgba(232,168,50,.3)","rgba(232,168,50,.1)"],red:[C.red,"rgba(255,85,85,.3)","rgba(255,85,85,.1)"],blue:[C.blue,"rgba(74,159,223,.3)","rgba(74,159,223,.1)"]}[v]||[C.acc,C.acc,"rgba(200,245,58,.1)"];
+  const m = {green:[C.acc,C.acc,"rgba(199,255,46,.1)"],amber:[C.amber,"rgba(232,168,50,.3)","rgba(232,168,50,.1)"],red:[C.red,"rgba(255,85,85,.3)","rgba(255,85,85,.1)"],blue:[C.blue,"rgba(74,159,223,.3)","rgba(74,159,223,.1)"]}[v]||[C.acc,C.acc,"rgba(199,255,46,.1)"];
   return <span style={{fontSize:12,padding:"3px 10px",borderRadius:20,background:m[2],color:m[0],border:`1px solid ${m[1]}`,whiteSpace:"nowrap",fontWeight:600}}>{children}</span>;
 };
 
 const Ava = ({name="?",size=44}) => {
   const i=(name||"?").split(" ").slice(0,2).map(w=>w[0]||"").join("").toUpperCase();
-  return <div style={{width:size,height:size,borderRadius:"50%",background:"rgba(200,245,58,.1)",border:`2px solid ${C.acc}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*.38,fontWeight:800,color:C.acc,flexShrink:0}}>{i}</div>;
+  return <div style={{width:size,height:size,borderRadius:"50%",background:"rgba(199,255,46,.1)",border:`2px solid ${C.acc}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*.38,fontWeight:800,color:C.acc,flexShrink:0}}>{i}</div>;
 };
 
 const Tog = ({on,onToggle}) => (
   <div onClick={onToggle} style={{width:44,height:24,borderRadius:12,background:on?C.acc:C.s3,position:"relative",cursor:"pointer",transition:"background .2s",flexShrink:0}}>
-    <div style={{width:18,height:18,borderRadius:"50%",background:on?"#0a0a0a":C.ts,position:"absolute",top:3,left:on?23:3,transition:"left .2s"}}/>
+    <div style={{width:18,height:18,borderRadius:"50%",background:on?"#080808":C.ts,position:"absolute",top:3,left:on?23:3,transition:"left .2s"}}/>
   </div>
 );
 
 const PBtn = ({children,onClick,disabled,loading,style={}}) => (
   <button onClick={onClick} disabled={disabled||loading} className={disabled||loading?"":"pu"}
-    style={{background:disabled||loading?"rgba(200,245,58,.3)":C.acc,color:"#0a0a0a",borderRadius:16,padding:"16px 0",width:"100%",fontSize:16,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",gap:8,...style}}>
-    {loading&&<div className="sp" style={{width:16,height:16,borderRadius:"50%",border:"2px solid rgba(0,0,0,.2)",borderTopColor:"#0a0a0a"}}/>}
+    style={{background:disabled||loading?"rgba(199,255,46,.3)":C.acc,color:"#080808",borderRadius:16,padding:"16px 0",width:"100%",fontSize:16,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",gap:8,...style}}>
+    {loading&&<div className="sp" style={{width:16,height:16,borderRadius:"50%",border:"2px solid rgba(0,0,0,.2)",borderTopColor:"#080808"}}/>}
     {children}
   </button>
 );
@@ -728,9 +728,9 @@ const BNav = ({active,onChange,isAdmin}) => {
       }}>
         <div style={{
           width:"100%",height:"100%",borderRadius:14,
-          background:"rgba(200,245,58,0.09)",
-          border:"1px solid rgba(200,245,58,0.18)",
-          boxShadow:"0 0 16px rgba(200,245,58,0.08)",
+          background:"rgba(199,255,46,0.09)",
+          border:"1px solid rgba(199,255,46,0.18)",
+          boxShadow:"0 0 16px rgba(199,255,46,0.08)",
         }}/>
       </div>
       {/* Tabs */}
@@ -764,7 +764,7 @@ const Welcome = ({onStart,onLogin}) => (
       <img src={PHOTOS.trainer_welcome} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}}/>
       <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(10,10,10,.2) 0%,rgba(10,10,10,.6) 60%,rgba(10,10,10,1) 100%)"}}/>
       <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"24px 20px"}}>
-        <div style={{fontSize:12,color:C.acc,fontWeight:700,letterSpacing:1,textTransform:"uppercase",background:"rgba(200,245,58,.1)",border:"1px solid rgba(200,245,58,.25)",display:"inline-block",padding:"4px 14px",borderRadius:20,marginBottom:10}}>AI Trainer</div>
+        <div style={{fontSize:12,color:C.acc,fontWeight:700,letterSpacing:1,textTransform:"uppercase",background:"rgba(199,255,46,.1)",border:"1px solid rgba(199,255,46,.25)",display:"inline-block",padding:"4px 14px",borderRadius:20,marginBottom:10}}>AI Trainer</div>
         <div style={{fontSize:36,fontWeight:900,color:C.tm,letterSpacing:-1.5,lineHeight:1.05}}>MATIAS<br/>FITNESS</div>
         <div style={{fontSize:14,color:"rgba(255,255,255,.55)",marginTop:6}}>Персональний тренер · Одеса</div>
       </div>
@@ -841,7 +841,7 @@ const MenuScreen = ({plans,payLinks,onSelectPlan,clientPlan,onShowReviews}) => {
           })}
         </div>
         {DUR_FUNNEL[months]&&(
-          <div className="fi" key={months} style={{marginTop:12,padding:"12px 14px",background:C.gradAccSubtle,border:"1px solid rgba(200,245,58,0.25)",borderRadius:R.md,fontSize:13,color:C.acc,fontWeight:600,lineHeight:1.55}}>
+          <div className="fi" key={months} style={{marginTop:12,padding:"12px 14px",background:C.gradAccSubtle,border:"1px solid rgba(199,255,46,0.25)",borderRadius:R.md,fontSize:13,color:C.acc,fontWeight:600,lineHeight:1.55}}>
             💡 {DUR_FUNNEL[months]}
           </div>
         )}
@@ -858,8 +858,8 @@ const MenuScreen = ({plans,payLinks,onSelectPlan,clientPlan,onShowReviews}) => {
           <Card key={k} variant={plan.hot?"accent":"elevated"} glow={plan.hot} padding={20} className={plan.hot?"pu":undefined} style={{position:"relative",overflow:"hidden",border:plan.hot?`2px solid ${C.acc}`:undefined}}>
             {/* Top-right badges */}
             <div style={{position:"absolute",top:14,right:14,display:"flex",flexDirection:"column",gap:6,alignItems:"flex-end"}}>
-              {plan.hot&&<div style={{fontSize:10,color:"#0a0a0a",background:C.gradAcc,borderRadius:R.full,padding:"4px 12px",fontWeight:900,letterSpacing:0.5,textTransform:"uppercase",boxShadow:SH.sm}}>Популярний</div>}
-              {isMine&&<div style={{fontSize:10,color:C.acc,background:"rgba(200,245,58,0.12)",border:`1px solid ${C.acc}`,borderRadius:R.full,padding:"3px 10px",fontWeight:800,letterSpacing:0.4,textTransform:"uppercase"}}>Твій</div>}
+              {plan.hot&&<div style={{fontSize:10,color:"#080808",background:C.gradAcc,borderRadius:R.full,padding:"4px 12px",fontWeight:900,letterSpacing:0.5,textTransform:"uppercase",boxShadow:SH.sm}}>Популярний</div>}
+              {isMine&&<div style={{fontSize:10,color:C.acc,background:"rgba(199,255,46,0.12)",border:`1px solid ${C.acc}`,borderRadius:R.full,padding:"3px 10px",fontWeight:800,letterSpacing:0.4,textTransform:"uppercase"}}>Твій</div>}
               {months>1&&saved>0&&<div style={{fontSize:10,color:"#080808",background:C.amber,borderRadius:R.full,padding:"3px 10px",fontWeight:900,letterSpacing:0.3}}>−{saved.toLocaleString()} ₴</div>}
             </div>
 
@@ -916,7 +916,7 @@ const MenuScreen = ({plans,payLinks,onSelectPlan,clientPlan,onShowReviews}) => {
       })}
 
       {months>1&&(
-        <div style={{background:"rgba(200,245,58,.04)",border:"1px solid rgba(200,245,58,.12)",borderRadius:16,padding:"14px 16px"}}>
+        <div style={{background:"rgba(199,255,46,.04)",border:"1px solid rgba(199,255,46,.12)",borderRadius:16,padding:"14px 16px"}}>
           <div style={{fontSize:14,fontWeight:700,color:C.acc,marginBottom:8}}>🎯 Чому довгий пакет вигідніший?</div>
           {["Результат у фітнесі — це мінімум 3 місяці послідовної роботи","Зупинитись на місяць = майже повернутись до початку","Довгий пакет = зобов'язання перед собою = вищий результат",`Реальна економія ${DUR_DISC[months]}% — це ${dSaved(1699,months).toLocaleString()} ₴+ в залежності від тарифу`].map((t,i)=>(
             <div key={i} style={{display:"flex",gap:8,fontSize:13,color:C.ts,marginBottom:5,lineHeight:1.5}}>
@@ -926,7 +926,7 @@ const MenuScreen = ({plans,payLinks,onSelectPlan,clientPlan,onShowReviews}) => {
         </div>
       )}
 
-      <div style={{background:"rgba(200,245,58,.05)",border:"1px solid rgba(200,245,58,.15)",borderRadius:16,padding:"16px"}}>
+      <div style={{background:"rgba(199,255,46,.05)",border:"1px solid rgba(199,255,46,.15)",borderRadius:16,padding:"16px"}}>
         <div style={{fontSize:15,fontWeight:700,color:C.acc,marginBottom:6}}>Питання щодо тарифів?</div>
         <div style={{fontSize:14,color:C.ts,marginBottom:12,lineHeight:1.6}}>Напиши тренеру — підберемо оптимальний варіант особисто.</div>
         <a href={TRAINER_LINK} style={{textDecoration:"none"}}>
@@ -991,7 +991,7 @@ const PlanSelect = ({plans,payLinks,onSelect}) => {
 
       {/* Соц.доказ — реальна статистика */}
       {stats && (stats.active_now>0 || stats.checkins_today>0 || stats.purchases_week>0) && (
-        <div style={{background:"linear-gradient(135deg, rgba(200,245,58,.08), rgba(232,168,50,.06))",border:"1px solid rgba(200,245,58,.25)",borderRadius:16,padding:"14px 16px"}}>
+        <div style={{background:"linear-gradient(135deg, rgba(199,255,46,.08), rgba(232,168,50,.06))",border:"1px solid rgba(199,255,46,.25)",borderRadius:16,padding:"14px 16px"}}>
           <div style={{fontSize:11,color:C.acc,fontWeight:800,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Що відбувається в FitCore</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
             {stats.active_now > 0 && (
@@ -1020,7 +1020,7 @@ const PlanSelect = ({plans,payLinks,onSelect}) => {
             )}
           </div>
           {(stats.top_streak>=7 || stats.loyal_clients>0) && (
-            <div style={{marginTop:10,paddingTop:10,borderTop:`1px solid rgba(200,245,58,.15)`,display:"flex",justifyContent:"space-around",gap:12,fontSize:12}}>
+            <div style={{marginTop:10,paddingTop:10,borderTop:`1px solid rgba(199,255,46,.15)`,display:"flex",justifyContent:"space-around",gap:12,fontSize:12}}>
               {stats.top_streak >= 7 && (
                 <div style={{color:C.ts,textAlign:"center"}}>🔥 топ стрік<br/><b style={{color:C.tm,fontSize:14}}>{stats.top_streak} днів</b></div>
               )}
@@ -1042,7 +1042,7 @@ const PlanSelect = ({plans,payLinks,onSelect}) => {
             const disc=DUR_DISC[m];
             return(
               <div key={m} onClick={()=>{haptic("selection");setMonths(m);}}
-                style={{borderRadius:14,border:`2px solid ${on?C.acc:C.bc}`,background:on?"rgba(200,245,58,.08)":C.s2,padding:"10px 6px",cursor:"pointer",textAlign:"center",position:"relative",transition:"all .15s"}}>
+                style={{borderRadius:14,border:`2px solid ${on?C.acc:C.bc}`,background:on?"rgba(199,255,46,.08)":C.s2,padding:"10px 6px",cursor:"pointer",textAlign:"center",position:"relative",transition:"all .15s"}}>
                 {disc>0&&<div style={{position:"absolute",top:-8,left:"50%",transform:"translateX(-50%)",background:m===12?C.acc:m===6?"#e8a832":"#4a9fdf",color:"#080808",fontSize:8,fontWeight:900,padding:"2px 5px",borderRadius:6,whiteSpace:"nowrap",lineHeight:1.4}}>-{disc}%</div>}
                 <div style={{fontSize:m===12?10:12,fontWeight:800,color:on?C.acc:C.ts,lineHeight:1.3}}>{m===12?"1 рік":m+"міс"}</div>
               </div>
@@ -1050,7 +1050,7 @@ const PlanSelect = ({plans,payLinks,onSelect}) => {
           })}
         </div>
         {DUR_FUNNEL[months]&&(
-          <div style={{marginTop:10,padding:"10px 12px",background:"rgba(200,245,58,.06)",border:"1px solid rgba(200,245,58,.2)",borderRadius:12,fontSize:13,color:C.acc,fontWeight:600,lineHeight:1.5}}>
+          <div style={{marginTop:10,padding:"10px 12px",background:"rgba(199,255,46,.06)",border:"1px solid rgba(199,255,46,.2)",borderRadius:12,fontSize:13,color:C.acc,fontWeight:600,lineHeight:1.5}}>
             💡 {DUR_FUNNEL[months]}
           </div>
         )}
@@ -1065,7 +1065,7 @@ const PlanSelect = ({plans,payLinks,onSelect}) => {
         return(
           <div key={k} className={plan.hot?"bl":""} onClick={()=>onSelect(k,months)}
             style={{background:C.s1,borderRadius:18,border:`1.5px solid ${plan.hot?C.acc:C.bc}`,padding:"16px",cursor:"pointer",position:"relative"}}>
-            {plan.hot&&<div style={{position:"absolute",top:14,right:14,fontSize:11,color:"#0a0a0a",background:C.acc,borderRadius:20,padding:"3px 10px",fontWeight:800}}>Популярний</div>}
+            {plan.hot&&<div style={{position:"absolute",top:14,right:14,fontSize:11,color:"#080808",background:C.acc,borderRadius:20,padding:"3px 10px",fontWeight:800}}>Популярний</div>}
             {months>1&&saved>0&&<div style={{position:"absolute",top:plan.hot?40:14,right:14,fontSize:10,color:"#080808",background:"#e8a832",borderRadius:20,padding:"2px 8px",fontWeight:800}}>-{saved.toLocaleString()} ₴</div>}
             <div style={{fontSize:19,fontWeight:900,color:C.tm,marginBottom:6}}>{plan.name}</div>
             <div style={{display:"flex",alignItems:"baseline",gap:6,marginBottom:2}}>
@@ -1084,7 +1084,7 @@ const PlanSelect = ({plans,payLinks,onSelect}) => {
       })}
 
       {months>1&&(
-        <div style={{background:"rgba(200,245,58,.04)",border:"1px solid rgba(200,245,58,.12)",borderRadius:16,padding:"14px 16px"}}>
+        <div style={{background:"rgba(199,255,46,.04)",border:"1px solid rgba(199,255,46,.12)",borderRadius:16,padding:"14px 16px"}}>
           <div style={{fontSize:14,fontWeight:700,color:C.acc,marginBottom:8}}>🎯 Чому довгий пакет вигідніший?</div>
           {["Результат у фітнесі — це мінімум 3 місяці послідовної роботи","Зупинитись на місяць = повернутись майже до початку","Довгий пакет = зобов'язання перед собою = вищий результат",`Ти реально економиш ${DUR_DISC[months]}% — це ${dSaved(1699,months).toLocaleString()} ₴+ в залежності від тарифу`].map((t,i)=>(
             <div key={i} style={{display:"flex",gap:8,fontSize:13,color:C.ts,marginBottom:5,lineHeight:1.5}}>
@@ -1134,11 +1134,11 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
 
   if(sent)return(
     <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 28px",textAlign:"center"}}>
-      <div style={{width:72,height:72,borderRadius:"50%",background:"rgba(200,245,58,.1)",border:`2px solid ${C.acc}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{width:72,height:72,borderRadius:"50%",background:"rgba(199,255,46,.1)",border:`2px solid ${C.acc}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
         <svg width="32" height="32" viewBox="0 0 18 18" fill="none"><path d="M4 9l4 4 7-7" stroke={C.acc} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </div>
       <div style={{fontSize:22,fontWeight:900,color:C.tm}}>Тренер отримав сповіщення!</div>
-      <div style={{background:C.s1,borderRadius:16,border:`1px solid rgba(200,245,58,.2)`,padding:"16px",width:"100%"}}>
+      <div style={{background:C.s1,borderRadius:16,border:`1px solid rgba(199,255,46,.2)`,padding:"16px",width:"100%"}}>
         <div style={{fontSize:13,fontWeight:700,color:C.acc,marginBottom:10,textTransform:"uppercase",letterSpacing:.7}}>Що робити далі:</div>
         {[
           ["1","Відкрий бота @fitcore_matias_bot"],
@@ -1177,7 +1177,7 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
             <div style={{fontSize:13,color:C.ts,marginTop:2}}>{DUR_LABEL[months]||"1 місяць"} доступу</div>
           </div>
           {disc>0 && (
-            <div style={{background:"rgba(200,245,58,.12)",border:"1px solid rgba(200,245,58,.3)",borderRadius:8,padding:"4px 10px"}}>
+            <div style={{background:"rgba(199,255,46,.12)",border:"1px solid rgba(199,255,46,.3)",borderRadius:8,padding:"4px 10px"}}>
               <div style={{fontSize:11,color:C.acc,fontWeight:800}}>−{disc}%</div>
             </div>
           )}
@@ -1227,7 +1227,7 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
       {/* FitCoins toggle */}
       {coinsBalance > 0 && (
         <div onClick={()=>{haptic("selection");setUseCoins(v=>!v);}} style={{
-          background:useCoins?"rgba(200,245,58,0.08)":C.s1,
+          background:useCoins?"rgba(199,255,46,0.08)":C.s1,
           border:`1.5px solid ${useCoins?C.acc:C.bc}`,
           borderRadius:R.lg,padding:"14px 16px",
           display:"flex",alignItems:"center",gap:12,cursor:"pointer",
@@ -1241,7 +1241,7 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
           <div style={{flex:1}}>
             <div style={{fontSize:14,fontWeight:800,color:C.tm}}>
               Застосувати FitCoins
-              <span style={{fontSize:11,color:C.acc,background:C.accDim,border:`1px solid rgba(200,245,58,0.3)`,padding:"2px 7px",borderRadius:R.full,fontWeight:800,marginLeft:6}}>{coinsBalance} FC</span>
+              <span style={{fontSize:11,color:C.acc,background:C.accDim,border:`1px solid rgba(199,255,46,0.3)`,padding:"2px 7px",borderRadius:R.full,fontWeight:800,marginLeft:6}}>{coinsBalance} FC</span>
             </div>
             <div style={{fontSize:12,color:C.ts,marginTop:2}}>
               {useCoins?`Знижка −${coinsDiscount.toLocaleString()} ₴ — до оплати ${finalPrice.toLocaleString()} ₴`:`Знижка ${coinsBalance.toLocaleString()} ₴ на цю підписку`}
@@ -1256,9 +1256,9 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
 
       {/* Monobank — primary */}
       <div style={{background:C.s1,borderRadius:18,border:`1.5px solid ${C.acc}`,padding:"16px",position:"relative"}}>
-        <div style={{position:"absolute",top:-9,left:14,background:C.acc,color:"#0a0a0a",fontSize:9,fontWeight:900,padding:"3px 8px",borderRadius:6,letterSpacing:.5}}>РЕКОМЕНДУЄМО</div>
+        <div style={{position:"absolute",top:-9,left:14,background:C.acc,color:"#080808",fontSize:9,fontWeight:900,padding:"3px 8px",borderRadius:6,letterSpacing:.5}}>РЕКОМЕНДУЄМО</div>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
-          <div style={{width:44,height:44,background:"rgba(200,245,58,.1)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:24}}>💳</div>
+          <div style={{width:44,height:44,background:"rgba(199,255,46,.1)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:24}}>💳</div>
           <div style={{flex:1}}>
             <div style={{fontSize:16,fontWeight:800,color:C.tm}}>Monobank · {finalPrice.toLocaleString()} ₴</div>
             <div style={{fontSize:12,color:C.ts,marginTop:2}}>Оплата через банку MatiasFitness</div>
@@ -1298,14 +1298,14 @@ const Payment = ({planKey,months=1,plans,payLinks,onBack,onPaid,userId}) => {
           } else {
             window.location.href = link;
           }
-        }} style={{width:"100%",background:"linear-gradient(135deg,#f6c90e,#e4a200)",color:"#0a0a0a",border:"none",borderRadius:14,padding:"14px 0",fontSize:15,fontWeight:800}}>Оплатити {totalStars.toLocaleString()} ⭐ → у боті</button>
+        }} style={{width:"100%",background:"linear-gradient(135deg,#f6c90e,#e4a200)",color:"#080808",border:"none",borderRadius:14,padding:"14px 0",fontSize:15,fontWeight:800}}>Оплатити {totalStars.toLocaleString()} ⭐ → у боті</button>
         <div style={{fontSize:12,color:C.td,marginTop:10,lineHeight:1.5}}>
           Доступ активується миттєво після підтвердження Telegram.
         </div>
       </div>
 
       {/* Already paid */}
-      <div style={{background:"rgba(200,245,58,.05)",borderRadius:14,border:"1px dashed rgba(200,245,58,.25)",padding:"14px 16px",textAlign:"center"}}>
+      <div style={{background:"rgba(199,255,46,.05)",borderRadius:14,border:"1px dashed rgba(199,255,46,.25)",padding:"14px 16px",textAlign:"center"}}>
         <div style={{fontSize:13,color:C.ts,marginBottom:10,lineHeight:1.5}}>Вже оплатив через Monobank?</div>
         <button onClick={sendScreenshot} disabled={sending} style={{width:"100%",background:"transparent",border:`1px solid ${C.acc}`,borderRadius:12,padding:"11px 0",fontSize:14,fontWeight:700,color:C.acc}}>
           {sending?"Надсилаю...":"✓ Я оплатив — повідомити тренера"}
@@ -1564,7 +1564,7 @@ const ExModal = ({ex, onClose}) => {
           borderRadius: 18,
           border: `1px solid ${C.bc}`,
           padding: "16px",
-          boxShadow: "0 16px 48px rgba(0,0,0,.6), 0 0 0 1px rgba(200,245,58,.1)",
+          boxShadow: "0 16px 48px rgba(0,0,0,.6), 0 0 0 1px rgba(199,255,46,.1)",
           opacity: visible ? 1 : 0,
           transform: `scale(${visible ? 1 : 0.92})`,
           transition: "opacity .18s ease-out, transform .18s ease-out",
@@ -1593,7 +1593,7 @@ const ExModal = ({ex, onClose}) => {
         )}
 
         {/* Техніка */}
-        <div style={{background:"rgba(200,245,58,.06)",border:"1px solid rgba(200,245,58,.2)",borderRadius:12,padding:"12px 14px"}}>
+        <div style={{background:"rgba(199,255,46,.06)",border:"1px solid rgba(199,255,46,.2)",borderRadius:12,padding:"12px 14px"}}>
           <div style={{fontSize:11,color:C.acc,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:6}}>💡 Техніка</div>
           <div style={{fontSize:14,color:C.tm,lineHeight:1.7}}>{info.tip}</div>
         </div>
@@ -1755,7 +1755,7 @@ const SwapModal = ({ex, exerciseIndex, dayName, currentSwap, onSwap, onRevert, o
           {currentSwap && (
             <div
               onClick={() => { haptic("light"); onRevert(); handleClose(); }}
-              style={{display:"flex",alignItems:"center",gap:10,padding:"11px 14px",background:"rgba(200,245,58,0.08)",border:`1px solid rgba(200,245,58,0.3)`,borderRadius:12,cursor:"pointer"}}
+              style={{display:"flex",alignItems:"center",gap:10,padding:"11px 14px",background:"rgba(199,255,46,0.08)",border:`1px solid rgba(199,255,46,0.3)`,borderRadius:12,cursor:"pointer"}}
             >
               <span style={{fontSize:16,flexShrink:0}}>↩</span>
               <div style={{flex:1,minWidth:0}}>
@@ -1778,8 +1778,8 @@ const SwapModal = ({ex, exerciseIndex, dayName, currentSwap, onSwap, onRevert, o
                 style={{
                   display:"flex", alignItems:"center", justifyContent:"space-between",
                   padding:"13px 14px",
-                  background: isActive ? "rgba(200,245,58,0.1)" : C.s2,
-                  border:`1px solid ${isActive ? "rgba(200,245,58,0.4)" : C.bc}`,
+                  background: isActive ? "rgba(199,255,46,0.1)" : C.s2,
+                  border:`1px solid ${isActive ? "rgba(199,255,46,0.4)" : C.bc}`,
                   borderRadius:12, cursor:"pointer",
                 }}
               >
@@ -1803,7 +1803,7 @@ const SwapModal = ({ex, exerciseIndex, dayName, currentSwap, onSwap, onRevert, o
 const HeroMoment = ({title, subtitle, icon, color=C.acc, onClose, duration=2400}) => {
   // Generate confetti pieces
   const confetti = useMemo(() => {
-    const colors = [C.acc, "#a8d420", "#e8a832", "#4a9fdf", "#ff5555", "#a855f7"];
+    const colors = [C.acc, "#84FF72", "#e8a832", "#4a9fdf", "#ff5555", "#a855f7"];
     return Array.from({length:50}).map((_,i) => ({
       id:i,
       left: Math.random() * 100,
@@ -1890,7 +1890,7 @@ const LivingBackground = ({intensity=1}) => (
   <div style={{
     position:"absolute", inset:0, pointerEvents:"none", zIndex:0, overflow:"hidden",
     background:`
-      radial-gradient(ellipse 600px 400px at 0% 0%, rgba(200,245,58,${0.08*intensity}) 0%, transparent 60%),
+      radial-gradient(ellipse 600px 400px at 0% 0%, rgba(199,255,46,${0.08*intensity}) 0%, transparent 60%),
       radial-gradient(ellipse 500px 700px at 100% 100%, rgba(74,159,223,${0.06*intensity}) 0%, transparent 55%),
       radial-gradient(ellipse 700px 500px at 50% 50%, rgba(168,85,247,${0.05*intensity}) 0%, transparent 50%)
     `,
@@ -1924,7 +1924,7 @@ const FloatingParticles = ({count=18}) => {
           background:C.acc,
           opacity:p.opacity,
           filter:`blur(${p.size > 4 ? 1 : 0}px)`,
-          boxShadow:`0 0 ${p.size*3}px rgba(200,245,58,0.4)`,
+          boxShadow:`0 0 ${p.size*3}px rgba(199,255,46,0.4)`,
           animation:`floatUp ${p.duration}s linear ${p.delay}s infinite`,
         }}/>
       ))}
@@ -1968,8 +1968,8 @@ const CinematicLoader = ({onComplete}) => {
           {[0,1,2].map(i => (
             <div key={i} style={{
               width:60,height:4,borderRadius:R.full,
-              background:i < stage ? C.gradAcc : i === stage ? "rgba(200,245,58,0.4)" : C.s2,
-              boxShadow:i <= stage ? "0 0 8px rgba(200,245,58,0.4)" : "none",
+              background:i < stage ? C.gradAcc : i === stage ? "rgba(199,255,46,0.4)" : C.s2,
+              boxShadow:i <= stage ? "0 0 8px rgba(199,255,46,0.4)" : "none",
               transition:`all ${T.slow} ${E.out}`,
               animation:i === stage ? "accentPulse 1s ease-in-out infinite" : "none",
             }}/>
@@ -1989,7 +1989,7 @@ const WelcomeScreen = ({onStart}) => (
     <FloatingParticles count={24}/>
 
     {/* ── EDGE GLOW BURST — radiates outward at 350ms ── */}
-    <div style={{position:"absolute",inset:-40,zIndex:10,pointerEvents:"none",background:`radial-gradient(ellipse at 50% 50%, transparent 42%, rgba(200,245,58,0.5) 100%)`,opacity:0,animation:"wlEdgeGlow 550ms ease-out 350ms forwards"}}/>
+    <div style={{position:"absolute",inset:-40,zIndex:10,pointerEvents:"none",background:`radial-gradient(ellipse at 50% 50%, transparent 42%, rgba(199,255,46,0.5) 100%)`,opacity:0,animation:"wlEdgeGlow 550ms ease-out 350ms forwards"}}/>
 
     {/* ── HERO SECTION ── */}
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:20,marginTop:20,position:"relative",zIndex:2}}>
@@ -2010,7 +2010,7 @@ const WelcomeScreen = ({onStart}) => (
         <div style={{position:"relative",display:"inline-block"}}>
           <div style={{
             fontSize:44,fontWeight:900,letterSpacing:-2,color:C.tm,lineHeight:1,
-            textShadow:`0 0 30px ${C.acc}, 0 0 60px rgba(200,245,58,0.3)`,
+            textShadow:`0 0 30px ${C.acc}, 0 0 60px rgba(199,255,46,0.3)`,
             opacity:0,
             animation:"wlStamp 300ms cubic-bezier(0.2,0,0.3,1) 80ms forwards",
           }}>
@@ -2019,8 +2019,8 @@ const WelcomeScreen = ({onStart}) => (
           {/* Dust particles scatter at stamp impact (265ms) */}
           <div style={{position:"absolute",width:7,height:7,borderRadius:"50%",background:C.acc,top:-2,left:-2,opacity:0,animation:"wlDustTL 320ms ease-out 265ms forwards"}}/>
           <div style={{position:"absolute",width:6,height:6,borderRadius:"50%",background:C.acc,top:-2,right:-2,opacity:0,animation:"wlDustTR 320ms ease-out 265ms forwards"}}/>
-          <div style={{position:"absolute",width:5,height:5,borderRadius:"50%",background:"rgba(200,245,58,0.7)",bottom:0,left:6,opacity:0,animation:"wlDustBL 300ms ease-out 280ms forwards"}}/>
-          <div style={{position:"absolute",width:5,height:5,borderRadius:"50%",background:"rgba(200,245,58,0.6)",bottom:0,right:6,opacity:0,animation:"wlDustBR 300ms ease-out 280ms forwards"}}/>
+          <div style={{position:"absolute",width:5,height:5,borderRadius:"50%",background:"rgba(199,255,46,0.7)",bottom:0,left:6,opacity:0,animation:"wlDustBL 300ms ease-out 280ms forwards"}}/>
+          <div style={{position:"absolute",width:5,height:5,borderRadius:"50%",background:"rgba(199,255,46,0.6)",bottom:0,right:6,opacity:0,animation:"wlDustBR 300ms ease-out 280ms forwards"}}/>
         </div>
 
         {/* Lime underline — ink smear at stamp landing (270ms) */}
@@ -2028,7 +2028,7 @@ const WelcomeScreen = ({onStart}) => (
           height:3,borderRadius:R.full,background:C.gradAcc,width:140,
           transformOrigin:"left center",transform:"scaleX(0)",
           animation:"wlInkSmear 70ms cubic-bezier(0.4,0,0.2,1) 270ms forwards",
-          boxShadow:`0 0 16px ${C.acc}, 0 0 32px rgba(200,245,58,0.5)`,
+          boxShadow:`0 0 16px ${C.acc}, 0 0 32px rgba(199,255,46,0.5)`,
         }}/>
 
         {/* Description (900ms) */}
@@ -2120,7 +2120,7 @@ const OnboardingFlow = ({userId, onComplete}) => {
             <button key={o.id} onClick={()=>{haptic("selection");update("gender",o.id);}}
               style={{
                 background:active?C.gradAcc:C.s1,
-                color:active?"#0a0a0a":C.tm,
+                color:active?"#080808":C.tm,
                 border:active?"none":`1px solid ${C.bc}`,
                 borderRadius:R.lg,padding:"22px 0",fontSize:15,fontWeight:800,
                 cursor:"pointer",
@@ -2196,7 +2196,7 @@ const OnboardingFlow = ({userId, onComplete}) => {
             {id:"health",l:"❤️ Здоровʼя"},
           ].map(o=>(
             <button key={o.id} onClick={()=>update("goal",o.id)}
-              style={{background:data.goal===o.id?C.acc:C.s2,color:data.goal===o.id?"#0a0a0a":C.tm,
+              style={{background:data.goal===o.id?C.acc:C.s2,color:data.goal===o.id?"#080808":C.tm,
                 border:`1.5px solid ${data.goal===o.id?C.acc:C.bc}`,borderRadius:12,padding:"14px 16px",fontSize:14,fontWeight:700,textAlign:"left",cursor:"pointer"}}>{o.l}</button>
           ))}
         </div>
@@ -2215,7 +2215,7 @@ const OnboardingFlow = ({userId, onComplete}) => {
             {id:"advanced",l:"🔥 Досвідчений",d:"Більше 3 років"},
           ].map(o=>(
             <button key={o.id} onClick={()=>update("experience",o.id)}
-              style={{background:data.experience===o.id?C.acc:C.s2,color:data.experience===o.id?"#0a0a0a":C.tm,
+              style={{background:data.experience===o.id?C.acc:C.s2,color:data.experience===o.id?"#080808":C.tm,
                 border:`1.5px solid ${data.experience===o.id?C.acc:C.bc}`,borderRadius:12,padding:"14px 16px",cursor:"pointer",textAlign:"left"}}>
               <div style={{fontSize:15,fontWeight:800}}>{o.l}</div>
               <div style={{fontSize:12,opacity:.7,marginTop:2}}>{o.d}</div>
@@ -2238,7 +2238,7 @@ const OnboardingFlow = ({userId, onComplete}) => {
             {id:"outdoor",l:"🌳 Вулиця / воркаут"},
           ].map(o=>(
             <button key={o.id} onClick={()=>update("equipment",o.id)}
-              style={{background:data.equipment===o.id?C.acc:C.s2,color:data.equipment===o.id?"#0a0a0a":C.tm,
+              style={{background:data.equipment===o.id?C.acc:C.s2,color:data.equipment===o.id?"#080808":C.tm,
                 border:`1.5px solid ${data.equipment===o.id?C.acc:C.bc}`,borderRadius:12,padding:"14px 16px",fontSize:14,fontWeight:700,textAlign:"left",cursor:"pointer"}}>{o.l}</button>
           ))}
         </div>
@@ -2253,7 +2253,7 @@ const OnboardingFlow = ({userId, onComplete}) => {
         <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
           {[2,3,4,5,6].map(n=>(
             <button key={n} onClick={()=>update("workouts_pw",String(n))}
-              style={{gridColumn: n===6?"span 4":"auto",background:String(data.workouts_pw)===String(n)?C.acc:C.s2,color:String(data.workouts_pw)===String(n)?"#0a0a0a":C.tm,
+              style={{gridColumn: n===6?"span 4":"auto",background:String(data.workouts_pw)===String(n)?C.acc:C.s2,color:String(data.workouts_pw)===String(n)?"#080808":C.tm,
                 border:`1.5px solid ${String(data.workouts_pw)===String(n)?C.acc:C.bc}`,borderRadius:12,padding:"16px 0",fontSize:18,fontWeight:800,cursor:"pointer"}}>{n}</button>
           ))}
         </div>
@@ -2273,7 +2273,7 @@ const OnboardingFlow = ({userId, onComplete}) => {
             {id:"flex",l:"🔄 Гнучкий — як вийде"},
           ].map(o=>(
             <button key={o.id} onClick={()=>update("pref_time",o.id)}
-              style={{background:data.pref_time===o.id?C.acc:C.s2,color:data.pref_time===o.id?"#0a0a0a":C.tm,
+              style={{background:data.pref_time===o.id?C.acc:C.s2,color:data.pref_time===o.id?"#080808":C.tm,
                 border:`1.5px solid ${data.pref_time===o.id?C.acc:C.bc}`,borderRadius:12,padding:"14px 16px",fontSize:14,fontWeight:700,textAlign:"left",cursor:"pointer"}}>{o.l}</button>
           ))}
         </div>
@@ -2295,7 +2295,7 @@ const OnboardingFlow = ({userId, onComplete}) => {
             {id:"other",l:"⚠️ Інше"},
           ].map(o=>(
             <button key={o.id} onClick={()=>update("health_issues",o.id)}
-              style={{background:data.health_issues===o.id?C.acc:C.s2,color:data.health_issues===o.id?"#0a0a0a":C.tm,
+              style={{background:data.health_issues===o.id?C.acc:C.s2,color:data.health_issues===o.id?"#080808":C.tm,
                 border:`1.5px solid ${data.health_issues===o.id?C.acc:C.bc}`,borderRadius:12,padding:"14px 16px",fontSize:14,fontWeight:700,textAlign:"left",cursor:"pointer"}}>{o.l}</button>
           ))}
           {(data.health_issues!=="none" && data.health_issues) && (
@@ -2398,13 +2398,13 @@ const OnboardingFlow = ({userId, onComplete}) => {
     {bg:"radial-gradient(ellipse at top, rgba(74,159,223,0.08), transparent 60%)", accent:"#4a9fdf"},  // height — blue
     {bg:"radial-gradient(ellipse at top, rgba(74,159,223,0.10), transparent 60%)", accent:"#4a9fdf"},  // weight
     {bg:"radial-gradient(ellipse at top, rgba(74,222,128,0.08), transparent 60%)", accent:"#4ade80"},  // target — green
-    {bg:"radial-gradient(ellipse at top, rgba(200,245,58,0.10), transparent 60%)", accent:"#c8f53a"},  // goal — accent
-    {bg:"radial-gradient(ellipse at top, rgba(200,245,58,0.08), transparent 60%)", accent:"#c8f53a"},  // experience
-    {bg:"radial-gradient(ellipse at top, rgba(200,245,58,0.08), transparent 60%)", accent:"#c8f53a"},  // equipment
+    {bg:"radial-gradient(ellipse at top, rgba(199,255,46,0.10), transparent 60%)", accent:"#C7FF2E"},  // goal — accent
+    {bg:"radial-gradient(ellipse at top, rgba(199,255,46,0.08), transparent 60%)", accent:"#C7FF2E"},  // experience
+    {bg:"radial-gradient(ellipse at top, rgba(199,255,46,0.08), transparent 60%)", accent:"#C7FF2E"},  // equipment
     {bg:"radial-gradient(ellipse at top, rgba(232,168,50,0.08), transparent 60%)", accent:"#e8a832"},  // workouts/week
     {bg:"radial-gradient(ellipse at top, rgba(232,168,50,0.10), transparent 60%)", accent:"#e8a832"},  // pref_time
     {bg:"radial-gradient(ellipse at top, rgba(255,85,85,0.06), transparent 60%)",  accent:"#ff5555"},  // health
-    {bg:"radial-gradient(ellipse at top, rgba(200,245,58,0.12), transparent 60%)", accent:"#c8f53a"},  // allergies — final accent
+    {bg:"radial-gradient(ellipse at top, rgba(199,255,46,0.12), transparent 60%)", accent:"#C7FF2E"},  // allergies — final accent
   ];
   const theme = stepThemes[step] || stepThemes[0];
 
@@ -2434,9 +2434,9 @@ const OnboardingFlow = ({userId, onComplete}) => {
             return (
               <div key={i} style={{
                 flex:1,
-                background: isPast ? C.gradAcc : isCurrent ? "rgba(200,245,58,0.5)" : C.s2,
+                background: isPast ? C.gradAcc : isCurrent ? "rgba(199,255,46,0.5)" : C.s2,
                 borderRadius:R.full,
-                boxShadow: isPast || isCurrent ? "0 0 6px rgba(200,245,58,0.4)" : "none",
+                boxShadow: isPast || isCurrent ? "0 0 6px rgba(199,255,46,0.4)" : "none",
                 transition:`all ${T.slow} ${E.out}`,
                 animation: isCurrent ? "accentPulse 2s ease-in-out infinite" : "none",
               }}/>
@@ -2665,9 +2665,9 @@ const ProgressPhotos = ({userId}) => {
               <div style={{marginBottom:10}}>✅ <b style={{color:C.tm}}>Однакове освітлення і ракурс</b> — вранці, натщесерце, у дзеркалі</div>
               <div style={{marginBottom:10}}>✅ <b style={{color:C.tm}}>Мінімум одягу</b> — щоб реально бачити зміни тіла</div>
               <div style={{marginBottom:10}}>✅ <b style={{color:C.tm}}>Фото — тільки твоє</b> — ніхто крім тебе (і тренера) не бачить</div>
-              <div style={{marginTop:14,padding:"10px 12px",background:"rgba(200,245,58,.08)",border:"1px solid rgba(200,245,58,.2)",borderRadius:10,fontSize:13,color:C.acc}}>💡 Через місяць матимеш 4 фото — різниця буде помітна навіть коли не бачиш її щодня</div>
+              <div style={{marginTop:14,padding:"10px 12px",background:"rgba(199,255,46,.08)",border:"1px solid rgba(199,255,46,.2)",borderRadius:10,fontSize:13,color:C.acc}}>💡 Через місяць матимеш 4 фото — різниця буде помітна навіть коли не бачиш її щодня</div>
             </div>
-            <button onClick={()=>setShowHelp(false)} style={{width:"100%",marginTop:16,background:C.acc,color:"#0a0a0a",border:"none",borderRadius:12,padding:"12px 0",fontSize:14,fontWeight:800}}>Зрозуміло</button>
+            <button onClick={()=>setShowHelp(false)} style={{width:"100%",marginTop:16,background:C.acc,color:"#080808",border:"none",borderRadius:12,padding:"12px 0",fontSize:14,fontWeight:800}}>Зрозуміло</button>
           </div>
         </div>,
         document.body
@@ -2742,8 +2742,8 @@ const AIChat = ({userId,clientData}) => {
             width:44, height:44, borderRadius:R.full,
             background:"linear-gradient(135deg,"+C.acc+",#e8a832)",
             display:"flex",alignItems:"center",justifyContent:"center",
-            fontSize:18,fontWeight:900,color:"#0a0a0a",
-            boxShadow:"0 6px 20px rgba(200,245,58,0.3)",
+            fontSize:18,fontWeight:900,color:"#080808",
+            boxShadow:"0 6px 20px rgba(199,255,46,0.3)",
             position:"relative",
           }}>
             М
@@ -2786,7 +2786,7 @@ const AIChat = ({userId,clientData}) => {
               {["Що їсти перед тренуванням?","Як правильно робити присідання?","Чому боляче коліно після тренування?"].map(q=>(
                 <button key={q} onClick={()=>{haptic("light");setInput(q);}} style={{
                   background:C.gradAccSubtle,
-                  border:"1px solid rgba(200,245,58,0.25)",
+                  border:"1px solid rgba(199,255,46,0.25)",
                   borderRadius:R.md,padding:"12px 14px",fontSize:13,
                   color:C.acc,textAlign:"left",fontWeight:600,
                   cursor:"pointer",transition:`all ${T.fast} ${E.out}`,
@@ -2797,7 +2797,7 @@ const AIChat = ({userId,clientData}) => {
         )}
         {messages.map((m,i)=>(
           <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
-            <div style={{maxWidth:"85%",padding:"10px 14px",borderRadius:16,background:m.role==="user"?C.acc:C.s1,color:m.role==="user"?"#0a0a0a":C.tm,border:m.role==="assistant"?`1px solid ${C.bc}`:"none",fontSize:14,lineHeight:1.55,whiteSpace:"pre-wrap"}}>{m.content}</div>
+            <div style={{maxWidth:"85%",padding:"10px 14px",borderRadius:16,background:m.role==="user"?C.acc:C.s1,color:m.role==="user"?"#080808":C.tm,border:m.role==="assistant"?`1px solid ${C.bc}`:"none",fontSize:14,lineHeight:1.55,whiteSpace:"pre-wrap"}}>{m.content}</div>
           </div>
         ))}
         {sending && (
@@ -2820,7 +2820,7 @@ const AIChat = ({userId,clientData}) => {
           style={{flex:1,background:C.s1,border:`1px solid ${C.bc}`,borderRadius:16,padding:"12px 14px",color:C.tm,fontSize:14,outline:"none"}}
         />
         <button onClick={()=>{haptic("light");send();}} disabled={!input.trim()||sending||(limit!==null&&used>=limit&&limit<999)} style={{
-          background:C.gradAcc,color:"#0a0a0a",border:"none",borderRadius:R.md,
+          background:C.gradAcc,color:"#080808",border:"none",borderRadius:R.md,
           width:48,height:48,fontSize:18,fontWeight:900,flexShrink:0,
           opacity:(!input.trim()||sending)?.4:1,
           boxShadow:input.trim()?SH.glow:"none",
@@ -2838,7 +2838,7 @@ const AIChat = ({userId,clientData}) => {
               <div style={{marginBottom:10}}>📊 Твій ліміт залежить від тарифу:<br/>• Trial — 5 повідомлень/день<br/>• Start — 10<br/>• Premium — 30<br/>• VIP — безліміт</div>
               <div style={{marginTop:14,padding:"10px 12px",background:"rgba(255,180,0,.08)",border:"1px solid rgba(255,180,0,.2)",borderRadius:10,fontSize:13,color:"#f6c90e"}}>⚠ Якщо сильно болить або травма — звертайся до тренера Матіаса особисто</div>
             </div>
-            <button onClick={()=>setShowHelp(false)} style={{width:"100%",marginTop:16,background:C.acc,color:"#0a0a0a",border:"none",borderRadius:12,padding:"12px 0",fontSize:14,fontWeight:800}}>Зрозуміло</button>
+            <button onClick={()=>setShowHelp(false)} style={{width:"100%",marginTop:16,background:C.acc,color:"#080808",border:"none",borderRadius:12,padding:"12px 0",fontSize:14,fontWeight:800}}>Зрозуміло</button>
           </div>
         </div>,
         document.body
@@ -2924,7 +2924,7 @@ const Recipes = ({userId,clientData}) => {
           <button key={c.id} onClick={()=>{haptic("selection");setCat(c.id);}}
             style={{
               background:active?C.gradAcc:C.s1,
-              color:active?"#0a0a0a":C.ts,
+              color:active?"#080808":C.ts,
               border:active?"none":`1px solid ${C.bc}`,
               borderRadius:R.md,padding:"11px 4px",fontSize:12,fontWeight:800,
               boxShadow:active?SH.glow:SH.inner,
@@ -2954,10 +2954,10 @@ const Recipes = ({userId,clientData}) => {
         const catEmoji = {breakfast:"🍳", lunch:"🍲", dinner:"🍽", snack:"🥗"}[category] || "🍴";
         const isOpen = expanded===i;
         return (
-        <div key={i} onClick={()=>{haptic("light");setExpanded(isOpen?null:i);}} style={{background:C.s1,borderRadius:R.md,border:`1px solid ${isOpen?"rgba(200,245,58,0.3)":C.bc}`,padding:"14px 16px",cursor:"pointer",transition:`border-color ${T.base} ${E.out}, transform ${T.fast} ${E.out}`,boxShadow:isOpen?SH.sm:SH.inner}}>
+        <div key={i} onClick={()=>{haptic("light");setExpanded(isOpen?null:i);}} style={{background:C.s1,borderRadius:R.md,border:`1px solid ${isOpen?"rgba(199,255,46,0.3)":C.bc}`,padding:"14px 16px",cursor:"pointer",transition:`border-color ${T.base} ${E.out}, transform ${T.fast} ${E.out}`,boxShadow:isOpen?SH.sm:SH.inner}}>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
             {/* Емоджі-картинка зліва */}
-            <div style={{width:56,height:56,borderRadius:12,background:"linear-gradient(135deg, rgba(200,245,58,.15), rgba(200,245,58,.05))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,flexShrink:0}}>{catEmoji}</div>
+            <div style={{width:56,height:56,borderRadius:12,background:"linear-gradient(135deg, rgba(199,255,46,.15), rgba(199,255,46,.05))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,flexShrink:0}}>{catEmoji}</div>
 
             {/* Назва + макроси */}
             <div style={{flex:1,minWidth:0}}>
@@ -3086,7 +3086,7 @@ const MacrosCalculator = ({userId, questionnaire, onBack}) => {
             const on = gender === o.id;
             return (
               <button key={o.id} onClick={()=>{haptic("selection");setGender(o.id);touch();}}
-                style={{background:on?C.gradAcc:C.s2,color:on?"#0a0a0a":C.tm,border:on?"none":`1px solid ${C.bc}`,borderRadius:R.md,padding:"13px 0",fontSize:14,fontWeight:800,cursor:"pointer",transition:`all ${T.base} ${E.out}`,boxShadow:on?SH.glow:"none"}}>{o.l}</button>
+                style={{background:on?C.gradAcc:C.s2,color:on?"#080808":C.tm,border:on?"none":`1px solid ${C.bc}`,borderRadius:R.md,padding:"13px 0",fontSize:14,fontWeight:800,cursor:"pointer",transition:`all ${T.base} ${E.out}`,boxShadow:on?SH.glow:"none"}}>{o.l}</button>
             );
           })}
         </div>
@@ -3118,7 +3118,7 @@ const MacrosCalculator = ({userId, questionnaire, onBack}) => {
             const on = activity === l.id;
             return (
               <button key={l.id} onClick={()=>{haptic("selection");setActivity(l.id);touch();}}
-                style={{background:on?C.gradAccSubtle:C.s2,border:`1.5px solid ${on?"rgba(200,245,58,0.4)":C.bc}`,borderRadius:R.md,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",transition:`all ${T.base} ${E.out}`}}>
+                style={{background:on?C.gradAccSubtle:C.s2,border:`1.5px solid ${on?"rgba(199,255,46,0.4)":C.bc}`,borderRadius:R.md,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",transition:`all ${T.base} ${E.out}`}}>
                 <div style={{textAlign:"left"}}>
                   <div style={{fontSize:13,fontWeight:800,color:on?C.acc:C.tm,letterSpacing:-0.1}}>{l.label}</div>
                   <div style={{fontSize:11,color:C.ts,marginTop:1}}>{l.desc}</div>
@@ -3138,7 +3138,7 @@ const MacrosCalculator = ({userId, questionnaire, onBack}) => {
             const on = goal === g.id;
             return (
               <button key={g.id} onClick={()=>{haptic("selection");setGoal(g.id);touch();}}
-                style={{background:on?C.gradAcc:C.s2,color:on?"#0a0a0a":C.tm,border:on?"none":`1px solid ${C.bc}`,borderRadius:R.md,padding:"14px 16px",fontSize:14,fontWeight:800,textAlign:"left",cursor:"pointer",transition:`all ${T.base} ${E.out}`,boxShadow:on?SH.glow:"none"}}>{g.label}</button>
+                style={{background:on?C.gradAcc:C.s2,color:on?"#080808":C.tm,border:on?"none":`1px solid ${C.bc}`,borderRadius:R.md,padding:"14px 16px",fontSize:14,fontWeight:800,textAlign:"left",cursor:"pointer",transition:`all ${T.base} ${E.out}`,boxShadow:on?SH.glow:"none"}}>{g.label}</button>
             );
           })}
         </div>
@@ -3181,7 +3181,7 @@ const MacrosCalculator = ({userId, questionnaire, onBack}) => {
 
       {calc && (
         saved ? (
-          <Card variant="elevated" style={{textAlign:"center",padding:"18px 16px",border:`1px solid rgba(200,245,58,0.3)`}}>
+          <Card variant="elevated" style={{textAlign:"center",padding:"18px 16px",border:`1px solid rgba(199,255,46,0.3)`}}>
             <div style={{fontSize:28,marginBottom:6}}>✅</div>
             <div style={{fontSize:15,fontWeight:800,color:C.acc}}>КБЖУ збережено!</div>
             <div style={{fontSize:12,color:C.ts,marginTop:4,lineHeight:1.5}}>Рецепти тепер генеруватимуться під твої показники</div>
@@ -3253,7 +3253,7 @@ const TrainingSchedule = ({userId}) => {
             <button key={d.id} onClick={()=>{haptic("selection");toggleDay(d.id);}}
               style={{
                 background:active?C.gradAcc:C.s2,
-                color:active?"#0a0a0a":C.ts,
+                color:active?"#080808":C.ts,
                 border:active?"none":`1px solid ${C.bc}`,
                 borderRadius:R.md,padding:"14px 0",fontSize:13,fontWeight:800,
                 boxShadow:active?SH.glow:SH.inner,
@@ -3281,7 +3281,7 @@ const TrainingSchedule = ({userId}) => {
       </Btn>
 
       {days.length>0 && (
-        <Card padding={"12px 14px"} style={{background:C.gradAccSubtle,border:"1px solid rgba(200,245,58,0.25)"}}>
+        <Card padding={"12px 14px"} style={{background:C.gradAccSubtle,border:"1px solid rgba(199,255,46,0.25)"}}>
           <div style={{fontSize:13,color:C.acc,lineHeight:1.6,fontWeight:600}}>
             📅 Тренуєшся <b style={{fontWeight:900}}>{days.length}</b> {days.length===1?"день":days.length<5?"дні":"днів"} на тиждень о <b style={{fontWeight:900}}>{time}</b>. Нагадування — о {(()=>{const[h,m]=time.split(":").map(Number);const nh=(h-5+24)%24;return `${String(nh).padStart(2,"0")}:${String(m).padStart(2,"0")}`;})()}.
           </div>
@@ -3493,7 +3493,7 @@ const MoreScreen = ({clientData, onNav}) => {
             <div style={{fontSize:15,fontWeight:800,color:C.tm,display:"flex",alignItems:"center",gap:6,letterSpacing:-0.1}}>
               {it.title}
               {it.locked && <span style={{fontSize:9,color:"#d8b4fe",background:"rgba(168,85,247,0.15)",border:"1px solid rgba(168,85,247,0.3)",padding:"2px 7px",borderRadius:R.sm,fontWeight:800,letterSpacing:0.5}}>VIP</span>}
-              {it.vipBadge && !it.locked && <span style={{fontSize:9,color:C.acc,background:C.accDim,border:"1px solid rgba(200,245,58,0.3)",padding:"2px 7px",borderRadius:R.sm,fontWeight:800,letterSpacing:0.5}}>TRIAL</span>}
+              {it.vipBadge && !it.locked && <span style={{fontSize:9,color:C.acc,background:C.accDim,border:"1px solid rgba(199,255,46,0.3)",padding:"2px 7px",borderRadius:R.sm,fontWeight:800,letterSpacing:0.5}}>TRIAL</span>}
             </div>
             <div style={{fontSize:12,color:C.ts,marginTop:3,lineHeight:1.4}}>{it.desc}</div>
           </div>
@@ -3563,7 +3563,7 @@ const Leaderboard = ({userId}) => {
             <button key={v} onClick={()=>{haptic("selection");setPeriod(v);}} style={{
               flex:1,
               background:active?C.gradAcc:"transparent",
-              color:active?"#0a0a0a":C.ts,
+              color:active?"#080808":C.ts,
               border:"none",borderRadius:R.full,
               padding:"8px 0",fontSize:12,fontWeight:800,
               cursor:"pointer",
@@ -3574,14 +3574,14 @@ const Leaderboard = ({userId}) => {
       </div>
 
       {/* Boss of the week — collapsible info + progress */}
-      <div style={{background:C.s1,border:`1px solid ${bossOpen?"rgba(200,245,58,0.55)":"rgba(200,245,58,0.22)"}`,borderRadius:R.lg,overflow:"hidden",transition:`border-color ${T.fast} ${E.out}`}}>
+      <div style={{background:C.s1,border:`1px solid ${bossOpen?"rgba(199,255,46,0.55)":"rgba(199,255,46,0.22)"}`,borderRadius:R.lg,overflow:"hidden",transition:`border-color ${T.fast} ${E.out}`}}>
 
         {/* Header — tap to toggle */}
         <div onClick={()=>{haptic("light");setBossOpen(o=>!o);}} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"11px 14px",cursor:"pointer"}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <span style={{fontSize:15}}>🏆</span>
             <span style={{fontSize:14,fontWeight:800,color:C.tm}}>Бос тижня</span>
-            {bp?.all_passed && <span style={{fontSize:10,color:C.acc,fontWeight:800,background:"rgba(200,245,58,0.15)",padding:"2px 8px",borderRadius:R.full,letterSpacing:.4}}>✅ ВИКОНАНО</span>}
+            {bp?.all_passed && <span style={{fontSize:10,color:C.acc,fontWeight:800,background:"rgba(199,255,46,0.15)",padding:"2px 8px",borderRadius:R.full,letterSpacing:.4}}>✅ ВИКОНАНО</span>}
           </div>
           <span style={{fontSize:12,color:C.ts,display:"inline-block",transition:`transform ${T.fast} ${E.out}`,transform:bossOpen?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
         </div>
@@ -3597,7 +3597,7 @@ const Leaderboard = ({userId}) => {
               <div key={i} style={{flex:1,background:C.s2,borderRadius:R.md,padding:"6px 8px",textAlign:"center"}}>
                 <div style={{fontSize:12,fontWeight:800,color:c.passed?C.acc:C.tm}} className="num">{c.ic} {c.done}/{c.req}</div>
                 <div style={{height:3,background:"rgba(0,0,0,0.4)",borderRadius:R.full,marginTop:5,overflow:"hidden"}}>
-                  <div style={{height:"100%",borderRadius:R.full,width:`${Math.min(100,Math.round((c.done/c.req)*100))}%`,background:c.passed?C.gradAcc:"rgba(200,245,58,0.3)",transition:`width ${T.slow} ${E.out}`}}/>
+                  <div style={{height:"100%",borderRadius:R.full,width:`${Math.min(100,Math.round((c.done/c.req)*100))}%`,background:c.passed?C.gradAcc:"rgba(199,255,46,0.3)",transition:`width ${T.slow} ${E.out}`}}/>
                 </div>
                 <div style={{fontSize:9,color:c.passed?C.acc:C.ts,fontWeight:700,marginTop:3,letterSpacing:.3,textTransform:"uppercase"}}>{c.label}</div>
               </div>
@@ -3976,12 +3976,12 @@ const WorkoutScreen = ({userId, day, weekNumber, onClose}) => {
         </div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
           <H level={2} style={{margin:0}}>{day?.day || "Тренування"}</H>
-          <div style={{fontSize:12,color:C.acc,fontWeight:800,padding:"4px 10px",background:C.gradAccSubtle,borderRadius:R.full,border:"1px solid rgba(200,245,58,0.25)"}}>{doneEx}/{totalEx}</div>
+          <div style={{fontSize:12,color:C.acc,fontWeight:800,padding:"4px 10px",background:C.gradAccSubtle,borderRadius:R.full,border:"1px solid rgba(199,255,46,0.25)"}}>{doneEx}/{totalEx}</div>
         </div>
         {day?.muscle_group && <div style={{fontSize:13,color:C.ts,fontWeight:600}}>{day.muscle_group}</div>}
         {/* Progress bar */}
         <div style={{height:4,background:C.s2,borderRadius:R.full,overflow:"hidden",marginTop:10}}>
-          <div style={{height:"100%",width:`${progress}%`,background:C.gradAcc,borderRadius:R.full,transition:`width ${T.slow} ${E.out}`,boxShadow:"0 0 10px rgba(200,245,58,0.5)"}}/>
+          <div style={{height:"100%",width:`${progress}%`,background:C.gradAcc,borderRadius:R.full,transition:`width ${T.slow} ${E.out}`,boxShadow:"0 0 10px rgba(199,255,46,0.5)"}}/>
         </div>
       </div>
 
@@ -4042,7 +4042,7 @@ const WorkoutScreen = ({userId, day, weekNumber, onClose}) => {
                           flex:1,
                           height:34,
                           background: checked ? C.gradAcc : C.s2,
-                          color: checked ? "#0a0a0a" : C.ts,
+                          color: checked ? "#080808" : C.ts,
                           border: checked ? "none" : `1px solid ${C.bc}`,
                           borderRadius: R.sm,
                           fontSize:12,fontWeight:800,
@@ -4090,7 +4090,7 @@ const WorkoutScreen = ({userId, day, weekNumber, onClose}) => {
                 </div>
 
                 {/* Note / technique */}
-                {ex.technique && <div style={{fontSize:11,color:"rgba(200,245,58,0.7)",marginTop:8,lineHeight:1.5,fontStyle:"italic"}}>💡 {ex.technique}</div>}
+                {ex.technique && <div style={{fontSize:11,color:"rgba(199,255,46,0.7)",marginTop:8,lineHeight:1.5,fontStyle:"italic"}}>💡 {ex.technique}</div>}
               </>}
             </Card>
           );
@@ -4195,7 +4195,7 @@ const TrainPlan = ({userId}) => {
           <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-.8,marginTop:3}}>{days.length} тренувань</div>
           <div style={{fontSize:12,color:"rgba(255,255,255,.5)",marginTop:3}}>{days.filter(d=>d.exercises?.length).map(d=>d.muscle_group?.split(" ")[0]).slice(0,3).join(" · ")}</div>
         </div>
-        <button onClick={generate} disabled={gen} style={{position:"absolute",right:14,bottom:16,background:"rgba(200,245,58,.15)",border:`1px solid rgba(200,245,58,.3)`,borderRadius:10,padding:"6px 12px",color:C.acc,fontSize:11,fontWeight:700}}>
+        <button onClick={generate} disabled={gen} style={{position:"absolute",right:14,bottom:16,background:"rgba(199,255,46,.15)",border:`1px solid rgba(199,255,46,.3)`,borderRadius:10,padding:"6px 12px",color:C.acc,fontSize:11,fontWeight:700}}>
           {gen?"...":"Оновити"}
         </button>
       </div>
@@ -4222,7 +4222,7 @@ const TrainPlan = ({userId}) => {
                     }}
                   >❤️</div>
                 )}
-                {d.muscle_group&&<div style={{fontSize:11,color:"#0a0a0a",background:C.acc,padding:"4px 12px",borderRadius:20,fontWeight:800}}>{d.muscle_group}</div>}
+                {d.muscle_group&&<div style={{fontSize:11,color:"#080808",background:C.acc,padding:"4px 12px",borderRadius:20,fontWeight:800}}>{d.muscle_group}</div>}
               </div>
             </div>
             {hasExercises&&(
@@ -4236,22 +4236,22 @@ const TrainPlan = ({userId}) => {
                   <div key={j}>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                       <div style={{display:"flex",alignItems:"center",gap:8,flex:1,minWidth:0}}>
-                        <div style={{width:6,height:6,borderRadius:"50%",background:activeSwap?C.acc:"rgba(200,245,58,0.5)",flexShrink:0}}/>
+                        <div style={{width:6,height:6,borderRadius:"50%",background:activeSwap?C.acc:"rgba(199,255,46,0.5)",flexShrink:0}}/>
                         <div style={{fontSize:14,color:activeSwap?C.acc:C.tm,fontWeight:activeSwap?700:400,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{displayName}</div>
                         {getExTip(displayName)&&(
                           <div onClick={e=>{e.stopPropagation();setSelEx({...ex,name:displayName});}}
-                            style={{fontSize:10,color:"#0a0a0a",background:C.acc,borderRadius:6,padding:"1px 7px",fontWeight:900,flexShrink:0,cursor:"pointer",userSelect:"none"}}>?</div>
+                            style={{fontSize:10,color:"#080808",background:C.acc,borderRadius:6,padding:"1px 7px",fontWeight:900,flexShrink:0,cursor:"pointer",userSelect:"none"}}>?</div>
                         )}
                         {hasAlts&&(
                           <div onClick={e=>{e.stopPropagation();haptic("light");setSelSwap({ex,dayName:d.day});}}
-                            style={{fontSize:11,color:activeSwap?"#0a0a0a":C.ts,background:activeSwap?C.acc:"rgba(255,255,255,0.07)",border:`1px solid ${activeSwap?"transparent":"rgba(255,255,255,0.12)"}`,borderRadius:6,padding:"1px 7px",fontWeight:800,flexShrink:0,cursor:"pointer",userSelect:"none",letterSpacing:.2}}>⇄</div>
+                            style={{fontSize:11,color:activeSwap?"#080808":C.ts,background:activeSwap?C.acc:"rgba(255,255,255,0.07)",border:`1px solid ${activeSwap?"transparent":"rgba(255,255,255,0.12)"}`,borderRadius:6,padding:"1px 7px",fontWeight:800,flexShrink:0,cursor:"pointer",userSelect:"none",letterSpacing:.2}}>⇄</div>
                         )}
                       </div>
-                      <div style={{fontSize:13,color:C.acc,fontWeight:700,background:"rgba(200,245,58,.08)",padding:"4px 10px",borderRadius:8,flexShrink:0,marginLeft:6}}>{ex.sets}×{ex.reps}</div>
+                      <div style={{fontSize:13,color:C.acc,fontWeight:700,background:"rgba(199,255,46,.08)",padding:"4px 10px",borderRadius:8,flexShrink:0,marginLeft:6}}>{ex.sets}×{ex.reps}</div>
                     </div>
                     {!activeSwap&&ex.note&&<div style={{fontSize:12,color:C.td,fontStyle:"italic",marginTop:3,paddingLeft:14}}>📌 {ex.note}</div>}
-                    {activeSwap&&getExTip(displayName)?.tip&&<div style={{fontSize:12,color:"rgba(200,245,58,0.75)",marginTop:4,paddingLeft:14,lineHeight:1.5}}>💡 {getExTip(displayName).tip}</div>}
-                    {!activeSwap&&ex.technique&&<div style={{fontSize:12,color:"rgba(200,245,58,0.75)",marginTop:4,paddingLeft:14,lineHeight:1.5}}>💡 {ex.technique}</div>}
+                    {activeSwap&&getExTip(displayName)?.tip&&<div style={{fontSize:12,color:"rgba(199,255,46,0.75)",marginTop:4,paddingLeft:14,lineHeight:1.5}}>💡 {getExTip(displayName).tip}</div>}
+                    {!activeSwap&&ex.technique&&<div style={{fontSize:12,color:"rgba(199,255,46,0.75)",marginTop:4,paddingLeft:14,lineHeight:1.5}}>💡 {ex.technique}</div>}
                   </div>
                   );
                 })}
@@ -4274,7 +4274,7 @@ const TrainPlan = ({userId}) => {
             <div style={{fontSize:14,color:C.tm,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{data.plan_text}</div>
           </div>
         )}
-        {weekNote&&<div style={{background:"rgba(200,245,58,.05)",border:"1px solid rgba(200,245,58,.15)",borderRadius:14,padding:"12px 14px",display:"flex",gap:8}}>
+        {weekNote&&<div style={{background:"rgba(199,255,46,.05)",border:"1px solid rgba(199,255,46,.15)",borderRadius:14,padding:"12px 14px",display:"flex",gap:8}}>
           <div style={{width:3,background:C.acc,borderRadius:2,flexShrink:0}}/>
           <div style={{fontSize:13,color:C.ts,lineHeight:1.6}}>{weekNote}</div>
         </div>}
@@ -4420,9 +4420,9 @@ const Nutrition = ({userId, questionnaire, clientData}) => {
         <div style={{
           borderRadius:18,padding:"16px",
           background:currentInfo.type==="current"
-            ?"linear-gradient(135deg,rgba(200,245,58,0.13) 0%,rgba(200,245,58,0.04) 100%)"
+            ?"linear-gradient(135deg,rgba(199,255,46,0.13) 0%,rgba(199,255,46,0.04) 100%)"
             :`linear-gradient(180deg,#141414 0%,${C.s1} 100%)`,
-          border:currentInfo.type==="current"?"1.5px solid rgba(200,245,58,0.38)":`1px solid ${C.bc}`,
+          border:currentInfo.type==="current"?"1.5px solid rgba(199,255,46,0.38)":`1px solid ${C.bc}`,
           boxShadow:currentInfo.type==="current"?SH.glow:`inset 0 1px 0 rgba(255,255,255,0.07)`,
         }}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
@@ -4456,19 +4456,19 @@ const Nutrition = ({userId, questionnaire, clientData}) => {
         return(
           <div key={i} style={{
             borderRadius:16,
-            border:isCurrent?"1.5px solid rgba(200,245,58,0.3)":`1px solid ${C.bc}`,
+            border:isCurrent?"1.5px solid rgba(199,255,46,0.3)":`1px solid ${C.bc}`,
             overflow:"hidden",
             opacity:isPast?0.5:1,
             transition:`opacity ${T.base} ${E.out}`,
             background:`linear-gradient(180deg,#141414 0%,${C.s1} 100%)`,
-            boxShadow:isCurrent?"0 0 20px rgba(200,245,58,0.07)":`inset 0 1px 0 rgba(255,255,255,0.05)`,
+            boxShadow:isCurrent?"0 0 20px rgba(199,255,46,0.07)":`inset 0 1px 0 rgba(255,255,255,0.05)`,
           }}>
             {/* Заголовок прийому */}
             <div style={{background:C.s2,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div>
                 <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:4}}>
-                  <div style={{fontSize:11,color:C.acc,fontWeight:700,background:"rgba(200,245,58,.1)",display:"inline-block",padding:"2px 9px",borderRadius:8}}>{m.time}</div>
-                  {isCurrent&&<div style={{fontSize:9,color:"#0a0a0a",background:C.acc,fontWeight:900,padding:"2px 8px",borderRadius:8,letterSpacing:.5}}>ЗАРАЗ</div>}
+                  <div style={{fontSize:11,color:C.acc,fontWeight:700,background:"rgba(199,255,46,.1)",display:"inline-block",padding:"2px 9px",borderRadius:8}}>{m.time}</div>
+                  {isCurrent&&<div style={{fontSize:9,color:"#080808",background:C.acc,fontWeight:900,padding:"2px 8px",borderRadius:8,letterSpacing:.5}}>ЗАРАЗ</div>}
                 </div>
                 <div style={{fontSize:17,fontWeight:800,color:C.tm}}>{m.name}</div>
               </div>
@@ -4503,19 +4503,19 @@ const Nutrition = ({userId, questionnaire, clientData}) => {
                   <button onClick={()=>toggleRecipes(i,m)}
                     className={!rSt.visible?"pu":""}
                     style={{
-                      background:rSt.visible?"rgba(200,245,58,0.12)":"rgba(200,245,58,0.07)",
-                      border:`1px solid ${rSt.visible?"rgba(200,245,58,0.45)":"rgba(200,245,58,0.22)"}`,
+                      background:rSt.visible?"rgba(199,255,46,0.12)":"rgba(199,255,46,0.07)",
+                      border:`1px solid ${rSt.visible?"rgba(199,255,46,0.45)":"rgba(199,255,46,0.22)"}`,
                       borderRadius:R.full,
                       padding:"7px 13px",
                       cursor:"pointer",
                       display:"inline-flex",alignItems:"center",gap:6,
-                      color:rSt.visible?C.acc:"rgba(200,245,58,0.75)",
+                      color:rSt.visible?C.acc:"rgba(199,255,46,0.75)",
                       fontSize:13,fontWeight:700,
                       transition:`background ${T.base} ${E.out}, border-color ${T.base} ${E.out}, color ${T.base} ${E.out}`,
                     }}>
                     <span style={{fontSize:15,display:"inline-block",transform:`rotate(${rSt.visible?90:0}deg)`,transition:"transform .22s ease"}}>›</span>
                     Рецепти · {m.name}
-                    {isTrial&&<span style={{fontSize:9,color:C.acc,background:C.accDim,border:"1px solid rgba(200,245,58,0.3)",padding:"2px 6px",borderRadius:R.sm,fontWeight:800}}>TRIAL</span>}
+                    {isTrial&&<span style={{fontSize:9,color:C.acc,background:C.accDim,border:"1px solid rgba(199,255,46,0.3)",padding:"2px 6px",borderRadius:R.sm,fontWeight:800}}>TRIAL</span>}
                   </button>
 
                   {rSt.visible&&(
@@ -4541,11 +4541,11 @@ const Nutrition = ({userId, questionnaire, clientData}) => {
                             return(
                               <div key={ri} onClick={()=>toggleRecipeCard(i,ri)} style={{
                                 background:C.s2,borderRadius:R.md,cursor:"pointer",
-                                border:`1px solid ${isOpen?"rgba(200,245,58,0.25)":C.bc}`,
+                                border:`1px solid ${isOpen?"rgba(199,255,46,0.25)":C.bc}`,
                                 padding:"12px",transition:`border-color ${T.base} ${E.out}`,
                               }}>
                                 <div style={{display:"flex",alignItems:"center",gap:10}}>
-                                  <div style={{width:44,height:44,borderRadius:10,background:"linear-gradient(135deg,rgba(200,245,58,.15),rgba(200,245,58,.05))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{emoji}</div>
+                                  <div style={{width:44,height:44,borderRadius:10,background:"linear-gradient(135deg,rgba(199,255,46,.15),rgba(199,255,46,.05))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{emoji}</div>
                                   <div style={{flex:1,minWidth:0}}>
                                     <div style={{fontSize:14,fontWeight:800,color:C.tm,marginBottom:3,lineHeight:1.3}}>{r.name}</div>
                                     <div style={{display:"flex",gap:8,flexWrap:"wrap",fontSize:11,color:C.ts}}>
@@ -4630,7 +4630,7 @@ const Checkin = ({userId,onDone}) => {
   );
   if(result)return(
     <div className="fi" style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 24px"}}>
-      <div style={{width:72,height:72,borderRadius:"50%",background:"rgba(200,245,58,.1)",border:`2px solid ${C.acc}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{width:72,height:72,borderRadius:"50%",background:"rgba(199,255,46,.1)",border:`2px solid ${C.acc}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
         <svg width="32" height="32" viewBox="0 0 18 18" fill="none"><path d="M4 9l4 4 7-7" stroke={C.acc} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </div>
       <div style={{fontSize:22,fontWeight:900,color:C.tm}}>Збережено!</div>
@@ -4638,7 +4638,7 @@ const Checkin = ({userId,onDone}) => {
         <span style={{color:C.ts}}>Стрік: <span style={{color:C.acc,fontWeight:700}}>{result.streak} днів</span></span>
         {result.delta!=null&&<span style={{color:C.ts}}>{result.delta>0?"+":""}<span style={{color:C.acc,fontWeight:700}}>{result.delta} кг</span></span>}
       </div>
-      {result.feedback&&<div style={{background:C.s1,border:`1px solid rgba(200,245,58,.2)`,borderRadius:16,padding:"16px",width:"100%"}}>
+      {result.feedback&&<div style={{background:C.s1,border:`1px solid rgba(199,255,46,.2)`,borderRadius:16,padding:"16px",width:"100%"}}>
         <div style={{fontSize:11,color:C.acc,fontWeight:700,marginBottom:6,textTransform:"uppercase",letterSpacing:.8}}>Фідбек тренера</div>
         <div style={{fontSize:15,color:C.tm,lineHeight:1.7}}>{result.feedback}</div>
       </div>}
@@ -4656,7 +4656,7 @@ const Checkin = ({userId,onDone}) => {
         <div style={{fontSize:12,color:C.ts,textTransform:"uppercase",letterSpacing:.8,fontWeight:600,marginBottom:10}}>Рівень енергії</div>
         <div style={{display:"flex",gap:8}}>
           {[1,2,3,4,5].map(n=>(
-            <button key={n} onClick={()=>setE(n)} style={{flex:1,background:e===n?C.acc:C.s2,border:`1px solid ${e===n?C.acc:C.bc}`,borderRadius:12,padding:"12px 0",fontSize:16,fontWeight:800,color:e===n?"#0a0a0a":C.ts}}>{n}</button>
+            <button key={n} onClick={()=>setE(n)} style={{flex:1,background:e===n?C.acc:C.s2,border:`1px solid ${e===n?C.acc:C.bc}`,borderRadius:12,padding:"12px 0",fontSize:16,fontWeight:800,color:e===n?"#080808":C.ts}}>{n}</button>
           ))}
         </div>
       </div>
@@ -4740,7 +4740,7 @@ const ReviewsScreen = ({userId}) => {
               style={{background:C.s2,border:`1px solid ${C.bc}`,borderRadius:12,padding:"12px",color:C.tm,fontSize:14,width:"100%",resize:"none",lineHeight:1.6}}/>
           </div>
           <button onClick={()=>setAnon(!anon)} style={{background:"none",display:"flex",alignItems:"center",gap:10,padding:"4px 0"}}>
-            <div style={{width:20,height:20,borderRadius:6,background:anon?"rgba(200,245,58,.15)":"var(--s2)",border:`1.5px solid ${anon?C.acc:C.bc}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <div style={{width:20,height:20,borderRadius:6,background:anon?"rgba(199,255,46,.15)":"var(--s2)",border:`1.5px solid ${anon?C.acc:C.bc}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
               {anon&&<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke={C.acc} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
             </div>
             <span style={{fontSize:14,color:C.ts}}>Публікувати анонімно</span>
@@ -4831,7 +4831,7 @@ const NotificationsScreen = ({userId,nutritionPlan:nutritionPlanProp}) => {
     {name:"Сніданок",time:"07:30"},{name:"Перекус",time:"10:30"},{name:"Обід",time:"13:00"},
     {name:"Пред-тренув.",time:"16:00"},{name:"Вечеря",time:"18:30"},{name:"Пізній перекус",time:"21:00"}
   ];
-  const mealColors=["#c8f53a","#f0a030","#3a9fd8","#9b7fe8","#ff6b6b","#888"];
+  const mealColors=["#C7FF2E","#f0a030","#3a9fd8","#9b7fe8","#ff6b6b","#888"];
 
   const Tog=({on,onToggle,size=44})=>(
     <div onClick={onToggle} style={{width:size,height:size*0.55,borderRadius:size*0.28,background:on?C.acc:C.s3,position:"relative",cursor:"pointer",transition:"background .2s",flexShrink:0}}>
@@ -4844,7 +4844,7 @@ const NotificationsScreen = ({userId,nutritionPlan:nutritionPlanProp}) => {
       <div style={{fontSize:26,fontWeight:900,color:C.tm,letterSpacing:-1}}>Нагадування</div>
       <div style={{fontSize:14,color:C.ts}}>Налаштуй сповіщення під свій розклад.</div>
 
-      {saved&&<div style={{background:"rgba(200,245,58,.1)",border:"1px solid rgba(200,245,58,.2)",borderRadius:14,padding:"12px 16px",fontSize:14,color:C.acc,fontWeight:700}}>✓ Збережено</div>}
+      {saved&&<div style={{background:"rgba(199,255,46,.1)",border:"1px solid rgba(199,255,46,.2)",borderRadius:14,padding:"12px 16px",fontSize:14,color:C.acc,fontWeight:700}}>✓ Збережено</div>}
 
       <div style={{fontSize:13,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,padding:"4px 0"}}>Тренування</div>
 
@@ -4980,7 +4980,7 @@ const SupplementsScreen = ({userId,clientPlan,isAdmin}) => {
       <div style={{fontSize:14,color:C.ts}}>Персональна пропись від тренера</div>
 
       {data?.supplements?(
-        <div style={{background:C.s1,borderRadius:18,border:`1px solid rgba(200,245,58,.2)`,padding:"18px"}}>
+        <div style={{background:C.s1,borderRadius:18,border:`1px solid rgba(199,255,46,.2)`,padding:"18px"}}>
           <div style={{fontSize:12,color:C.acc,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Твоя пропись</div>
           <div style={{fontSize:15,color:C.tm,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{data.supplements}</div>
         </div>
@@ -4994,7 +4994,7 @@ const SupplementsScreen = ({userId,clientPlan,isAdmin}) => {
       )}
 
       {isAdmin&&(
-        <div style={{background:C.s1,borderRadius:16,border:`1px solid rgba(200,245,58,.2)`,padding:"14px 16px"}}>
+        <div style={{background:C.s1,borderRadius:16,border:`1px solid rgba(199,255,46,.2)`,padding:"14px 16px"}}>
           <div style={{fontSize:12,color:C.acc,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,marginBottom:8}}>Ручне призначення (адмін)</div>
           <textarea value={manualText} onChange={e=>setManual(e.target.value)}
             placeholder="Введи пропись БАДів вручну..." rows={5}
@@ -5003,7 +5003,7 @@ const SupplementsScreen = ({userId,clientPlan,isAdmin}) => {
         </div>
       )}
 
-      <div style={{background:"rgba(200,245,58,.05)",border:"1px solid rgba(200,245,58,.15)",borderRadius:16,padding:"16px"}}>
+      <div style={{background:"rgba(199,255,46,.05)",border:"1px solid rgba(199,255,46,.15)",borderRadius:16,padding:"16px"}}>
         <div style={{fontSize:15,fontWeight:700,color:C.acc,marginBottom:6}}>Є питання?</div>
         <div style={{fontSize:14,color:C.ts,marginBottom:12}}>Напиши тренеру особисто — відповість протягом години.</div>
         <a href={TRAINER_LINK} style={{textDecoration:"none"}}><PBtn style={{background:C.s2,color:C.tm}}>Написати тренеру</PBtn></a>
@@ -5086,7 +5086,7 @@ const Progress = ({userId}) => {
             const h=maxW===minW?50:((c.weight_kg-minW)/(maxW-minW))*65+15;
             return <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
               <div style={{fontSize:8,color:C.ts}}>{c.weight_kg}</div>
-              <div style={{width:"100%",height:h,background:i===checkins.slice(-8).length-1?C.acc:"rgba(200,245,58,.3)",borderRadius:"4px 4px 0 0"}}/>
+              <div style={{width:"100%",height:h,background:i===checkins.slice(-8).length-1?C.acc:"rgba(199,255,46,.3)",borderRadius:"4px 4px 0 0"}}/>
               <div style={{fontSize:8,color:C.td}}>Т{c.week_number}</div>
             </div>;
           })}
@@ -5108,7 +5108,7 @@ const Progress = ({userId}) => {
         <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
           {Object.entries(badges).map(([code,[emoji,label]])=>{
             const has=earned.includes(code);
-            return <div key={code} style={{background:has?"rgba(200,245,58,.1)":C.s2,borderRadius:14,border:`1px solid ${has?C.acc:C.bc}`,padding:"10px 16px",textAlign:"center",opacity:has?1:.4}}>
+            return <div key={code} style={{background:has?"rgba(199,255,46,.1)":C.s2,borderRadius:14,border:`1px solid ${has?C.acc:C.bc}`,padding:"10px 16px",textAlign:"center",opacity:has?1:.4}}>
               <div style={{fontSize:22}}>{emoji}</div>
               <div style={{fontSize:11,color:has?C.acc:C.ts,marginTop:4,fontWeight:600}}>{label}</div>
             </div>;
@@ -5138,10 +5138,10 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
         <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(10,10,10,0.2) 0%,rgba(10,10,10,0.5) 50%,rgba(10,10,10,0.95) 100%)"}}/>
         <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"20px 18px",display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:12}}>
           <div style={{flex:1,minWidth:0}}>
-            <SectionLabel accent style={{marginBottom:4,color:"rgba(200,245,58,0.85)"}}>МІЙ ПРОФІЛЬ</SectionLabel>
+            <SectionLabel accent style={{marginBottom:4,color:"rgba(199,255,46,0.85)"}}>МІЙ ПРОФІЛЬ</SectionLabel>
             <div style={{fontSize:24,fontWeight:900,color:C.tm,letterSpacing:-1,lineHeight:1.1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",display:"flex",alignItems:"center",gap:8}}>
               {client?.full_name||"Клієнт"}
-              {totalBosses > 0 && <span title={`${totalBosses} босів пройдено`} style={{fontSize:18,filter:"drop-shadow(0 0 8px rgba(200,245,58,0.5))"}}>🏆</span>}
+              {totalBosses > 0 && <span title={`${totalBosses} босів пройдено`} style={{fontSize:18,filter:"drop-shadow(0 0 8px rgba(199,255,46,0.5))"}}>🏆</span>}
             </div>
             {client?.username && <div style={{fontSize:13,color:"rgba(255,255,255,0.6)",marginTop:3,fontWeight:500}}>@{client.username}</div>}
           </div>
@@ -5297,7 +5297,7 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
                   <SectionLabel>КБЖУ не розраховано</SectionLabel>
                   <div style={{fontSize:12,color:C.ts,marginTop:3}}>Розрахуй персональну норму калорій</div>
                 </div>
-                {onMacros&&<button onClick={()=>{haptic("selection");onMacros();}} style={{background:C.gradAcc,border:"none",borderRadius:R.md,padding:"8px 14px",color:"#0a0a0a",fontSize:12,fontWeight:800,flexShrink:0,cursor:"pointer"}}>Розрахувати</button>}
+                {onMacros&&<button onClick={()=>{haptic("selection");onMacros();}} style={{background:C.gradAcc,border:"none",borderRadius:R.md,padding:"8px 14px",color:"#080808",fontSize:12,fontWeight:800,flexShrink:0,cursor:"pointer"}}>Розрахувати</button>}
               </Card>
             )}
           </div>
@@ -5305,14 +5305,14 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
         {profileTab===1&&<ReviewsScreen userId={userId}/>}
         {profileTab===2&&<NotificationsScreen userId={userId}/>}
         {client?.status==="trial"&&<div className="pu" onClick={onBuyPlan} style={{background:C.acc,borderRadius:16,padding:"16px 20px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-          <div><div style={{fontSize:17,fontWeight:800,color:"#0a0a0a"}}>Придбати тариф</div><div style={{fontSize:12,color:"rgba(10,10,10,.55)",fontWeight:600,marginTop:2}}>від {PLANS_STATIC.start.price.toLocaleString()} ₴ / місяць</div></div>
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="13" fill="rgba(0,0,0,.2)"/><path d="M9 14h10M14 9l5 5-5 5" stroke="#0a0a0a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <div><div style={{fontSize:17,fontWeight:800,color:"#080808"}}>Придбати тариф</div><div style={{fontSize:12,color:"rgba(10,10,10,.55)",fontWeight:600,marginTop:2}}>від {PLANS_STATIC.start.price.toLocaleString()} ₴ / місяць</div></div>
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="13" fill="rgba(0,0,0,.2)"/><path d="M9 14h10M14 9l5 5-5 5" stroke="#080808" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </div>}
         <button onClick={onCheckin} style={{background:C.s1,border:`1px solid ${C.bc}`,borderRadius:16,padding:"16px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%"}}>
           <span style={{fontSize:16,fontWeight:700,color:C.tm}}>Зробити чекін</span>
           <svg width="20" height="20" viewBox="0 0 18 18" fill="none"><path d="M4 9h10M10 5l4 4-4 4" stroke={C.acc} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
-        {onSupplements&&<button onClick={onSupplements} style={{background:"rgba(200,245,58,.05)",border:"1px solid rgba(200,245,58,.2)",borderRadius:16,padding:"16px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%"}}>
+        {onSupplements&&<button onClick={onSupplements} style={{background:"rgba(199,255,46,.05)",border:"1px solid rgba(199,255,46,.2)",borderRadius:16,padding:"16px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%"}}>
           <span style={{fontSize:16,fontWeight:700,color:C.acc}}>💊 Мої БАДи (VIP)</span>
           <svg width="20" height="20" viewBox="0 0 18 18" fill="none"><path d="M4 9h10M10 5l4 4-4 4" stroke={C.acc} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>}
@@ -5322,7 +5322,7 @@ const Profile = ({client,questionnaire,isAdmin,onAdminAccess,onCheckin,onBuyPlan
             <svg width="20" height="20" viewBox="0 0 18 18" fill="none"><path d="M4 9h10M10 5l4 4-4 4" stroke={C.acc} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
         </a>
-        {isAdmin&&<button onClick={onAdminAccess} style={{background:"rgba(200,245,58,.05)",border:"1.5px solid rgba(200,245,58,.2)",borderRadius:16,padding:"16px 18px",display:"flex",alignItems:"center",gap:10,width:"100%"}}>
+        {isAdmin&&<button onClick={onAdminAccess} style={{background:"rgba(199,255,46,.05)",border:"1.5px solid rgba(199,255,46,.2)",borderRadius:16,padding:"16px 18px",display:"flex",alignItems:"center",gap:10,width:"100%"}}>
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2l7 4v5c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-4z" stroke={C.acc} strokeWidth="1.8" fill="none"/></svg>
           <span style={{fontSize:16,fontWeight:800,color:C.acc}}>Адмін-панель</span>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{marginLeft:"auto"}}><path d="M4 8h8M8 4l4 4-4 4" stroke={C.acc} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -5407,7 +5407,7 @@ const AdminClients = ({onSelect}) => {
               padding:"8px 14px",borderRadius:R.full,
               border:active?"none":`1px solid ${C.bc}`,
               background:active?C.gradAcc:C.s1,
-              color:active?"#0a0a0a":C.ts,
+              color:active?"#080808":C.ts,
               fontSize:12,fontWeight:800,
               whiteSpace:"nowrap",flexShrink:0,
               boxShadow:active?SH.sm:"none",
@@ -5504,7 +5504,7 @@ const MessageModal = ({client, onClose}) => {
         </div>
 
         {done ? (
-          <div style={{background:"rgba(200,245,58,.1)",border:"1px solid rgba(200,245,58,.3)",borderRadius:12,padding:"16px",fontSize:15,color:C.acc,fontWeight:700,textAlign:"center"}}>
+          <div style={{background:"rgba(199,255,46,.1)",border:"1px solid rgba(199,255,46,.3)",borderRadius:12,padding:"16px",fontSize:15,color:C.acc,fontWeight:700,textAlign:"center"}}>
             ✓ Повідомлення надіслано
           </div>
         ) : (
@@ -5519,7 +5519,7 @@ const MessageModal = ({client, onClose}) => {
             {err && <div style={{color:C.red,fontSize:13,marginTop:8}}>{err}</div>}
             <div style={{display:"flex",gap:8,marginTop:14}}>
               <button onClick={handleClose} style={{flex:1,background:C.s2,color:C.ts,border:`1px solid ${C.bc}`,borderRadius:12,padding:"12px 0",fontSize:14,fontWeight:700}}>Скасувати</button>
-              <button onClick={send} disabled={!text.trim()||sending} style={{flex:2,background:C.acc,color:"#0a0a0a",border:"none",borderRadius:12,padding:"12px 0",fontSize:14,fontWeight:800,opacity:(!text.trim()||sending)?.5:1}}>
+              <button onClick={send} disabled={!text.trim()||sending} style={{flex:2,background:C.acc,color:"#080808",border:"none",borderRadius:12,padding:"12px 0",fontSize:14,fontWeight:800,opacity:(!text.trim()||sending)?.5:1}}>
                 {sending?"Надсилаю...":"Надіслати"}
               </button>
             </div>
@@ -5592,7 +5592,7 @@ const AdminChat = () => {
           {messages.length===0 && <div style={{textAlign:"center",color:C.td,fontSize:13,padding:"20px 0"}}>Історія порожня</div>}
           {messages.map((m,i)=>(
             <div key={i} style={{display:"flex",justifyContent:m.direction==="out"?"flex-end":"flex-start"}}>
-              <div style={{maxWidth:"85%",padding:"10px 14px",borderRadius:14,background:m.direction==="out"?C.acc:C.s1,color:m.direction==="out"?"#0a0a0a":C.tm,border:m.direction==="in"?`1px solid ${C.bc}`:"none",fontSize:14,lineHeight:1.5,whiteSpace:"pre-wrap"}}>
+              <div style={{maxWidth:"85%",padding:"10px 14px",borderRadius:14,background:m.direction==="out"?C.acc:C.s1,color:m.direction==="out"?"#080808":C.tm,border:m.direction==="in"?`1px solid ${C.bc}`:"none",fontSize:14,lineHeight:1.5,whiteSpace:"pre-wrap"}}>
                 {m.text}
                 <div style={{fontSize:10,opacity:.6,marginTop:4}}>{(m.created_at||"").slice(11,16)}</div>
               </div>
@@ -5601,7 +5601,7 @@ const AdminChat = () => {
         </div>
         <div style={{padding:"10px 14px 14px",borderTop:`1px solid ${C.bc}`,display:"flex",gap:8,background:C.bg,flexShrink:0}}>
           <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")send();}} placeholder="Написати відповідь..." disabled={sending} style={{flex:1,background:C.s1,border:`1px solid ${C.bc}`,borderRadius:14,padding:"12px 14px",color:C.tm,fontSize:14,outline:"none"}}/>
-          <button onClick={send} disabled={!input.trim()||sending} style={{background:C.acc,color:"#0a0a0a",border:"none",borderRadius:12,padding:"0 18px",fontSize:14,fontWeight:800,opacity:(!input.trim()||sending)?.5:1}}>↑</button>
+          <button onClick={send} disabled={!input.trim()||sending} style={{background:C.acc,color:"#080808",border:"none",borderRadius:12,padding:"0 18px",fontSize:14,fontWeight:800,opacity:(!input.trim()||sending)?.5:1}}>↑</button>
         </div>
       </div>
     );
@@ -5633,7 +5633,7 @@ const AdminChat = () => {
             </div>
           </div>
           {(c.unread||0) > 0 && (
-            <div style={{background:C.acc,color:"#0a0a0a",fontSize:11,fontWeight:800,padding:"2px 7px",borderRadius:10,minWidth:20,textAlign:"center"}}>{c.unread}</div>
+            <div style={{background:C.acc,color:"#080808",fontSize:11,fontWeight:800,padding:"2px 7px",borderRadius:10,minWidth:20,textAlign:"center"}}>{c.unread}</div>
           )}
         </div>
       ))}
@@ -5708,7 +5708,7 @@ const ProgressCharts = ({userId}) => {
     <div>
       <div style={{display:"flex",gap:6,marginBottom:10}}>
         {[4,8,12,26].map(w=>(
-          <button key={w} onClick={()=>setWeeks(w)} style={{flex:1,background:weeks===w?C.acc:C.s1,color:weeks===w?"#0a0a0a":C.ts,border:`1px solid ${weeks===w?C.acc:C.bc}`,borderRadius:10,padding:"8px 0",fontSize:12,fontWeight:700}}>{w} тижнів</button>
+          <button key={w} onClick={()=>setWeeks(w)} style={{flex:1,background:weeks===w?C.acc:C.s1,color:weeks===w?"#080808":C.ts,border:`1px solid ${weeks===w?C.acc:C.bc}`,borderRadius:10,padding:"8px 0",fontSize:12,fontWeight:700}}>{w} тижнів</button>
         ))}
       </div>
       {loading && !data ? <Spin/> : (
@@ -5791,7 +5791,7 @@ const AdminClientDetail = ({client,onBack}) => {
   return(
     <Scr>
       {/* Header card */}
-      <div style={{background:C.s1,borderRadius:18,border:`1px solid rgba(200,245,58,.2)`,padding:"16px",display:"flex",gap:14,alignItems:"center"}}>
+      <div style={{background:C.s1,borderRadius:18,border:`1px solid rgba(199,255,46,.2)`,padding:"16px",display:"flex",gap:14,alignItems:"center"}}>
         <Ava name={client.full_name||"?"} size={56}/>
         <div style={{flex:1}}>
           <div style={{fontSize:20,fontWeight:900,color:C.tm,letterSpacing:-.5}}>{client.full_name}</div>
@@ -5866,7 +5866,7 @@ const AdminClientDetail = ({client,onBack}) => {
               return (
                 <button key={v} onClick={()=>setPeriod(v)} style={{
                   background:active?C.gradAcc:"transparent",
-                  color:active?"#0a0a0a":C.ts,
+                  color:active?"#080808":C.ts,
                   border:"none",borderRadius:R.full,
                   padding:"4px 10px",fontSize:11,fontWeight:800,
                   letterSpacing:0.3,cursor:"pointer",
@@ -6003,7 +6003,7 @@ const AdminClientDetail = ({client,onBack}) => {
       )}
 
       {/* Message button */}
-      <button onClick={()=>setShowMsgModal(true)} style={{background:"rgba(200,245,58,.1)",border:"1.5px solid rgba(200,245,58,.3)",color:C.acc,borderRadius:14,padding:"14px 0",fontSize:15,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+      <button onClick={()=>setShowMsgModal(true)} style={{background:"rgba(199,255,46,.1)",border:"1.5px solid rgba(199,255,46,.3)",color:C.acc,borderRadius:14,padding:"14px 0",fontSize:15,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
         ✉️ Написати повідомлення
       </button>
 
@@ -6012,8 +6012,8 @@ const AdminClientDetail = ({client,onBack}) => {
       {/* Management actions */}
       <div style={{fontSize:11,color:C.ts,fontWeight:700,textTransform:"uppercase",letterSpacing:.8}}>Керування</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-        <button onClick={generate} disabled={gen} className={gen?"":"pu"} style={{background:C.acc,borderRadius:14,padding:"14px 0",fontSize:14,fontWeight:800,color:"#0a0a0a",display:"flex",alignItems:"center",justifyContent:"center",gap:6,gridColumn:"1/-1"}}>
-          {gen&&<div className="sp" style={{width:14,height:14,borderRadius:"50%",border:"2px solid rgba(0,0,0,.2)",borderTopColor:"#0a0a0a"}}/>}
+        <button onClick={generate} disabled={gen} className={gen?"":"pu"} style={{background:C.acc,borderRadius:14,padding:"14px 0",fontSize:14,fontWeight:800,color:"#080808",display:"flex",alignItems:"center",justifyContent:"center",gap:6,gridColumn:"1/-1"}}>
+          {gen&&<div className="sp" style={{width:14,height:14,borderRadius:"50%",border:"2px solid rgba(0,0,0,.2)",borderTopColor:"#080808"}}/>}
           Згенерувати план
         </button>
         {/* Duration switcher for activation */}
@@ -6039,7 +6039,7 @@ const AdminClientDetail = ({client,onBack}) => {
         )}
       </div>
 
-      {msg && <div style={{background:"rgba(200,245,58,.08)",border:"1px solid rgba(200,245,58,.2)",borderRadius:14,padding:"14px 16px",fontSize:15,color:C.acc,fontWeight:600}}>{msg}</div>}
+      {msg && <div style={{background:"rgba(199,255,46,.08)",border:"1px solid rgba(199,255,46,.2)",borderRadius:14,padding:"14px 16px",fontSize:15,color:C.acc,fontWeight:600}}>{msg}</div>}
 
       {/* Графіки прогресу */}
       <div>
@@ -6093,7 +6093,7 @@ const AdminPayments = () => {
     <Scr>
       <div style={{display:"flex",gap:8}}>
         {[["submitted","На перевірці"],["confirmed","Підтверджені"],["rejected","Відхилені"]].map(([v,l])=>(
-          <button key={v} onClick={()=>setFilter(v)} style={{flex:1,padding:"10px 0",borderRadius:14,border:`1px solid ${filter===v?C.acc:C.bc}`,background:filter===v?"rgba(200,245,58,.1)":C.s1,color:filter===v?C.acc:C.ts,fontSize:13,fontWeight:700}}>{l}</button>
+          <button key={v} onClick={()=>setFilter(v)} style={{flex:1,padding:"10px 0",borderRadius:14,border:`1px solid ${filter===v?C.acc:C.bc}`,background:filter===v?"rgba(199,255,46,.1)":C.s1,color:filter===v?C.acc:C.ts,fontSize:13,fontWeight:700}}>{l}</button>
         ))}
       </div>
       {loading?<Spin/>:payments.length===0?<div style={{padding:"50px 0",textAlign:"center",color:C.ts,fontSize:15}}>Немає оплат</div>:payments.map(p=>(
@@ -6103,7 +6103,7 @@ const AdminPayments = () => {
             <div style={{fontSize:28,fontWeight:900,color:C.acc}}>{p.amount} ₴</div>
           </div>
           {filter==="submitted"&&<div style={{display:"flex",gap:8,marginTop:10}}>
-            <button onClick={async()=>{await apiPost(`/api/admin/payment/${p.id}/confirm`,{});load();}} style={{flex:1,background:"rgba(200,245,58,.1)",color:C.acc,border:`1px solid rgba(200,245,58,.3)`,borderRadius:12,padding:"12px 0",fontSize:14,fontWeight:700}}>Підтвердити</button>
+            <button onClick={async()=>{await apiPost(`/api/admin/payment/${p.id}/confirm`,{});load();}} style={{flex:1,background:"rgba(199,255,46,.1)",color:C.acc,border:`1px solid rgba(199,255,46,.3)`,borderRadius:12,padding:"12px 0",fontSize:14,fontWeight:700}}>Підтвердити</button>
             <button onClick={async()=>{await apiPost(`/api/admin/payment/${p.id}/reject`,{});load();}} style={{flex:1,background:"rgba(255,85,85,.08)",color:C.red,border:"1px solid rgba(255,85,85,.2)",borderRadius:12,padding:"12px 0",fontSize:14,fontWeight:700}}>Відхилити</button>
           </div>}
         </div>
@@ -6118,7 +6118,7 @@ const AdminBroadcast = () => {
   const send=async()=>{if(!text)return;setSend(true);try{const r=await apiPost("/api/admin/broadcast",{text,target});setResult(r);setText("");}catch(e){alert("Помилка: "+e.message);}setSend(false);};
   return(
     <Scr>
-      {result&&<div style={{background:"rgba(200,245,58,.08)",border:"1px solid rgba(200,245,58,.2)",borderRadius:14,padding:"14px",fontSize:15,color:C.acc,fontWeight:600}}>✓ Надіслано {result.sent_to} клієнтам</div>}
+      {result&&<div style={{background:"rgba(199,255,46,.08)",border:"1px solid rgba(199,255,46,.2)",borderRadius:14,padding:"14px",fontSize:15,color:C.acc,fontWeight:600}}>✓ Надіслано {result.sent_to} клієнтам</div>}
       <div style={{fontSize:16,fontWeight:700,color:C.tm}}>Аудиторія</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
         {[["all","Всі"],["start","START"],["premium","PREMIUM"],["vip","VIP"],["trial","Trial"]].map(([v,l])=>(
@@ -6130,7 +6130,7 @@ const AdminBroadcast = () => {
       </div>
       <div style={{fontSize:16,fontWeight:700,color:C.tm}}>Повідомлення</div>
       <textarea value={text} onChange={ev=>setText(ev.target.value)} placeholder="Текст повідомлення..." rows={4} style={{background:C.s1,border:`1px solid ${C.bc}`,borderRadius:14,padding:"14px 16px",color:C.tm,fontSize:15,resize:"none",lineHeight:1.6}}/>
-      {text&&<div style={{background:"rgba(200,245,58,.05)",border:`1px solid rgba(200,245,58,.15)`,borderRadius:14,padding:"14px 16px"}}>
+      {text&&<div style={{background:"rgba(199,255,46,.05)",border:`1px solid rgba(199,255,46,.15)`,borderRadius:14,padding:"14px 16px"}}>
         <div style={{fontSize:12,color:C.ts,fontWeight:600,marginBottom:6,textTransform:"uppercase",letterSpacing:.8}}>Попередній перегляд</div>
         <div style={{fontSize:15,color:C.tm,lineHeight:1.6}}>{text}</div>
       </div>}
@@ -6144,13 +6144,13 @@ const AdminSettings = ({settings,onExitAdmin,onFillQuestionnaire}) => {
   return(
     <Scr>
       <div style={{fontSize:16,fontWeight:700,color:C.tm}}>Профіль тренера</div>
-      <button onClick={onFillQuestionnaire} style={{background:"rgba(200,245,58,.06)",border:"1px solid rgba(200,245,58,.2)",borderRadius:16,padding:"16px 18px",display:"flex",alignItems:"center",gap:10,width:"100%"}}>
+      <button onClick={onFillQuestionnaire} style={{background:"rgba(199,255,46,.06)",border:"1px solid rgba(199,255,46,.2)",borderRadius:16,padding:"16px 18px",display:"flex",alignItems:"center",gap:10,width:"100%"}}>
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 4a4 4 0 100 8 4 4 0 000-8zm-7 14c0-3.314 3.134-6 7-6s7 2.686 7 6" stroke={C.acc} strokeWidth="1.8" strokeLinecap="round"/></svg>
         <div style={{textAlign:"left"}}><div style={{fontSize:15,fontWeight:700,color:C.acc}}>Заповнити / оновити мою анкету</div><div style={{fontSize:12,color:C.ts,marginTop:2}}>Потрібно для AI-генерації твого особистого плану</div></div>
       </button>
       <div style={{height:1,background:C.bc}}/>
       <div style={{fontSize:16,fontWeight:700,color:C.tm}}>Автоматизація</div>
-      <div style={{background:"rgba(200,245,58,.05)",border:"1px solid rgba(200,245,58,.15)",borderRadius:16,padding:"14px 16px"}}>
+      <div style={{background:"rgba(199,255,46,.05)",border:"1px solid rgba(199,255,46,.15)",borderRadius:16,padding:"14px 16px"}}>
         <div style={{fontSize:13,color:C.ts,lineHeight:1.7}}>Всі автоматичні функції запущені на сервері постійно:</div>
       </div>
       {[{l:"✅ Авто-план щопонеділка",s:"Генерація через Claude AI о 07:00"},{l:"✅ Нагадування про чекін",s:"Ср та Пт о 19:00 (активним клієнтам)"},{l:"✅ Оффер на день 3",s:"Trial → платний тариф о 12:00"},{l:"✅ Нагадування за 3 дні до кінця",s:"Про закінчення підписки о 10:00"},{l:"✅ Автоблокування",s:"Прострочені пакети о 00:01"}].map(item=>(
@@ -6216,7 +6216,7 @@ const ExpiredScreen = ({client, plans, onSelectPlan}) => {
         </div>
 
         {/* Інструкція */}
-        <div style={{background:"rgba(200,245,58,.06)",border:"1px solid rgba(200,245,58,.2)",borderRadius:14,padding:"12px 14px",fontSize:13,color:C.ts,lineHeight:1.6}}>
+        <div style={{background:"rgba(199,255,46,.06)",border:"1px solid rgba(199,255,46,.2)",borderRadius:14,padding:"12px 14px",fontSize:13,color:C.ts,lineHeight:1.6}}>
           <div style={{color:C.acc,fontWeight:700,marginBottom:6}}>Як відновити доступ:</div>
           <div>1. Обери тривалість пакета</div>
           <div>2. Натисни на тариф</div>
@@ -6233,7 +6233,7 @@ const ExpiredScreen = ({client, plans, onSelectPlan}) => {
               const disc = DUR_DISC[opt.m];
               return (
                 <div key={opt.m} onClick={()=>setMonths(opt.m)}
-                  style={{position:"relative",borderRadius:12,border:`2px solid ${isAct?C.acc:C.bc}`,background:isAct?"rgba(200,245,58,.08)":C.s2,padding:"10px 4px",cursor:"pointer",textAlign:"center"}}>
+                  style={{position:"relative",borderRadius:12,border:`2px solid ${isAct?C.acc:C.bc}`,background:isAct?"rgba(199,255,46,.08)":C.s2,padding:"10px 4px",cursor:"pointer",textAlign:"center"}}>
                   {disc>0 && (
                     <div style={{position:"absolute",top:-9,left:"50%",transform:"translateX(-50%)",background:opt.m===12?C.acc:opt.m===6?"#e8a832":"#4a9fdf",color:"#080808",fontSize:9,fontWeight:900,padding:"2px 6px",borderRadius:6,whiteSpace:"nowrap",lineHeight:1.4}}>−{disc}%</div>
                   )}
@@ -6257,7 +6257,7 @@ const ExpiredScreen = ({client, plans, onSelectPlan}) => {
               <div key={key} onClick={()=>onSelectPlan(key, months)}
                 style={{background:C.s1,borderRadius:16,border:`1.5px solid ${plan.hot?C.acc:C.bc}`,padding:"14px 16px",cursor:"pointer",position:"relative"}}>
                 {plan.hot && (
-                  <div style={{position:"absolute",top:14,right:14,fontSize:10,color:"#0a0a0a",background:C.acc,borderRadius:8,padding:"3px 8px",fontWeight:800}}>Популярний</div>
+                  <div style={{position:"absolute",top:14,right:14,fontSize:10,color:"#080808",background:C.acc,borderRadius:8,padding:"3px 8px",fontWeight:800}}>Популярний</div>
                 )}
 
                 <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:4}}>
@@ -6274,7 +6274,7 @@ const ExpiredScreen = ({client, plans, onSelectPlan}) => {
                 )}
 
                 {saved > 0 && (
-                  <div style={{display:"inline-block",background:"rgba(200,245,58,.1)",border:"1px solid rgba(200,245,58,.25)",borderRadius:8,padding:"4px 10px",fontSize:11,color:C.acc,fontWeight:700,marginBottom:8}}>
+                  <div style={{display:"inline-block",background:"rgba(199,255,46,.1)",border:"1px solid rgba(199,255,46,.25)",borderRadius:8,padding:"4px 10px",fontSize:11,color:C.acc,fontWeight:700,marginBottom:8}}>
                     Економія {saved.toLocaleString()} ₴ проти місячного
                   </div>
                 )}
@@ -6287,7 +6287,7 @@ const ExpiredScreen = ({client, plans, onSelectPlan}) => {
                   </div>
                 ))}
 
-                <div style={{marginTop:12,padding:"10px 0",background:"rgba(200,245,58,.08)",border:"1px solid rgba(200,245,58,.2)",borderRadius:10,textAlign:"center",fontSize:13,fontWeight:800,color:C.acc}}>
+                <div style={{marginTop:12,padding:"10px 0",background:"rgba(199,255,46,.08)",border:"1px solid rgba(199,255,46,.2)",borderRadius:10,textAlign:"center",fontSize:13,fontWeight:800,color:C.acc}}>
                   Обрати — {total.toLocaleString()} ₴
                 </div>
               </div>
@@ -6315,14 +6315,14 @@ const DumbbellLoader = () => {
     <div className={spinning ? "db-spin db-appear" : "db-appear"}
       style={{width:64,height:64,display:"flex",alignItems:"center",justifyContent:"center"}}>
       <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-        <rect x="8" y="27" width="10" height="10" rx="3" fill="#c8f53a"/>
-        <rect x="8" y="22" width="10" height="6" rx="2" fill="rgba(200,245,58,.6)"/>
-        <rect x="8" y="36" width="10" height="6" rx="2" fill="rgba(200,245,58,.6)"/>
-        <rect x="46" y="27" width="10" height="10" rx="3" fill="#c8f53a"/>
-        <rect x="46" y="22" width="10" height="6" rx="2" fill="rgba(200,245,58,.6)"/>
-        <rect x="46" y="36" width="10" height="6" rx="2" fill="rgba(200,245,58,.6)"/>
-        <rect x="18" y="30" width="28" height="4" rx="2" fill="#c8f53a"/>
-        <rect x="26" y="26" width="12" height="12" rx="3" fill="rgba(200,245,58,.3)" stroke="#c8f53a" strokeWidth="1.5"/>
+        <rect x="8" y="27" width="10" height="10" rx="3" fill="#C7FF2E"/>
+        <rect x="8" y="22" width="10" height="6" rx="2" fill="rgba(199,255,46,.6)"/>
+        <rect x="8" y="36" width="10" height="6" rx="2" fill="rgba(199,255,46,.6)"/>
+        <rect x="46" y="27" width="10" height="10" rx="3" fill="#C7FF2E"/>
+        <rect x="46" y="22" width="10" height="6" rx="2" fill="rgba(199,255,46,.6)"/>
+        <rect x="46" y="36" width="10" height="6" rx="2" fill="rgba(199,255,46,.6)"/>
+        <rect x="18" y="30" width="28" height="4" rx="2" fill="#C7FF2E"/>
+        <rect x="26" y="26" width="12" height="12" rx="3" fill="rgba(199,255,46,.3)" stroke="#C7FF2E" strokeWidth="1.5"/>
       </svg>
     </div>
   );
@@ -6426,7 +6426,7 @@ export default function FitCoreApp() {
               height:2,background:C.acc,borderRadius:1,marginTop:8,
               transformOrigin:"center",transform:"scaleX(0)",
               animation:"underlineCenter 300ms cubic-bezier(0.34,1.2,0.64,1) 450ms forwards",
-              boxShadow:`0 0 12px ${C.acc}, 0 0 24px rgba(200,245,58,0.4)`,
+              boxShadow:`0 0 12px ${C.acc}, 0 0 24px rgba(199,255,46,0.4)`,
             }}/>
           </div>
           <div style={{fontSize:14,color:"rgba(255,255,255,.4)",letterSpacing:2,textTransform:"uppercase",opacity:0,animation:"riseFromBelow 400ms ease-out 700ms forwards"}}>AI Trainer by Matias</div>
