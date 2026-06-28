@@ -512,23 +512,13 @@ const Btn = ({children, variant="primary", size="md", disabled, loading, fullWid
 // CARD — стандартизована картка
 // elevated: bg s1+border  |  flat: bg s1 без бордера  |  outline: тільки border
 // ═══════════════════════════════════════════════════════════════
-const Card = ({children, variant="elevated", padding=16, onClick, glow, style={}, ...rest}) => {
+const Card = ({children, variant="elevated", padding=16, onClick, glow, radius, style={}, ...rest}) => {
   const variants = {
-    elevated: {
-      background: `linear-gradient(180deg,#141414 0%,${C.s1} 100%)`,
-      border: `1px solid ${C.bc}`,
-      boxShadow: `inset 0 1px 0 rgba(255,255,255,0.07), 0 4px 16px rgba(0,0,0,0.35)`,
-    },
-    flat: {background: C.s1, border: "none", boxShadow: "none"},
-    outline: {background: "transparent", border: `1px solid ${C.bc}`, boxShadow: "none"},
+    elevated: {...GLASS},
+    flat: {background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "none"},
+    outline: {background: "transparent", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "none"},
     accent: {background: C.gradAccSubtle, border: `1px solid rgba(199,255,46,0.25)`, boxShadow: glow ? SH.glow : SH.inner},
-    glass: {
-      background: "rgba(255,255,255,0.03)",
-      backdropFilter: "blur(20px) saturate(120%)",
-      WebkitBackdropFilter: "blur(20px) saturate(120%)",
-      border: "1px solid rgba(255,255,255,0.08)",
-      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12), 0 8px 32px rgba(0,0,0,0.3)",
-    },
+    glass: {...GLASS},
   };
   const v = variants[variant] || variants.elevated;
   return (
@@ -539,7 +529,7 @@ const Card = ({children, variant="elevated", padding=16, onClick, glow, style={}
         border: v.border,
         boxShadow: v.boxShadow,
         ...(v.backdropFilter ? {backdropFilter:v.backdropFilter, WebkitBackdropFilter:v.WebkitBackdropFilter} : {}),
-        borderRadius: R.lg,
+        borderRadius: radius || R.xxl,
         padding: typeof padding === "number" ? `${padding}px` : padding,
         cursor: onClick ? "pointer" : "default",
         transition: `transform ${T.fast} ${E.out}, border-color ${T.base} ${E.out}`,
@@ -670,7 +660,7 @@ const GBtn = ({children,onClick,style={}}) => (
 );
 
 const Scr = ({children,style={}}) => (
-  <div className="se" style={{flex:1,overflowY:"auto",padding:"12px 16px 110px",display:"flex",flexDirection:"column",gap:10,...style}}>{children}</div>
+  <div className="se" style={{flex:1,overflowY:"auto",padding:"14px 16px 110px",display:"flex",flexDirection:"column",gap:14,...style}}>{children}</div>
 );
 
 const TNav = ({title,onBack,rightEl}) => (
